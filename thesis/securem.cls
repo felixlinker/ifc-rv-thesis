@@ -1,0 +1,46 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesClass{securem}
+
+\LoadClass{article}
+\RequirePackage{amsmath}
+\RequirePackage{amsthm}
+\RequirePackage{amssymb}
+\RequirePackage{listings}
+
+\newtheorem{theorem}{Theorem}
+\theoremstyle{definition}
+\newtheorem{definition}{Definition}
+\theoremstyle{remark}
+\newtheorem{remark}{Remark}
+\newtheorem{example}{Example}
+
+\lstdefinelanguage{PSL}{
+    morekeywords=[1]{rule,assume,property,invariant},
+    morekeywords=[2]{Called,Returned,Past,Rose,Fell,Stable,Changed},
+    sensitive=false,
+    morecomment=[l]{//},
+    morestring=[b]",
+}
+\lstdefinestyle{PSLstyle}{
+    language=PSL,
+    basicstyle=\ttfamily,
+    keywordstyle={[1]\scshape},
+    keywordstyle={[2]\itshape},
+    frame=shadowbox,
+    framesep=5pt,
+    rulesep=2.5pt,
+    rulesepcolor=\color{gray},
+    captionpos=b,
+    abovecaptionskip=10pt,
+    numbers=left,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    escapechar=\#,
+    aboveskip=10pt,
+}
+\renewcommand{\lstlistingname}{Snippet}
+\renewcommand{\lstlistlistingname}{Snippets}
+\lstnewenvironment{psl}[1][]
+    {\lstset{style=PSLstyle,#1}}
+    {}
+\newcommand{\pslinline}[1]{\lstinline[style=PSLstyle]{#1}}
