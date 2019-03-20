@@ -21,10 +21,36 @@
     morecomment=[l]{//},
     morestring=[b]",
 }
+\lstdefinelanguage{ASL}{
+    morekeywords=[1]{if,then,elsif,else,case,of,when,otherwise,for,to,downto,while,do,repeat,until,return,assert,Consistent,enumeration,constant,is,array,bit,try,catch,throw,is,typeof},
+    morekeywords=[2]{UNDEFINED,UNKNOWN,UNPREDICTABLE,CONSTRAINED_UNPREDICTABLE,SEE,IMPLEMENTATION_DEFINED,SUBARCHITECTURE_DEFINED,RAISE},
+    morekeywords=[3]{QUOT,REM,DIV,MOD,AND,NOT,OR,EOR,IN},
+    sensitive=true,
+    morecomment=[l]{//},
+    morecomment=[s]{/*}{*/},
+    morestring=[b]",
+}
 \lstdefinestyle{PSLstyle}{
     language=PSL,
     basicstyle=\ttfamily,
     keywordstyle={[1]\scshape},
+    keywordstyle={[2]\itshape},
+    frame=shadowbox,
+    framesep=5pt,
+    rulesep=2.5pt,
+    rulesepcolor=\color{gray},
+    captionpos=b,
+    abovecaptionskip=10pt,
+    numbers=left,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    escapechar=\#,
+    aboveskip=10pt,
+}
+\lstdefinestyle{ASLstyle}{
+    language=ASL,
+    basicstyle=\ttfamily,
+    keywordstyle={[1]\em},
     keywordstyle={[2]\itshape},
     frame=shadowbox,
     framesep=5pt,
@@ -43,4 +69,8 @@
 \lstnewenvironment{psl}[1][]
     {\lstset{style=PSLstyle,#1}}
     {}
+\lstnewenvironment{asl}[1][]
+    {\lstset{style=ASLstyle,#1}}
+    {}
 \newcommand{\pslinline}[1]{\lstinline[style=PSLstyle]{#1}}
+\newcommand{\aslinline}[1]{\lstinline[style=ASLstyle]{#1}}
