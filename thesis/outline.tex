@@ -30,9 +30,186 @@
 
 \subsection{ARM Architecture Reference Manual}
 
+The Arm Architecture Reference Manual (in short: Arm ARM) describes the expected behavior of the Arm architecture for M-, A- and AR-class chips.
+Each of these chips is specified by a corresponding Arm ARM which again have different versions reflecting the histority of the architecture(s).
+
+The Arm v8-M ARM for example is sectioned into the following parts:
+\begin{enumerate}[label=\Alph*]
+    \item \label{itm:arm-intro} Introduction and Overview
+    \item \label{itm:arm-rules} Architecture Rules with various subsections
+    \item \label{itm:arm-instr} Instruction Set
+    \item \label{itm:arm-reg} Registers
+    \item \label{itm:arm-pseudo} Pseudocode
+    \item \label{itm:arm-prots} Debug Packet Protocols
+\end{enumerate}
+
+Whilst this structure is unique to the v8-M ARM, it covers all major points that are brought up in an Arm ARM.
+We will skip parts \ref{itm:arm-intro} and \ref{itm:arm-prots} in our introduction to the Arm ARM as they don't specify major aspects of the architecture.
+Part \ref{itm:arm-rules} lists a number of rules that describe how the Arm M-class architecture works in its core.
+In general, three types of rules can be found\footnote{In what follows, we will give examples for rules, however, these examples are not always accurate. For the sake of clarity, we will leave out parts of them.}:
+\begin{enumerate}
+    \item Rules that define concepts, e.g.:
+    \begin{displaycquote}{Armv8M}
+        \begin{description}
+            \item[R\textsubscript{QLHB}]
+            The return address is one of the following:
+            \begin{itemize}
+                \item For a synchronous exception, \textelp{} the address of the instruction that caused the exception.
+                \item For an asynchronous exception, the address of the next instruction in the program order. \textelp{}
+            \end{itemize}
+        \end{description}
+    \end{displaycquote}
+
+    \item Rules that define transitions, e.g.:
+    \begin{displaycquote}{Armv8M}
+        \begin{description}
+            \item[R\textsubscript{VLDB}] When a pending exception has a lower group priority value than current execution, \textelp{} the pending exception preempts current execution.
+        \end{description}
+    \end{displaycquote}
+
+    \item Rules that define actions, e.g.:
+    \begin{displaycquote}{Armv8M}
+        \begin{description}
+            \item[R\textsubscript{YFHR}] An exception that does not cause lockup sets both:
+            \begin{itemize}
+                \item The pending bit of its handler, or the pending bit of the HardFault handler, to 1.
+                \item The associated fault status information.
+            \end{itemize}
+        \end{description}
+    \end{displaycquote}
+\end{enumerate}
+
+These rules are the core of the Arm ARM and describe the general behavior of an architecture.
+
+Parts \ref{itm:arm-instr} and \ref{itm:arm-reg} specify the structure, usage and semantics of instructions and registers of the architecture; the details of these parts are not important for now.
+
+Part \ref{itm:arm-pseudo} lists some pseudocode variables and functions that are used within the specifications of instruction behavior.
+These are meant to clarify what instructions do.
+The pseudocode is written in a simple but fully-fledged programming language called Architecture Specification Language (in short: ASL).
+
 \subsection{Architecture Specification Language}
 
+It is a major aspect of the Arm ARM that it is accompanied by pseudocode.
+This pseudocode one the one hand clarifies parts of the Arm ARM written in natural language and on the other hand forms a basis for a simulation of the architecture.
+
+At Arm, the pseudocode of the Arm v8-M ARM has been taken and was formed into an executable model of the M-class architecture.
+An interpreter called \textit{archex} has been written that can execute ASL commands and simulate the architecture as a whole.
+
+In his paper \textit{Who Guards the Guards? Formal Validation of the Arm v8-M Architecture Specification} Alastair Reid describes ASL as follows:
+
+\begin{displaycquote}{Reid17}
+    % TODO: example code and inline-asl highlighting
+    At a high level, ASL is an indentation-sensitive,imperative, strongly-typed, first-order language with type inference, exceptions, enumerations, arrays, records, and no pointers.
+    All integers in ASL are unbounded and there is direct support for N-bit bitvectors and functions are allowed to be polymorphic in the width of a bitvector.
+    For example, memory read returns a value of type bits(8*size) where size is constrained to be 1, 2, 4 or 8.
+\end{displaycquote}
+
+This ASL-implementation of the Arm ARM forms a meta-model which describes (or at least should describe) the mechanisms that all implementations of the architecture must comply with.
+
 \subsection{Property Specification Language}
+
+The property specification language (in short: PSL) is a language that is best understood as meta-level ASL and was introduced by Alastair Reid in \cite{Reid17} as a means to verify the pseudocode model of the Arm v8-M ARM against the rules in the specification.
+
+Its foremost purpose therefore is to express rules of the Arm ARM in a formal language.
+In PSL you can \textit{talk about} ASL executions.
+At its heart, PSL consists of properties and invariants.
+A property states that a given formal expression should hold after a given ASL run, an invariant states that a given formal expression should hold before and after a given ASL run.
+These formal expressions - for now - can be understood as simple propositional logic.
+Furthermore, there are assumptions.
+Assumptions fulfill two purposes: they enhance readability and they reduce redundancy.
+As properties and invariants are equivalent to formulas of propositional logic they have a concept of assumptions embedded; when expressing the property "Property $ \varphi $ shall hold but only if $ \psi $ holds as well" you could always replace $ \varphi $ with $ \psi \rightarrow \varphi $.
+However, writing assumptions seperatly turned out to improve readability and seperate property from assumption more clearly and makes them applicable to multiple propeties/invariants.
+
+The main keywords of PSL are: \pslinline{rule}, \pslinline{assume}, \pslinline{property} and \pslinline{invariant}.
+These keywords form a tree.
+Each rule can have multiple sub-assumptions, -properties, -invariants and -rules latter of which again can have sub-assumptions, -properties, etc.
+Rules, assumptions, properties and invariants can be compared to a file-tree where rules are folders and assumptions/properties/invariants are files.
+Here is an example of how a PSL rule might look:
+
+\begin{psl}
+rule r
+    assume A1;
+    property p1 #\textit{<expression>}#;
+
+    rule r_1
+        property p2 #\textit{<expression>}#;
+        assume A2;
+        invariant i1 #\textit{<expression>}#;
+\end{psl}
+
+\pslinline{A1} and \pslinline{A2} are expressions whereas \pslinline{r}, \pslinline{r_1}, \pslinline{p1}, \pslinline{p2} and \pslinline{i1} are names.
+Assumptions are applied to all properties and invariants that come after them.
+This means that assumption \pslinline{a1} is applied to all properties and invariants in the example whereas assumption \pslinline{a2} only is applied to \pslinline{i1}.
+
+Properties and invariants are dealt with seperately, the nesting of rules only is handy for nesting assumptions and grouping similar properties.
+This means that our first example is basically the same as:
+
+\begin{psl}
+property p1 A1 IMPLIES #\textit{<expression>}#;
+property p2 A1 IMPLIES #\textit{<expression>}#;
+invariant 1 (A1 && A2) IMPLIES #\textit{<expression>}#;
+\end{psl}
+
+A formal definition\footnote{Only lacking the formalization of the necessary indentation.} of this structure is given by the following Backus-Naur-grammar:
+
+\begin{grammar}
+    <statement> ::= <rule>
+        \alt `property' <denominator> <expression> `;'
+        \alt `invariant' <denominator> <expression> `;'
+
+    <rule> ::= `rule' <denominator> \\
+        <body>
+
+    <body> ::= <body-statement>
+        \alt <body-statement> \\
+        <body>
+
+    <body-statement> ::= `assume' <expression> `;'
+        \alt <statement>
+\end{grammar}
+
+But what is the actual content of expressions in PSL?
+Basically just ASL code that evaluates to boolean (with a grain of salt).
+This grain of salt consists of syntactic sugare - which we will ignore for now - and the \pslinline{Past} keyword.
+Remember when we said that the idea of PSL was to talk about \textit{runs} of ASL.
+More precisely, those runs consist of three stages:
+First, there is a pre-state, then there is the actual run/ASL code execution, then there is a post-state.
+Rules of PSL can only talk about pre- and post-state of such ASL runs\footnote{Beware: Indirectly, in PSL you can also talk about what has happened in that run but only because this makes it much easier to talk about the architecture. We will come to this at a later point.}.
+Expressions in assumptions and properties - by default - are evaluated in post-state.
+This means that an assumption - by default - means: "If after the execution of the given ASL code, this expession evaluates to true, then check the following properties/invariants".
+The \pslinline{Past} keyword allows you to talk about the pre-state as well.
+It will take ASL code as an argument and evaluate the content of it in the pre-state.
+
+Furthermore, these two groups of keywords are support:
+\begin{enumerate}
+    \item \pslinline{Stable}, \pslinline{Changed}, \pslinline{Rose}, \pslinline{Fell}
+    \item \pslinline{Called}, \pslinline{Returned}
+\end{enumerate}
+
+The first group was introduced as:
+\begin{displaycquote}{Reid17}
+    \textins{W}e define syntactic sugar for some common uses of the Past operator.
+    \begin{align*}
+        Stable(e) \widehat{=} Past(e) = e \\
+        Changed(e) \widehat{=} Past(e) \neq e \\
+        Rose(e) \widehat{=} Past(e) < e \\
+        Fell(e) \widehat{=} Past(e) > e
+    \end{align*}
+    By abuse, Rose and Fell can also be applied to boolean expressions.
+\end{displaycquote}
+
+The second group more accurately could be described as semantic- but syntactic-sugar.
+It was introduced to more easily talk about pre- and post-states.
+They were introduced to tacke the following problem:
+\begin{displaycquote}{Reid17}
+    The classic approach to writing properties is to write invariant properties and function properties using predicates that refer only to the state of the system before and after the state transition function.
+    Our decision to limit ourselves to writing end-to-end properties makes it very hard to capture key properties only in terms of states.
+    For example, some properties will only apply if the system takes a certain kind of transition such as taking a reset or an exception but these are hard properties to observe from the state alone.
+    In principle, we could reverse engineer the initial conditions under which these events could occur but then we would be reasoning about when we think certain transitions occur instead of what the specification actually says.
+\end{displaycquote}
+
+The \pslinline{Called} and \pslinline{Returned} keywords therefore are in place to check whether the architecture did certain transitions.
+\pslinline{Called} will evaluate to true if a given function has been called in the ASL run and \pslinline{Returned} will evaluate to true if a given function also has returned in the ASL run.
 
 \section{Towards a Labeled State Transition System}
 
