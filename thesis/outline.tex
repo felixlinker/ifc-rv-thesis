@@ -45,11 +45,29 @@ Therefore another goal of this project is to explore the power of a labeled-IFC 
 
 \subsection{RISC-V}
 
-\subsection{µZ \& Datalog}
+\subsection{$ \mu $Z \& Datalog}
 
 \subsection{SPACER}
 
 \section{Project Plan}
+
+The project divides itself into the following steps:
+\begin{enumerate}
+    \item Development of a simplified architectural model which should include
+    \begin{itemize}
+        \item Protected system control registers
+        \item General purpose registers
+        \item A model of memory with secure and non-secure regions
+        \item At least 8 instructions: load immediate, load, store, add, subtract, compare, branch, enter privileged mode, leave privileged mode
+    \end{itemize}
+    \item Formal implementation of the architectural model in SMT
+    \item Verification
+    \begin{itemize}
+        \item Verification can be done straight-forward but it might be advisable to use algorithms like SPACER to enhance performance and output
+    \end{itemize}
+    \item Iteration \& refinement
+    \item Evaluation
+\end{enumerate}
 
 \bibliography{references}
 \bibliographystyle{alpha}
