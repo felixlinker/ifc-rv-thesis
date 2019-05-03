@@ -34,6 +34,8 @@ Furthermore, there are type-system rules that propagate labellings throughout th
 
 The goal of this project is to apply this approach of using security labellings to model information flow to the process of model checking an architectural model of a microprocessor with multiple privilege levels.
 The model checker will quantify over programs running on the microprocessor and check properties like: "It is not possible for secure information stored at point Y to leak".
+Such "point" at which information might be stored, include registers and memory of the micro-controller.
+In a 32-bit architecture, this gives us $ (R \cdot 32 + M \cdot 8)^2 $ implicit properties to check where $ R $ is the number of registers and $ M $ is the number of bytes in memory - for each bit in registers and memory, we can check whether information can leak to any other bit in registers or memory.
 We expect to find programs that will violate such properties simply because privileged code can do \textit{anything} that is also leaking information.
 
 This approach must not be seen as an attempt to formally verify the security of an architecture itself.
