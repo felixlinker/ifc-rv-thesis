@@ -47,9 +47,24 @@ Therefore another goal of this project is to explore the power of a labeled-IFC 
 
 \subsection{RISC-V}
 
+RISC-V (RISC stands for \textbf{R}educed \textbf{I}nstruction \textbf{S}et \textbf{C}omputer) is a modular processor architecture specification.
+There are many modules, e.g. integer arithmetic, floating point arithmetic, debugging, that can freely be combined with each other.
+The only necessity for each RISC-V CPU is to implement the integer arithmetic module.
+
+We will use parts of the base integer instruction set and privileged architecture in this project to model a micro-controller that has all function necessary to have sufficient complexity in computing but not too many features to make our undertaking infeasible.
+
 \subsection{$ \mu $Z \& Datalog}
 
+$ \mu $Z is a Datalog engine that comes with the SMT-solver Z3 from Microsoft.
+It can solve Horn-clauses and queries whether certain rules are reachable.
+The syntax of Datalog is very much comparable to the syntax of the programming language Prolog.
+
+We will use $ \mu $Z to perform the model checking process.
+
 \subsection{SPACER}
+
+SPACER is an algorithm that uses a Datalog engine to perform automated abstraction on Horn-clauses expressed in propositional Linear Rational Arithmetic and was proposed in \cite{Komuravelli13}.
+We might alter this algorithm in this project to be applicable to the theory of bit vectors and use it in our model checking procedure.
 
 \section{Project Plan}
 
