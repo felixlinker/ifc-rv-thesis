@@ -30,6 +30,15 @@
     morecomment=[s]{/*}{*/},
     morestring=[b]",
 }
+\lstdefinelanguage{SMT2}{
+    keywordsprefix={:},
+    morekeywords=[1]{!,_,as,DECIMAL,exists,forall,let,NUMERAL,par,STRING},
+    morekeywords=[2]{assert,check-sat,declare-sort, declare-fun,define-sort,define-fun,exit,get-assertions, get-assignment,get-info,get-option,get-proof,get-unsat-core,get-value,pop,push,set-logic,set-info,set-option,rule,query,declare-rel,declare-var},
+    sensitive=false,
+    morecomment=[l]{--},
+    alsoletter={:},
+    alsodigit={-},
+}
 \lstdefinestyle{PSLstyle}{
     language=PSL,
     basicstyle=\ttfamily,
@@ -64,6 +73,23 @@
     escapechar=\#,
     aboveskip=10pt,
 }
+\lstdefinestyle{SMT2style}{
+    language=SMT2,
+    basicstyle=\ttfamily,
+    keywordstyle={[1]\em},
+    keywordstyle={[2]\bfseries},
+    frame=shadowbox,
+    framesep=5pt,
+    rulesep=2.5pt,
+    rulesepcolor=\color{gray},
+    captionpos=b,
+    abovecaptionskip=10pt,
+    numbers=left,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    escapechar=\#,
+    aboveskip=10pt,
+}
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
 \lstnewenvironment{psl}[1][]
@@ -72,5 +98,9 @@
 \lstnewenvironment{asl}[1][]
     {\lstset{style=ASLstyle,#1}}
     {}
+\lstnewenvironment{smt2}[1][]
+    {\lstset{style=SMT2style,#1}}
+    {}
 \newcommand{\pslinline}[1]{\lstinline[style=PSLstyle]{#1}}
 \newcommand{\aslinline}[1]{\lstinline[style=ASLstyle]{#1}}
+\newcommand{\smt}[1]{\lstinline[style=SMT2style]{#1}}
