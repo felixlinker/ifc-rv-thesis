@@ -50,23 +50,57 @@ Therefore another goal of this project is to explore the power of a labeled-IFC 
 \subsection{RISC-V}
 
 RISC-V (RISC stands for \textbf{R}educed \textbf{I}nstruction \textbf{S}et \textbf{C}omputer) is a modular processor architecture specification.
-There are many modules, e.g. integer arithmetic, floating point arithmetic, debugging, that can freely be combined with each other.
+RISC-V as we will view it here is specified by two documents, the RISC-V User Level ISA \cite{RiscVISA} and the RISC-V Privileged Architectures manuals \cite{RiscVISAP}.
+The User Level ISA describes the basic functionality of the processor which is divided into several modules, e.g. integer arithmetic, floating point arithmetic, debugging, that can freely be combined with each other.
 The only necessity for each RISC-V CPU is to implement the integer arithmetic module.
 
-We will use parts of the base integer instruction set and privileged architecture in this project to model a micro-controller that has all function necessary to have sufficient complexity in computing but not too many features to make our undertaking infeasible.
+The modularity of the RISC-V architecture allows implementors to easily build very simple and small processors, that still are fully compliant with the specification.
 
-\subsection{$ \mu $Z \& Datalog}
+In this thesis, we will model check the RISC-V architecture.
+We will use the base integer instruction set, the standard extension for user-level interrupts and the privileged architecture to model a micro-controller that has all basic instructions needed to perform computational tasks, support for interrupts and exceptions and two or more privilege modes - thus all function necessary to have sufficient complexity in computing but not too many features to make our undertaking infeasible.
 
-$ \mu $Z is a Datalog engine that comes with the SMT-solver Z3 from Microsoft.
-It can solve Horn-clauses and queries whether certain rules are reachable.
-The syntax of Datalog is very much comparable to the syntax of the programming language Prolog.
+\subsection{\muZ{}}
 
-We will use $ \mu $Z to perform the model checking process.
+\muZ{} is a engine that computes fixed points with constraints and comes with the SMT-solver Z3 from Microsoft Research and was introduced in \cite{Hoder11}.
+As input \muZ{} receives a set of relations and rules (Horn clauses) utilizing those relations.
+Facts can be expressed by rules that have an empty body, e.g. $ R := \emptyset \Rightarrow x $ or $ R := \top \Rightarrow x $.
+\muZ{} accepts Datalog and SMT as input languages.
+
+\muZ{} solves queries, whether certain rules are derivable.
+This can be used in model checking by using relations to model program states and rules to model program transitions.
+For example, consider a program, where an integer counter is initialized to zero and then incremented indefinitely.
+We could model this program using rules and relations in SMT as follows:
+
+\begin{smt2}
+(declare-rel t (Int))
+(declare-rel fail ())
+
+(rule (t 0))
+
+(declare-var x Int)
+(rule   (=> (t x)
+            (t (+ x 1))))
+(rule   (=> (and (t x) (< x 0))
+            fail))
+
+(query fail)
+\end{smt2}
+
+In this example, \smt{t} is the program state and \smt{fail} models a failed state that is reached when the counter variable is strictly smaller than zero.
+We can use \muZ{} to verify that this fail-state will never be reached.
+
+In this thesis, we will use \muZ{} to perform the model checking and will attempt to translate the type system rules of \cite{Ferraiuolo17} into transition rules in SMT.
 
 \subsection{SPACER}
 
 SPACER is an algorithm that uses a Datalog engine to perform automated abstraction on Horn-clauses expressed in propositional Linear Rational Arithmetic and was proposed in \cite{Komuravelli13}.
-We might alter this algorithm in this project to be applicable to the theory of bit vectors and use it in our model checking procedure.
+It combines two approaches of automatic abstraction in model checking: proof based abstraction (PBA) and counterexample-guided abstraction refinement (CEGAR).
+Categorically, SPACER and \muZ{} perform the same type of tasks.
+Queries solvable by SPACER can also be solved by \muZ{}.
+However, SPACER claims to beat \muZ{} in performance giving examples of problem instance that have been solved by SPACER in under a minute whereas \muZ{} was not seen to terminate.
+Additionally, SPACER gives better output than \muZ{} as for positive instances of queries proofs and for negative queries counterexamples are given.
+
+If the scope of the project does allow for it, we will try to implement SPACER such that it also can work with a theory of bit vectors and thus be applied to the process of model checking a processor specification.
 
 \section{Project Plan}
 
