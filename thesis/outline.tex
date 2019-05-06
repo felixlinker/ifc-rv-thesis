@@ -31,9 +31,8 @@
 
 In \cite{Ferraiuolo17} the authors present an approach to formally verifying the ARM TrustZone architecture by using static information flow analysis.
 They apply the method of information flow control (IFC) to the hardware description language (HDL) implementing said architecture.
-They introduce a lattice of security labels and a way of annotating HDL code with said labels.
+They approach mainly consists of two things: A lattice of security labels and type-system rules that define how information flows through the HDL code.
 Intuitively, it is allowed for information to flow "up" the lattice but not "down".
-Furthermore, there are type-system rules that propagate labellings throughout the HDL code and type-check this code with regard to the security labellings.
 
 The goal of this project is to apply this approach of using security labellings to model information flow to the process of model checking an architectural model of a microprocessor with multiple privilege levels.
 The model checker will quantify over programs running on the microprocessor and check properties like: "It is not possible for secure information stored at point Y to leak".
@@ -42,7 +41,7 @@ In a 32-bit architecture, this gives us $ (R \cdot 32 + M \cdot 8)^2 $ implicit 
 We expect to find programs that will violate such properties simply because privileged code can do \textit{anything} that is also leaking information.
 
 This approach must not be seen as an attempt to formally verify the security of an architecture itself.
-It is an attempt to program patterns that can leak information and finding rules that - when complied with - guarantee the absence of such leaks.
+It is an attempt to find program patterns that can leak information and finding rules that - when complied with - guarantee the absence of such leaks.
 We will however also have in mind that a IFC formalism might not be able to find \textit{all} issues that can arise during the programming of micro-controllers.
 Therefore another goal of this project is to explore the power of a labeled-IFC approach.
 
