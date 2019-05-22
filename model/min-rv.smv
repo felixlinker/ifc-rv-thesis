@@ -28,6 +28,8 @@
 #define STORE_H( addr, h ) (STORE_B(addr, ( h )[7:0]) & STORE_B((addr) + 0ud32_1, ( h )[15:8]))
 #define STORE_B( addr, b ) (next(MEM)[(addr)[MEM_ADDR_LEN - 1:0]] = b)
 
+#define PC_ADVANCE (PC + 0d32_4)
+
 MODULE main
     IVAR
         INSTR : {
@@ -45,7 +47,14 @@ MODULE main
 
     -- B- and S-type instructions don't have a rd field; require rd to not be
     -- zero in all other situations as everything else would result in NOOP
-    FAIRNESS INSTR in { BEQ, BNE, BLT, BLTU, BGE, BGEU } <-> rd = 0h_0;
+    FAIRNESS INSTR in {
+        BEQ, BNE, BLT, BLTU, BGE, BGEU, SW, SH, SB, ECALL, MRET, URET
+    } -> rd = 0h_0;
+    FAIRNESS INSTR in {
+        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, AUIPC, ADD,
+        SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA, LW, LH, LHU, LB, LBU,
+        CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRCI
+    } -> rd != 0h_0;
     -- J-type instructions don't have a rs1 field
     FAIRNESS INSTR in { LUI, AUIPC, JAL } -> rs1 = 0h_0;
     -- I- and J-type instructions don't have a rs2 field
@@ -78,7 +87,13 @@ MODULE main
     TRANS (R[15] != next(R[15])) -> (rd = 0d4_15);
 
     VAR PC : unsigned word[XLEN];
-    -- TODO: How does the PC get updated?
+    -- This fairness constraint ensures that we only branch to valid addresses
+    -- and don't need to check this in the code
+    FAIRNESS PC[0:0] = 0b_0;
+    -- Advance PC by default unless a branch or jump instruction is taken
+    TRANS (PC_ADVANCE != next(PC) -> INSTR in {
+        JAL, JALR, BEQ, BNE, BLT, BLTU, BGE, BGEU
+    });
 
     VAR MEM : array 0..(MEM_SIZE) of unsigned word[8];
 
@@ -118,3 +133,24 @@ MODULE main
     TRANS INSTR = SW -> STORE_W(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2))
     TRANS INSTR = SH -> STORE_H(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[15:0])
     TRANS INSTR = SB -> STORE_B(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[7:0])
+
+    TRANS INSTR = LUI -> next(R)[rd] = resize(imm, 32) >> 12;
+    TRANS INSTR = AUIPC -> next(R)[rd] = (resize(imm, 32) >> 12) + PC;
+
+    -- For jumps, rd can be zero so this must be handled accordingly
+    TRANS INSTR = JAL -> (
+        (rd != 0h_0 -> next(R)[rd] = PC_ADVANCE) &
+        (next(PC) = PC + (resize(imm, 32) << 12))
+    );
+    TRANS INSTR = JALR -> (
+        (rd != 0h_0 -> next(R)[rd] = PC_ADVANCE) &
+        (next(PC) = PC + unsigned(signed(LOAD_R(rs1)) + LOAD_I_W(12)))
+    );
+
+    #define BRANCH_BY( s_off ) unsigned(signed(PC) + s_off)
+    TRANS INSTR = BEQ -> next(PC) = (LOAD_R(rs1) = LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
+    TRANS INSTR = BNE -> next(PC) = (LOAD_R(rs1) != LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
+    TRANS INSTR = BLT -> next(PC) = (signed(LOAD_R(rs1)) < signed(LOAD_R(rs2)) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
+    TRANS INSTR = BLTU -> next(PC) = (LOAD_R(rs1) < LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
+    TRANS INSTR = BGE -> next(PC) = (signed(LOAD_R(rs1)) >= signed(LOAD_R(rs2)) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
+    TRANS INSTR = BGEU -> next(PC) = (LOAD_R(rs1) >= LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
