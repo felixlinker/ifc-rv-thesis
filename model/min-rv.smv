@@ -14,11 +14,19 @@
 #define LOAD_IU( width ) (resize(imm, width))
 #define LOAD_IU_W( width ) (extend(LOAD_IU(width), XLEN - width))
 
-#define LOAD_W( addr ) signed(LOAD_H(addr) :: LOAD_H((addr) + 0sd32_2))
-#define LOAD_H( addr ) signed(LOAD_B(addr) :: LOAD_B((addr) + 0sd32_1))
-#define LOAD_HU( addr ) (LOAD_B(addr) :: LOAD_B((addr) + 0sd32_1))
-#define LOAD_B( addr ) signed(MEM[unsigned(resize(addr, MEM_ADDR_LEN))])
-#define LOAD_BU( addr ) (MEM[unsigned(resize(addr, MEM_ADDR_LEN))])
+-- Load the memory offset as defined by load and store instructions,
+-- i.e. rs1 + 12-bit-immediate
+#define LOAD_MEMOFF( r, i ) (unsigned(signed(LOAD_R(r)) + LOAD_I_W(i)))
+
+#define LOAD_W( addr ) signed(LOAD_H(addr) :: LOAD_H((addr) + 0ud32_2))
+#define LOAD_H( addr ) signed(LOAD_B(addr) :: LOAD_B((addr) + 0ud32_1))
+#define LOAD_HU( addr ) (LOAD_B(addr) :: LOAD_B((addr) + 0ud32_1))
+#define LOAD_B( addr ) signed(MEM[(addr)[MEM_ADDR_LEN - 1:0]])
+#define LOAD_BU( addr ) (MEM[(addr)[MEM_ADDR_LEN - 1:0]])
+
+#define STORE_W( addr, w ) (STORE_H(addr, ( w )[15:0]) & STORE_H((addr) + 0ud32_2, ( w )[31:16]))
+#define STORE_H( addr, h ) (STORE_B(addr, ( h )[7:0]) & STORE_B((addr) + 0ud32_1, ( h )[15:8]))
+#define STORE_B( addr, b ) (next(MEM)[(addr)[MEM_ADDR_LEN - 1:0]] = b)
 
 MODULE main
     IVAR
@@ -101,8 +109,12 @@ MODULE main
 
     -- Memory related instructions
     -- TODO: Is this interpretation of unsigned + signed right? I think it is because sign extending the immediate value wouldn't make sense otherwise
-    TRANS INSTR = LW -> next(R)[rd] = unsigned(LOAD_W(signed(LOAD_R(rs1)) + LOAD_I_W(12)));
-    TRANS INSTR = LH -> next(R)[rd] = unsigned(extend(LOAD_H(signed(LOAD_R(rs1)) + LOAD_I_W(12)), 32 - 16));
-    TRANS INSTR = LHU -> next(R)[rd] = extend(LOAD_HU(signed(LOAD_R(rs1)) + LOAD_I_W(12)), 32 - 16);
-    TRANS INSTR = LB -> next(R)[rd] = unsigned(extend(LOAD_B(signed(LOAD_R(rs1)) + LOAD_I_W(12)), 32 - 8));
-    TRANS INSTR = LBU -> next(R)[rd] = extend(LOAD_BU(signed(LOAD_R(rs1)) + LOAD_I_W(12)), 32 - 8);
+    TRANS INSTR = LW -> next(R)[rd] = unsigned(LOAD_W(LOAD_MEMOFF(rs1, 12)));
+    TRANS INSTR = LH -> next(R)[rd] = unsigned(extend(LOAD_H(LOAD_MEMOFF(rs1, 12)), 32 - 16));
+    TRANS INSTR = LHU -> next(R)[rd] = extend(LOAD_HU(LOAD_MEMOFF(rs1, 12)), 32 - 16);
+    TRANS INSTR = LB -> next(R)[rd] = unsigned(extend(LOAD_B(LOAD_MEMOFF(rs1, 12)), 32 - 8));
+    TRANS INSTR = LBU -> next(R)[rd] = extend(LOAD_BU(LOAD_MEMOFF(rs1, 12)), 32 - 8);
+
+    TRANS INSTR = SW -> STORE_W(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2))
+    TRANS INSTR = SH -> STORE_H(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[15:0])
+    TRANS INSTR = SB -> STORE_B(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[7:0])
