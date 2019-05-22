@@ -40,7 +40,7 @@ MODULE main
         rd : unsigned word[4];
         rs1 : unsigned word[4];
         rs2 : unsigned word[4];
-        imm : unsigned word[19];    -- longest possible immediate value; we
+        imm : unsigned word[20];    -- longest possible immediate value; we
                                     -- might select prefixes where necessary
 
     -- B- and S-type instructions don't have a rd field; require rd to not be
@@ -57,7 +57,7 @@ MODULE main
     -- R-type instructions don't have a immediate value field
     FAIRNESS INSTR in {
         ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA
-    } -> imm = 0d19_0;
+    } -> imm = 0d20_0;
 
     -- general purpose registers and constraints on how they can change
     VAR R : array 0..15 of unsigned word[XLEN];
