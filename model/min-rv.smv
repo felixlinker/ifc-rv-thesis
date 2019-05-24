@@ -33,6 +33,30 @@
 
 #define PC_ADVANCE (PC + 0d4_1)
 
+#define INSTR_CONSTRAINTS( pc_index ) \
+    -- B- and S-type instructions don't have a rd field; require rd to not be \
+    -- zero in all other situations as everything else would result in NOOP \
+    INIT instrs[ pc_index ] in { \
+        BEQ, BNE, BLT, BLTU, BGE, BGEU, SW, SH, SB, ECALL, MRET, URET \
+    } -> rds[ pc_index ] = 0h_0; \
+    INIT instrs[ pc_index ] in { \
+        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, \
+        AUIPC, ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA, LW, \
+        LH, LHU, LB, LBU, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRCI \
+    } -> rds[ pc_index ] != 0h_0; \
+    -- J-type instructions don't have a rs1 field \
+    INIT instrs[ pc_index ] in { LUI, AUIPC, JAL } -> rs1s[ pc_index ] = 0h_0; \
+    -- I- and J-type instructions don't have a rs2 field \
+    INIT instrs[ pc_index ] in { \
+        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, \
+        AUIPC, JAL, JALR, LW, LH, LHU, LB, LBU, CSRRW, CSRRS, CSRRC, \
+        CSRRWI, CSRRSI, CSRCI \
+    } -> rs2s[ pc_index ] = 0h_0; \
+    -- R-type instructions don't have a immediate value field \
+    INIT instrs[ pc_index ] in { \
+        ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA \
+    } -> imms[ pc_index ] = 0d20_0;
+
 MODULE main
     FROZENVAR
         INSTRS : array 0..(EX_MEM_SIZE) of {
@@ -49,35 +73,30 @@ MODULE main
         -- might select prefixes where necessary
         imms : array 0..(EX_MEM_SIZE) of unsigned word[20];
 
+    -- Add constraints for each exectuable instruction to restrict search space
+    INSTR_CONSTRAINTS(0)
+    INSTR_CONSTRAINTS(1)
+    INSTR_CONSTRAINTS(2)
+    INSTR_CONSTRAINTS(3)
+    INSTR_CONSTRAINTS(4)
+    INSTR_CONSTRAINTS(5)
+    INSTR_CONSTRAINTS(6)
+    INSTR_CONSTRAINTS(7)
+    INSTR_CONSTRAINTS(8)
+    INSTR_CONSTRAINTS(9)
+    INSTR_CONSTRAINTS(10)
+    INSTR_CONSTRAINTS(11)
+    INSTR_CONSTRAINTS(12)
+    INSTR_CONSTRAINTS(13)
+    INSTR_CONSTRAINTS(14)
+    INSTR_CONSTRAINTS(15)
+
     DEFINE
         INSTR := INSTRS[PC];
         rd := rds[PC];
         rs1 := rs1s[PC];
         rs2 := rs2s[PC];
         imm := imms[PC];
-
-    -- B- and S-type instructions don't have a rd field; require rd to not be
-    -- zero in all other situations as everything else would result in NOOP
-    FAIRNESS INSTR in {
-        BEQ, BNE, BLT, BLTU, BGE, BGEU, SW, SH, SB, ECALL, MRET, URET
-    } -> rd = 0h_0;
-    FAIRNESS INSTR in {
-        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, AUIPC, ADD,
-        SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA, LW, LH, LHU, LB, LBU,
-        CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRCI
-    } -> rd != 0h_0;
-    -- J-type instructions don't have a rs1 field
-    FAIRNESS INSTR in { LUI, AUIPC, JAL } -> rs1 = 0h_0;
-    -- I- and J-type instructions don't have a rs2 field
-    FAIRNESS INSTR in {
-        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI,
-        LUI, AUIPC, JAL, JALR, LW, LH, LHU, LB, LBU, CSRRW, CSRRS, CSRRC,
-        CSRRWI, CSRRSI, CSRCI
-    } -> rs2 = 0h_0;
-    -- R-type instructions don't have a immediate value field
-    FAIRNESS INSTR in {
-        ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA
-    } -> imm = 0d20_0;
 
     -- general purpose registers and constraints on how they can change
     VAR R : array 0..15 of unsigned word[XLEN];
