@@ -1,4 +1,7 @@
 
+#define EX_MEM_SIZE 16
+#define EX_MEM_ADDR_LEN 4
+
 #define MEM_SIZE 8
 #define MEM_ADDR_LEN 3
 #define XLEN 32
@@ -28,22 +31,30 @@
 #define STORE_H( addr, h ) (STORE_B(addr, ( h )[7:0]) & STORE_B((addr) + 0ud32_1, ( h )[15:8]))
 #define STORE_B( addr, b ) (next(MEM)[(addr)[MEM_ADDR_LEN - 1:0]] = b)
 
-#define PC_ADVANCE (PC + 0d32_4)
+#define PC_ADVANCE (PC + 0d4_1)
 
 MODULE main
-    IVAR
-        INSTR : {
+    FROZENVAR
+        INSTRS : array 0..(EX_MEM_SIZE) of {
             ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, AUIPC,
             ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA, JAL, JALR, BEQ,
             BNE, BLT, BLTU, BGE, BGEU, LW, LH, LHU, LB, LBU, SW, SH, SB, CSRRW,
             CSRRS, CSRRC, CSRRWI, CSRRSI, CSRCI, ECALL, MRET, URET, ILLEGAL,
             NOOP
         };
-        rd : unsigned word[4];
-        rs1 : unsigned word[4];
-        rs2 : unsigned word[4];
-        imm : unsigned word[20];    -- longest possible immediate value; we
-                                    -- might select prefixes where necessary
+        rds : array 0..(EX_MEM_SIZE) of unsigned word[4];
+        rs1s : array 0..(EX_MEM_SIZE) of unsigned word[4];
+        rs2s : array 0..(EX_MEM_SIZE) of unsigned word[4];
+        -- longest possible immediate value; we
+        -- might select prefixes where necessary
+        imms : array 0..(EX_MEM_SIZE) of unsigned word[20];
+
+    DEFINE
+        INSTR := INSTRS[PC];
+        rd := rds[PC];
+        rs1 := rs1s[PC];
+        rs2 := rs2s[PC];
+        imm := imms[PC];
 
     -- B- and S-type instructions don't have a rd field; require rd to not be
     -- zero in all other situations as everything else would result in NOOP
@@ -86,10 +97,7 @@ MODULE main
     TRANS (R[14] != next(R[14])) -> (rd = 0d4_14);
     TRANS (R[15] != next(R[15])) -> (rd = 0d4_15);
 
-    VAR PC : unsigned word[XLEN];
-    -- This fairness constraint ensures that we only branch to valid addresses
-    -- and don't need to check this in the code
-    FAIRNESS PC[0:0] = 0b_0;
+    VAR PC : unsigned word[EX_MEM_ADDR_LEN];
     -- Advance PC by default unless a branch or jump instruction is taken
     TRANS (PC_ADVANCE != next(PC) -> INSTR in {
         JAL, JALR, BEQ, BNE, BLT, BLTU, BGE, BGEU
@@ -135,19 +143,19 @@ MODULE main
     TRANS INSTR = SB -> STORE_B(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[7:0])
 
     TRANS INSTR = LUI -> next(R)[rd] = resize(imm, 32) >> 12;
-    TRANS INSTR = AUIPC -> next(R)[rd] = (resize(imm, 32) >> 12) + PC;
+    TRANS INSTR = AUIPC -> next(R)[rd] = (resize(imm, 32) >> 12) + resize(PC, XLEN);
 
     -- For jumps, rd can be zero so this must be handled accordingly
     TRANS INSTR = JAL -> (
-        (rd != 0h_0 -> next(R)[rd] = PC_ADVANCE) &
-        (next(PC) = PC + (resize(imm, 32) << 12))
+        (rd != 0h_0 -> next(R)[rd] = resize(PC_ADVANCE, XLEN)) &
+        (next(PC) = PC + resize(resize(imm, 32) << 12, EX_MEM_ADDR_LEN))
     );
     TRANS INSTR = JALR -> (
-        (rd != 0h_0 -> next(R)[rd] = PC_ADVANCE) &
-        (next(PC) = PC + unsigned(signed(LOAD_R(rs1)) + LOAD_I_W(12)))
+        (rd != 0h_0 -> next(R)[rd] = resize(PC_ADVANCE, XLEN)) &
+        (next(PC) = PC + resize(unsigned(signed(LOAD_R(rs1)) + LOAD_I_W(12)), EX_MEM_ADDR_LEN))
     );
 
-    #define BRANCH_BY( s_off ) unsigned(signed(PC) + s_off)
+    #define BRANCH_BY( s_off ) unsigned(signed(PC) + (resize(s_off, EX_MEM_ADDR_LEN)))
     TRANS INSTR = BEQ -> next(PC) = (LOAD_R(rs1) = LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
     TRANS INSTR = BNE -> next(PC) = (LOAD_R(rs1) != LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
     TRANS INSTR = BLT -> next(PC) = (signed(LOAD_R(rs1)) < signed(LOAD_R(rs2)) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
