@@ -1,0 +1,555 @@
+\section{An Introduction to RISC-V}
+
+\gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and since then has undergone many changes.
+\gls{riscv} divides its architectural specification into two volumes: in volume 1 the base user-level \gls{isa} is described which is seperated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
+The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
+Such groups include for example machine- and supervisor-level \glspl{isa} and the description of platform level interrupt controllers.
+
+% TODO: Add motiviation/goals of RISC-V
+
+In this thesis, we work with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
+\gls{riscv} understands itself as a highly customizable architecture.
+There are currently four variants of a base integer instruction set - one of which must be implemented by any \gls{riscv} processor - and a couple of optional extensions.
+A base integer instruction set includes instructions for integer arithmetic, memory operations (loads and stores), control transfer (jumps and branches) and some system instructions (environment calls and status register operations).
+They mainly differ in the word-size and register number and make small adjustments to cope with these but only introduce slight changes to the instruction set itself.
+These four base integer instruction sets are given by:
+\begin{description}
+    \item[RV32I] Base integer instruction set
+    \item[RV32E] Base integer instruction set for embedded computing
+    \item[RV64I] Base integer instruction set for a 64-bit architecture
+    \item[RV128I] Base integer instruction set for a 128-bit architecture
+\end{description}
+
+The \gls{riscv} manual differentiates between standard and non-standard extensions but only introduces standard ones.
+A standard extension is meant to be compatible with any other standard extension and should be \textcquote{RiscVISA}{generally useful} whilst non-standard extensions might add support for more niche use-cases and do not need to be compatible with all standard extensions.
+
+The set of functionalities offered by standard extensions begins at quite low level with the probably most mundane being the standard extension for integer multiplication and division.
+You can find a list of all standard extensions in table \ref{tbl:rv-exts}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| c | l |}
+        \hline
+        \textbf{M} & Integer multiplication and division \\
+        \textbf{A} & Atomic instructions \\
+        \textbf{F} & Single-precision floating-point arithmetic \\
+        \textbf{D} & Double-precision floating-point arithmetic \\
+        \textbf{Q} & Quad-precision floating-point arithmetic \\
+        \textbf{L} & Decimal floating-point arithmetic \\
+        \textbf{C} & Compressed instructions \\
+        \textbf{B} & Bit manipulation \\
+        \textbf{J} & Dynamically translated languages \\
+        \textbf{T} & Transactional memory \\
+        \textbf{P} & Packed-SIMD instructions \\
+        \textbf{V} & Vector operations \\
+        \textbf{N} & User-level interrupts \\
+        \hline
+    \end{tabular}
+    \caption{All \gls{riscv} standard extensions}
+    \label{tbl:rv-exts}
+\end{table}
+
+\paragraph{Naming strings}
+A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{RiscVISA}{\gls{isa} naming string} which is defined as:
+
+\begin{grammar}
+    <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
+\end{grammar}
+
+An example for a naming string is the very common subset of the \gls{isa} RV64IMAFD which officially is abbrevated by RV64G.
+This subset includes the integer multiplication and division, user-level interrupts, atomic instructions, single-precision and double-precision floating-point arithmetic extensions.
+
+We chose to go with the \gls{riscv} architecture for the approach of this thesis because of its high customizability.
+More specifically, we will be working with the RV32EN \gls{isa} subset, i.e. a 32-bit word-length core that supports integer arithmetic for embedded systems and user-level interrupts.
+The base integer instrutcion set only offers some core functionality that can easily be understood and modelled while it is not artificially or overly simplified thus we hope that our findings are relevant to and applicable for other real-world architectures.
+
+\subsection{Core Functionality of RISC-V}
+
+Let us first take a look at how the base integer arithmetic \gls{isa} works.
+A \gls{riscv} core consists of multiple \glspl{hart}.
+Each \gls{hart} has its own registers including a \gls{pc} and its own indepedent instruction fetch unit.
+However, multiple \glspl{hart} share the same memory.
+In this work, we only consider single \gls{hart} cores as an asynchronous model of memory and interleaving computations is out of scope.
+
+\subsubsection{Registers}
+A \gls{hart} might either have 15 or 31 general purpose registers.
+All but the RV32E base instruction sets support 31 general purpose registers whereas the base instruction set aimed at embedded computing only supports 15 general purpose registers.
+General purpose registers are named x1-x31.
+Additionally, there is the register x0 which is hardwired to zero and may be targeted by instructions like any other general purpose register.
+
+In \gls{riscv}, there is no dedicated \gls{lr} or \gls{sp}.
+Instead, it is the obligation of the software to imlement certain calling conventions.
+Both jump instructions of \gls{riscv}, \gls{jal} and \gls{jalr}, receive a general purpose register as argument to which they store the return address of the respective jump.
+
+\gls{riscv} supports up to 4096 \glspl{csr} for additional state.
+On the user-level without any extension, there are no \glspl{csr} present so we will postpone a more detailed introduction to \glspl{csr} to section \ref{sec:rv-priv-arch} where we have a look at the privileged architecture of \gls{riscv}.
+
+\subsubsection{Instructions}
+
+\paragraph{Integer arithmetic and boolean instructions}
+The base integer instruction set supports a cuple of instructions for $ + $ and $ - $ and integer comparisons as well as the boolean operators $ \land $, $ \lor $ and $ \oplus $.
+Most of these instructions are implemented in two version: a register version (or R-type instruction) and an immediate version (or I-type instruction).
+In the first case the two operands are given as registers and in the second case one operand is given as register and the other as an immediate value read from memory.
+In either case the value is stored in a destination register.
+
+These basic instructions are all side effect free besides from advancing the program counter which means that if the destination register is x0, each of them encodes a no-operation instruction.
+This property makes them particuarily easy to analyse.
+However, as a sideeffect, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
+There also are no special instructions to handle this.
+The authors of the manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
+
+\begin{assmblr}[caption={General overflow checking \cite{RiscVISA}},label={snpt:rv-overflow}]
+add  t0, t1, t2          # Set R[t0] to R[t1] + R[t2]
+slti t3, t2, 0           # Set R[t3] to R[t2] < 0
+slt  t4, t0, t1          # Set R[t4] to R[t0] < R[t1]
+bne  t3, t4, overflow    # If R[t3] != R[t4] branch to overflow
+\end{assmblr}
+
+The gist of snippet \ref{snpt:rv-overflow} boilds down to: we can check if there was overflow when calculating $ a + b $ by checking whether $ b < 0 \leftrightarrow a + b < a $ is false, i.e. \textcquote{RiscVISA}{the sum should be less than one of the operands if and only if the other operand is negative}.
+
+\paragraph{Memory operations}
+There are two types of instructions that deal with external memory.
+Firtly, simple load and store instructions that or write to memory.
+Secondly, FENCE instructions that synchronize memory access between multiple \glspl{hart}.
+We will ignore the category of FENCE instructions in this thesis as we already declared \gls{riscv} cores with multiple \glspl{hart} to be out of scope.
+Handling instructions that have the sole purpose to synchronize the operations of multiple \glspl{hart} where only one \gls{hart} is present does not make sense.
+% TODO: references
+Furthermore, the investigation of safety of memory models as a field in its own right, c.f. the works of .
+
+Load and store operations in \gls{riscv} can read or write words of size 8-, 16-, 32-, 64- or 128-bits, depending on the maximum word length of the base instruction set of choice.
+Therefore, memory in \gls{riscv} is byte-adressable.
+Read- and write-addresses don't have to be aligned by software before using them, however, if they are not, the architecture must first align them before fetching from or storing to them, i.e. reading a 32-bit word from memory at address 0x1 is impossible.
+If this address is given as argument to a respective load instruction it'll be aligned to the address 0x0.
+
+\paragraph{Control transfer instructions}
+There are two types of instructions that can control program flow in \gls{riscv}: jumps and branches.
+In short, jumps are performed unconditionally and can target a wider range in memory (at least $ \pm 2^{20}\text{bits} $ in case of a 32-bit architecture) whereas branches are performed conditionally, only can target a narrower range in memory ($ \pm 2^{12}\text{bits} $ in case of a 32-bit architecture) and always must branch to \gls{pc}-relative addresses.
+
+In contrast to memory operations, addresses targeted by jumps must be aligned correctly otherwise an exception will be generated.
+
+Jumps are intended to call routines and functions whereas branches are intended to control the program flow of one such routine or function.
+\gls{riscv} is agnostic about the details of calling conventions for routies, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
+
+\paragraph{System instructions}
+The last type of instructions we will have a look at are system instructions.
+The \gls{riscv} manual also knows this category and distincts it into two subcategories: instructions that deal with \glspl{csr} and other instructions that perform operations that potentially need some form of privilege.
+Examples for the former category are straight forward, e.g. \gls{riscv} knows instruction to read or write complete \glspl{csr} but also knows operations to modify single bits only.
+For the latter category, \gls{riscv} only knows two instructions at the base instruction set level which are \gls{ecall} and \gls{ebreak} instructions.
+We will inspect these instructions in more detail in section \ref{sec:rv-priv-arch}.
+
+\subsection{Privileged Architecture of RISC-V}
+\label{sec:rv-priv-arch}
+
+\gls{riscv} knows three privilege levels: user-mode, supervisor-mode and machine-mode\footnote{%
+    In an earlier version, there was a fourth privilege-mode being hypervisor-mode that sat between supervisor- and machine-mode.
+    However, support for this mode has been dropped.
+    This leads \gls{riscv} still with the need to encode mode-relative bit-fields in a size of 2 where 00 stands for user-, 01 for supervisor and 11 for machine-mode.
+    10 is reserved in most places.
+}.
+Each implementation of the \gls{riscv} specification must at least provide machine-mode as a base mode of operation.
+Besides this, there are two other choices of privilege levels netting in three different configurations:
+\begin{enumerate}
+    \item Machine-mode only as a \textcquote{RiscVISA}{simple embedded system}
+    \item User and machine-mode as a \textcquote{RiscVISA}{secure embedded system}
+    \item User, supervisor and machine-mode as a \textcquote{RiscVISA}{\textins{system} running Unix-like operating systems}
+\end{enumerate}
+
+A visualization of these three combinations is given in figure \ref{fig:rv-priv-lvls} where they are depicted from left to right.
+A simple embedded system might be the cheapest to implement and manufacteur, however, this system lacks any protection against malicious application code, i.e. one would only want to run such a system in very basic scenarios where full control over all source code and the device itself can be guaranteed.
+
+A secure embedded system supports some application to be run on it while an \gls{aee} running in machine-mode controls the execution of this application.
+The application communicates to the \gls{aee} via an \gls{abi} that defines the possible interactions between an application and an \gls{aee}.
+
+A system running a Unix-like \gls{os} enhances on this by having an \gls{os} running in supervisor-mode that communicates with multiple applications running in parallel via an \gls{abi} and itself is managed by a \gls{see} which communicates with the \gls{os} via a \gls{sbi}.
+The \gls{see} runs in machine-mode.
+
+\begin{figure}
+    \centering
+    \subcaptionbox{\centering Simple embedded system}
+    [0.18\textwidth]{
+        \begin{tabular}{| c |}
+            \hline
+            Application \\ \hline
+        \end{tabular}
+    }
+    \quad
+    \subcaptionbox{\centering Secure embedded system}
+    [0.18\textwidth]{
+        \begin{tabular}{|c|}
+            \hline
+            Application \\ \hline
+            \cellcolor{black} \textcolor{white}{ABI} \\ \hline
+            AEE \\ \hline
+        \end{tabular}
+    }
+    \quad
+    \subcaptionbox{\centering System with Unix-like OS}
+    {
+        \begin{tabular}{| c | c | c |}
+            \cline{1-1} \cline{3-3}
+            Application & \multirow{2}{*}{\dots} & Application \\
+            \cline{1-1} \cline{3-3}
+            \cellcolor{black} \textcolor{white}{ABI} & & \cellcolor{black} \textcolor{white}{ABI} \\ \hline
+            \multicolumn{3}{| c |}{OS} \\ \hline
+            \multicolumn{3}{| c |}{\cellcolor{black} \textcolor{white}{SBI}} \\ \hline
+            \multicolumn{3}{| c |}{SEE} \\ \hline
+        \end{tabular}
+    }
+    \caption{Privlege level combinations \cite{RiscVISA}}
+    \label{fig:rv-priv-lvls}
+\end{figure}
+
+In this thesis, we will focus on secure embedded systems.
+This thesis is not about \glspl{os} but about information flow between different levels of privilege.
+We think that a third layer does not introduce new problems in principle but is mainly intended to help software developers with abstraction when writing code.
+We think that two levels of privilege will be enough to observe all key problems that arise when dealing with information flow.
+
+This means that the architecture we will be working with supports two modes: user- and machine-mode.
+In volume 2 of the \gls{riscv} specification, \glspl{csr} for machine- and supervisor-mode are introduced.
+In conjunction with the N extension for user-level traps of the first volume, our design decision to support to privilege levels leaves us with 18 \glspl{csr} which are tightly coupled to trap and exception handling in \gls{riscv}.
+
+\subsubsection{Exceptions, traps and interrupts}
+Volume 1 introduces the concept of exceptions, traps and interrupts as follows:
+\begin{displaycquote}{RiscVISA}
+    We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
+    We use the term \textit{trap} to refer to the synchronous transfer of control to a trap handler caused by an exceptional condition occurring within a RISC-V thread.
+    Trap handlers usually execute in a more privileged environment.
+
+    We use the term \textit{interrupt} to refer to an external event that occurs asynchronously to the current RISC-V thread.
+    When an interrupt that must be serviced occurs, some instruction is selected to receive an interrupt exception and subsequently experiences a trap.
+
+    The instruction descriptions in following chapters describe conditions that raise an exception during execution.
+    Whether and how these are converted into traps is dependent on the execution environment, though the expectation is that most environments will take a \textit{precise} trap when an exception is signaled \textelp{}.
+\end{displaycquote}
+
+This - in short - means that a trigger-hierarchy for interrupts, traps and exceptions can be recognized which is depicted in figure \ref{fig:trigger-hierarch}.
+In general, interrupts occur asynchronously and trigger exceptions to be generated for a \gls{hart} which in turn may generate traps but also might be handled otherwise.
+The specification mentions the example of the floating-point extension in which exceptions not necessarily generate traps.
+
+\begin{figure}
+    \centering
+    \tikz \graph[grow right sep] {
+        Interrupt -> Exception -> {Trap, ?};
+    };
+    \caption{Trap-Trigger-Hierarchy}
+    \label{fig:trigger-hierarch}
+\end{figure}
+
+For the sake of simplicity, we will assume that every exception causes a trap.
+As we do not implement any floating-point arithmetic extension, the specification does not demand from us to handle exceptions otherwise and doing so does not serve any purpose at this point.
+We want to keep our architectural model simple and easy to analyze which is aided by handling exceptions uniformly.
+
+\subsubsection{Control and Status Registers}
+% TODO: introduce this paragraph
+
+\paragraph{Static \glspl{csr}}
+There are a couple of \glspl{csr} in the \gls{riscv} architecture that hold static information that can be used by software to determine what specific platform it is running on and to identify the processor or \gls{hart} itself.
+Each of these registers can't be changed by any \gls{csr}-targeting instruction.
+We chose to not model these registers as they don't contain any information that either is relevant to this thesis or couldn't be modelled in another way.
+You can find an overview over these registers in table \ref{tbl:static-csrs}.
+
+\begin{table}
+    \centering
+    \renewcommand{\arraystretch}{1.25}
+    \begin{tabular}{| r | p{8cm} |}
+        \hline
+        \textbf{\acrshort{misa}} & Stores the word-length and implemented extensions of a given processor \\
+        \textbf{\acrshort{mvendorid}} & Stores an ID of the manufacteurer of the processor \\
+        \textbf{\acrshort{marchid}} & Stores an ID of the concrete architecture that a given processor implements \\
+        \textbf{\acrshort{mimpid}} & Stores a version number of the architecture \\
+        \textbf{\acrshort{mhartid}} & Stores a unique ID per \gls{hart} of the processor \\
+        \hline
+    \end{tabular}
+    \caption{Static \glspl{csr}}
+    \label{tbl:static-csrs}
+\end{table}
+
+\paragraph{Timer and performance counter \glspl{csr}}
+There also is a group of registers dealing with timers and hardware performance monitoring, namely: \gls{mtime}, \gls{mtimecmp}, \gls{mcycle}, \gls{minstret}, \gls{mhpmcountern}, \gls{mhpmeventn} and \gls{mcounteren} but we won't go into detail here as we will be ignoring these registers as well.
+The reasoning for skipping these is not as straight-forward as for the previously introduced registers.
+In general, timer and performance counting registers can be used for side channel attacks.
+In \cite{Qian16} the authors give an overview over timing-side-channel-attacks which by their very nature always need to rely on some notion of time.
+This notion can be given by timer and performance counter registers which for example hold the number of instructions exectued since a given point in time.
+For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplcations and squarings being performed.
+Such a differentation could be easily done if performance counter registers where to count such instructions and were to leak information to lower privilege levels.
+This means that in principle, timer and performance counter registers are relevant for the security of an architecture.
+However, we find that they do not introduce new notions of information flow to the architecture and are therefore redundant to our thesis.
+
+It is the case that contents of these registers are confidential as their contents might be used to introduce side-channels to other applications running on the processor.
+However, their core mechanisms are not unique.
+They can be read and written to and might generate interrupts but this is nothing new to the architecture.
+We therefore think that dealing with information flow in general is sufficient for our approach and will ignore these registers.
+
+\paragraph{Trap handling \glspl{csr}}
+\label{par:trap-csrs}
+By default, all interrupts and exceptions will be handled by machine-mode.
+There are, however, also mechanisms to delegate trap handling to less privileged modes.
+You can find an overview over all registers that have to do with trap handling in table \ref{tbl:trap-csrs}.
+As you can see, many of the machine-mode registers have a user-mode equivalent.
+Those \glspl{csr} which are available to user-mode would also be available to supervisor-mode in this context.
+Registers written in italic font are not actual registers on their own but provide a restricted view on their respective machine-mode counterparts.
+
+We will subsequently give an introduction to these registers by guiding the reader through the control flow on dealing with interrupts which is depicted in figure \ref{fig:interrupt-handling}.
+Interrupt handling can be understood as a generalized form of exception handling as exception handling in principle works the same but has fewer steps.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| c c || l |}
+        \hline
+        \textbf{Machine-mode} & \textbf{User-mode} & \textbf{Description} \\
+        \acrshort{mstatus} & \textit{\acrshort{ustatus}} & Status \\
+        \acrshort{mie} & \textit{\acrshort{uie}} & Interrupt enable \\
+        \acrshort{mip} & \textit{\acrshort{uip}} & Interrupt pending \\
+        \acrshort{mtvec} & \acrshort{utvec} & Trap-vector base address \\
+        \acrshort{mscratch} & \acrshort{uscratch} & Scratch \\
+        \acrshort{mepc} & \acrshort{uepc} & Exception program counter \\
+        \acrshort{mcause} & \acrshort{ucause} & Trap cause \\
+        \acrshort{mtval} & \acrshort{utval} & Trap value \\
+        \acrshort{medeleg} & & Exception delegation \\
+        \acrshort{mideleg} & & Interrupt delegation \\
+        \hline
+    \end{tabular}
+    \caption{Trap-handling \glspl{csr}}
+    \label{tbl:trap-csrs}
+\end{table}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        box/.style={
+            draw,
+            rounded corners,
+            fill=white,
+            align=left
+        }
+    ]
+        \node[box] (pending) {
+            An interrupt $ i $ is pending in mode $ y $\\
+            Let $ x := \text{machine-mode} $ \\
+            Let $ a := \text{current address} $
+        };
+
+        \node[draw,circle] (takePre) [below=of pending] {};
+        \draw[->] (pending) to (takePre);
+
+        \node[box] (deleg) [left=of takePre] {$ x := x - 1 $};
+        \draw[->,bend right] (takePre) to node[above,xshift=-0.8cm] {
+            if $ x\text{ideleg}[i] \land x > y $?
+        } (deleg);
+        \draw[->,bend right] (deleg) to (takePre);
+
+        \node[box] (take) [below=of takePre] {
+            $ x \text{status}.x\text{PP} := y $\\
+            $ x \text{status}.x\text{PIE} := x\text{status}.x\text{IE} $\\
+            $ x\text{status}.x\text{IE} := 0 $\\
+            $ x\text{epc} := a $\\
+            $ x\text{cause}[31] := 1 $\\
+            $ x\text{cause}[30..0] := i $\\
+            Write $ x\text{tval} $ accorindgly\\
+            Let $ t := x\text{tvec} $
+        };
+        \draw[->] (takePre) to node[right] {
+            else if $ (x = y \land x\text{status}.x\text{IE} \land x\text{ie}[i]) \lor x > y $?
+        } (take);
+
+        \node[draw,circle] (jumpPre) [below=of take] {};
+        \draw[->] (take) to (jumpPre);
+
+        \node[box] (vectored) [right=of jumpPre] {$t := t + 4 \times i $};
+        \draw[->,bend left] (jumpPre) to node[above,xshift=0.4cm] {if $ x\text{tvec.MODE} $?} (vectored);
+        \draw[->,bend left] (vectored) to (jumpPre);
+
+        \node[box] (handling) [below=of jumpPre] {Jump to $ t $ and execute instructions};
+        \draw[->] (jumpPre) to (handling);
+
+        \node[box] (return) [below=of handling] {
+            $ x\text{status}.x\text{IE} := x\text{status}.x\text{PIE} $\\
+            Set privilege mode to $ x\text{status}.x\text{PP} $\\
+            Jump to $ x\text{epc} $
+        };
+        \draw[->] (handling) to node[right] {on $ x\text{RET} $} (return);
+    \end{tikzpicture}
+    \caption{Interrupt handling flow-chart}
+    \label{fig:interrupt-handling}
+\end{figure}
+
+There are three categories of interrupts: external interrupts, timer interrupts and software interrupts.
+Each of these categories of interrupts can target any privilege-mode netting a total of 6 interrupts available to the platform in our case (or 9 if supervisor-mode is supported).
+Each of these interrupt-types is associated with an index in the range of $ 0_{10} $ to $ 11_{10} $ also called interrupt code\footnote{%
+    The reader might have noticed that these are more indices than needed to encode all interrupts available - even if supervisor-mode is present.
+    Indices 2, 6 and 10 currently are reserved because support for hypervisor-mode was dropped.
+    The two least significant bits of the interrupt indices correspond to their respective mode thus 2, 6 and 10 are reserved as their two least significant bits are 10 corresponding to hypervisor-mode.
+}.
+An overview of all interrupt codes can be found in table \ref{tbl:interrupt-exception-codes}.
+Each of these interrupts can individually be dis- or enabled in the \gls{mie} register and also can be set pending individually in the \gls{mip} register.
+In both of these register, an interrupt is enabled or set pending if the bit corresponding the interrupts index is set to 1.
+
+The \gls{mstatus} register can dis- or enable interrupt handling all in all for a specific mode via its $ x\text{IE} $ bits ($ x \in \{ \text{M}, \text{S}, \text{U}\} $\footnote{%
+    In future, we will simply use $ x $ or other variables as placeholders for a mode-flag without specifically introducing the variable.
+}).
+The \gls{ustatus} only is a restricted view on \gls{mstatus} and therefore \gls{mstatus} holds these bits not only for machine- but any mode.
+\gls{mstatus} also holds bits to \enquote{stack} certain values when handling exceptions or interrupts.
+Nested interrupts are only supported between privilege modes.
+On a trap to handle an interrupt in mode $ x $, interrupts are disabled and the value of the interrupt-enable bit is \enquote{stacked} into a prior-interrupt-enable bit $x\text{PIE} $ for this mode, i.e. $ x\text{PIE} := x\text{IE} $ and $ x\text{IE} := 0 $.
+Also, every interrupt is handled in a mode that is more or equally privileged than the mode it was targeting.
+Therefore there is a prior-privilege bit $ x\text{PP} $ that stores the privilege mode before the trap was taken.
+
+\gls{mstatus} additionally holds some bits that we will skip here as they specifically target supervisor-mode which will be ignored in this thesis.
+It also holds two bits that deal with memory privilege but these will be introduced at a later point in this section.
+
+If an interrupt is set pending via \gls{mip} by default it will be taken by machine-mode if the corresponding bit in \gls{mie} is set and interrupts are enabled globally.
+There are however, certain twists to when \enquote{interrupts are globally enabled}.
+Interrupts are globally enabled for machine-mode if:
+\begin{itemize}
+    \item Current mode is machine-mode and MIE in \gls{mstatus} is set
+    \item Current mode is not machine-mode
+\end{itemize}
+
+This means that machine-mode can only decide to disable machine-mode-targeting interrupts for itself.
+
+Additionally, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg}\footnote{%
+    It would also be possible to delegate traps by using the \gls{mret} instruction and setting all corresponding \glspl{csr} accordingly.
+    However, this would come with a higher latency as a couple of jumps would need to be performed first.
+}.
+Similar to \gls{mip} and \gls{mie}, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
+Exceptions are also assigned with an code and thus, fields of \gls{medeleg} correspond to these codes.
+An interrupt or exception can only be delegated to modes equally or more privleged than the mode the interrupt or exception was targeting originally.
+If an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and $ x\text{ie} $ becomes writeable otherwise both registers appear to be heardwired to zero.
+Analogously to taking non-delegated interrupts, an interrupt delegated to mode $ x $ is taken if the respective bit in the $ x\text{ie} $ register is set and interrupts are globally enabled.
+In this context, interrupts are considered to be globally enabled if:
+\begin{itemize}
+    \item Current mode is $ x $ and $ x\text{IE} $ in \gls{mstatus} is set
+    \item Current mode is less privileged than $ x $
+\end{itemize}
+
+More specifically, this means that delegated interrupts will not be taken while the \gls{hart} is in a mode more privileged than $ x $.
+
+If a pending interrupt is taken, the \gls{mepc}, \gls{mcause} and \gls{mtval} are written.
+\gls{mepc} holds the address of the original instruction stream that was preempted, i.e. either the address of the instruction that caused the exception or the instruction that was next to be executed as a external interrupt was taken.
+\gls{mcause} holds an identifier of the current interrupt or exception being handled by the trap.
+The most significant bit indicates whether an interrupt is currently being served and all other bits hold the exception or interrupt code.
+The \gls{mtval} serves as a register to hold arguments for a trap handler.
+Technically, it holds \textcquote{RiscVISAP}{exception-specific information to assist software in handling the trap}.
+One example for such \enquote{exception-specific information} is that \gls{mtval} can contain the faulting bits of an instruction for an illegal instruction exception whereas \gls{mepc} would only point to the instruction in memory as a whole therefore giving no specific information about which part of the instruction caused the exception.
+
+On entering a trap handler, the platform will jump to a base address held by the \gls{mtvec}.
+It also holds a field that controls whether interrupts can be \textit{vectored}, i.e. for interrupts the \gls{pc} is not set to the base address for handling trap but to $ \text{base} + 4 \times \text{cause} $.
+The small
+This means that all differentiation between handling traps must be done by software.
+
+\paragraph{Other \glspl{csr}}
+In the previous paragraph, we mentioned that \gls{mstatus} contains some bits that are not directly relevant to trap handling.
+Alongside these bits we will introduce another \gls{csr} that is related to trap handling but not directly necessary in this section.
+
+These two remaining fields of \gls{mstatus} deal with memory privilege translation for machine-mode.
+Firstly, there is the MPRV bit which can translate memory access privilege.
+This bit is only available if at least two privilege modes are supported otherwise it is hardwired to zero.
+If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that has was preempted by taking the trap.
+Secondly, there is the MXR field that allows to read executable memory regions.
+If MXR is not set, attempting to read from a memory region marked as executable will fail.
+If MXR is set, such reads can succeed if said region is also marked as readable.
+% TODO: is page-based virutal memory given?
+MXR is only applicable though, if page-based virtual memory is in place.
+
+The last register we will introduce is the \gls{mscratch} which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
+The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapper with a user register upn entry to a \textins{machine}-mode trap handler}.
+
+\paragraph{Exception handling}
+In the paragraph about \glspl{csr} that deal with trap handling on page \ref{par:trap-csrs} we mentioned that exception handling works similar to interrupt handling but with fewer steps.
+Up until now, we haven't given any explanation for how exceptions are handled precisely.
+This gap shall now be filled.
+
+Exceptions are handled as soon as they occur.
+This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
+The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
+% Source: https://stackoverflow.com/a/56402079/7194995
+\gls{riscv} knows no concepts of settings exceptions pending, this however, isn't necessary.
+If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
+
+The differences between handling exceptions and interrupts are the following:
+\begin{itemize}
+    \item Exception can't be disabled therefore they will always be handled
+    \item $ x\text{cause}[31] $ is written with $ 0 $
+    \item Exceptions can't be vectored therefore the \gls{pc} will always be set to $ x\text{tvec} $
+\end{itemize}
+
+Still, $ x\text{status}.x\text{IE} $ is set to 0 which means that it is not possible to preempt handling an exception by handling an interrupt.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| r | r | l |}
+        \hline
+        Interrupt & Exception Code & Description \\
+        \hline
+        1 & 0 & User software interrupt \\
+        1 & 1 & Supervisor software interrupt \\
+        1 & 2 & \textit{Reserved} \\
+        1 & 3 & Machine software interrupt \\
+        \hline
+        1 & 4 & User timer interrupt \\
+        1 & 5 & Supervisor timer interrupt \\
+        1 & 6 & \textit{Reserved} \\
+        1 & 7 & Machine timer interrupt \\
+        \hline
+        1 & 8 & User external interrupt \\
+        1 & 9 & Supervisor external interrupt \\
+        1 & 10 & \textit{Reserved} \\
+        1 & 11 & Machine external interrupt \\
+        \hline
+        1 & $ \geq $ 12 & \textit{Reserved} \\
+        \hline
+        0 & 0 & Instruction address misaligned \\
+        0 & 1 & Instruction access fault \\
+        0 & 2 & Illegal instruction \\
+        0 & 3 & Breakpoint \\
+        0 & 4 & Load address misalgined \\
+        0 & 5 & Load access fault \\
+        0 & 6 & Store \textelp{} address misaligned \\
+        0 & 7 & Store \textelp{} access fault \\
+        0 & 8 & Environment call from U-mode \\
+        0 & 9 & Environment call from S-mode \\
+        0 & 10 & \textit{Reserved} \\
+        0 & 11 & Environment call from M-mode \\
+        0 & 12 & Instruction page fault \\
+        0 & 13 & Load page fault \\
+        0 & 14 & \textit{Reserved} \\
+        0 & 15 & Store \textelp{} page fault \\
+        0 & $ \geq $ 16 & \textit{Reserved} \\
+        \hline
+    \end{tabular}
+    \caption{Interrupt and exception codes \cite{RiscVISAP}}
+    \label{tbl:interrupt-exception-codes}
+\end{table}
+
+Besides the interrupts and exceptions that have been introduced in the last few paragraphs, there are two further \textit{exceptional conditions} that can occur in a \gls{hart}.
+
+\paragraph{Reset}
+The first of these is the reset.
+The specification does not explicitly define how resets are triggered but it is clear that resets must be triggered by hardware at least., e.g. by the push of a button that is on a shared board with the processor.
+As the specification gave an exhaustive list of exceptions and interrupts available to the system in table \ref{tbl:interrupt-exception-codes} we assume here that resets can be triggered by hardware only.
+
+On reset, the \gls{pc} is set to an implementation defined address, the privilege mode is set to machine-mode, the MIE and MPRV bits in \gls{mstatus} are set to 0 and \gls{mcause} should be written with implementation-defined values to indicate the cause of the reset.
+The specification explicitly mentions that \textcquote{RiscVISAP}{%
+    \textins{a}ll other hart state is undefined
+} although software located at the reset vector might write \glspl{csr} with arbitrary values.
+
+% Source: https://stackoverflow.com/a/46989066/7194995
+Although the specification itself says that the \textcquote{RiscVISAP}{\texttt{pc} is set to an implementation-defined reset vector} and does not lay any constraints on this, we think that this address must not be the same as \gls{mtvec}.
+The reason for this is given in a comment to this section where it says:
+\begin{displaycquote}{RiscVISAP}
+    \texttt{mcause} reset values may alias \texttt{mcause} values following synchronous exceptions.
+    There is no ambiguity in this overlap, since on reset the \texttt{pc} is set to a different value than on other traps.
+\end{displaycquote}
+
+Although comments should not be taken with the same weight as regular passages of the specification, the intent behind this comment is quite clear and as it only slightly contradicts the specification we will go with this interpretation.
+
+\paragraph{Non-Maskable Interrupts}
+The other exceptional condition are \glspl{nmi}.
+The specification describes these as: \textcquote{RiscVISAP}{%
+    \textins{NMIs} are only used for hardware error conditions, and cause an immediate jump to an implementation-defined NMI vector running in M-mode regardless of the state of a hart's interrupt enable bits.
+}
+Similar to resets, nothing is said about the mechanisms to trigger \glspl{nmi} in the specification.
+For the same reasons given in the paragraph about reset, we will assume that \glspl{nmi} can only be triggered by hardware.
+
+On jump to the \gls{nmi} handler address, \gls{mepc} is written with the next address to be read and executed and \gls{mcause} is written with information about the cause of the \gls{nmi}.
+Other \glspl{csr} are left untouched.
