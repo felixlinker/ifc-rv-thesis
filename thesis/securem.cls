@@ -39,6 +39,11 @@
     alsoletter={:},
     alsodigit={-},
 }
+\lstdefinelanguage{assembler}{
+    morekeywords=[1]{ADDI,SLTI,SLTIU,ANDI,ORI,XORI,SLLI,SRLI,SRAI,LUI,AUIPC,ADD,SLT,SLTU,AND,OR,XOR,SLL,SRL,SUB,SRA,JAL,JALR,BEQ,BNE,BLT,BLTU,BGE,BGEU,LW,LH,LHU,LB,LBU,SW,SH,SB,CSRRW,CSRRS,CSRRC,CSRRWI,CSRRSI,CSRCI,ECALL,EBREAK,MRET,URET},
+    sensitive=false,
+    morecomment=[l]{\#},
+}
 \lstdefinestyle{PSLstyle}{
     language=PSL,
     basicstyle=\ttfamily,
@@ -90,6 +95,22 @@
     escapechar=\#,
     aboveskip=10pt,
 }
+\lstdefinestyle{assemblerstyle}{
+    language=assembler,
+    basicstyle=\ttfamily,
+    keywordstyle={[1]\bfseries\scshape},
+    frame=shadowbox,
+    framesep=5pt,
+    rulesep=2.5pt,
+    rulesepcolor=\color{gray},
+    captionpos=b,
+    abovecaptionskip=10pt,
+    numbers=left,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    escapechar=~,
+    aboveskip=10pt,
+}
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
 \lstnewenvironment{psl}[1][]
@@ -101,6 +122,10 @@
 \lstnewenvironment{smt2}[1][]
     {\lstset{style=SMT2style,#1}}
     {}
+\lstnewenvironment{assmblr}[1][]
+    {\lstset{style=assemblerstyle,#1}}
+    {}
 \newcommand{\pslinline}[1]{\lstinline[style=PSLstyle]{#1}}
 \newcommand{\aslinline}[1]{\lstinline[style=ASLstyle]{#1}}
 \newcommand{\smt}[1]{\lstinline[style=SMT2style]{#1}}
+\newcommand{\assmblrinline}[1]{\lstinline[style=assemblerstyle]{#1}}
