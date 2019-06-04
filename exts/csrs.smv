@@ -1,0 +1,30 @@
+MODULE mstatus
+    VAR MXR : boolean;
+    VAR MPRV : boolean;
+    VAR MPP : boolean;
+    VAR MPIE : boolean;
+    VAR UPIE : boolean;
+    VAR MIE : boolean;
+    VAR UIE : boolean;
+
+MODULE ustatus(mstatus)
+    DEFINE UPIE := mstatus.UPIE;
+    DEFINE UIE := mstatus.UIE;
+
+MODULE Xtvec
+    VAR BASE : unsigned word[MEM_ADDR_LEN];
+    VAR MODE : boolean;
+
+MODULE miX
+    VAR MEI : boolean;
+    VAR UEI : boolean;
+    VAR MSI : boolean;
+    VAR USI : boolean;
+
+MODULE uiX(miX)
+    DEFINE UEI := miX.UEI;
+    DEFINE USI := miX.USI;
+
+MODULE Xcause
+    VAR interrupt : boolean;
+    VAR code : 0 .. 11;

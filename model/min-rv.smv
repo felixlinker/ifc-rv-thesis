@@ -7,6 +7,8 @@
 #define XLEN 32
 #define MAX_SHIFT_LEN 5
 
+#include "csrs.smv"
+
 -- nuXmv can't transform unsigned bitstrings of size > 31 to ints but as we
 -- don't need that we constrain the size first
 #define TO_INT( bs, size ) toint(resize( bs, size ))
@@ -115,6 +117,25 @@ MODULE main
     TRANS (R[13] != next(R[13])) -> (rd = 0d4_13);
     TRANS (R[14] != next(R[14])) -> (rd = 0d4_14);
     TRANS (R[15] != next(R[15])) -> (rd = 0d4_15);
+
+    VAR MSTATUS : mstatus();
+    VAR USTATUS : ustatus(MSTATUS);
+    VAR MTVEC : Xtvec();
+    VAR UTVEC : Xtvec();
+    VAR MIP : miX();
+    VAR MIE : miX();
+    VAR UIP : uiX(MIP);
+    VAR UIE : uiX(MIE);
+    VAR MCAUSE : Xcause();
+    VAR UCAUSE : Xcause();
+    VAR MEDELEG : unsigned word[12];
+    VAR MIDELEG : unsigned word[4];
+    VAR MSCRATCH : unsigned word[XLEN];
+    VAR USCRATCH : unsigned word[XLEN];
+    VAR MTVAL : unsigned word[XLEN];
+    VAR UTVAL : unsigned word[XLEN];
+    VAR MEPC : unsigned word[MEM_ADDR_LEN];
+    VAR UEPC : unsigned word[MEM_ADDR_LEN];
 
     VAR PC : unsigned word[EX_MEM_ADDR_LEN];
     -- Advance PC by default unless a branch or jump instruction is taken
