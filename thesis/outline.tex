@@ -31,12 +31,12 @@
 
 In \cite{Ferraiuolo17} the authors present an approach to formally verifying the ARM TrustZone architecture by using static information flow analysis.
 They apply the method of information flow control (IFC) to the hardware description language (HDL) implementing said architecture.
-They approach mainly consists of two things: A lattice of security labels and type-system rules that define how information flows through the HDL code.
+Their approach mainly consists of two concepts: A lattice of security labels and type-system rules that define how information flows through the HDL code.
 Intuitively, it is allowed for information to flow "up" the lattice but not "down".
 
 The goal of this project is to apply this approach of using security labellings to model information flow to the process of model checking an architectural model of a microprocessor with multiple privilege levels.
 The model checker will quantify over programs running on the microprocessor and check properties like: "It is not possible for secure information stored at point Y to leak".
-Such "point" at which information might be stored, include registers and memory of the micro-controller.
+Such "points" at which information might be stored include registers and memory of the micro-controller.
 In a 32-bit architecture, this gives us $ (R \cdot 32 + M \cdot 8)^2 $ implicit properties to check where $ R $ is the number of registers and $ M $ is the number of bytes in memory - for each bit in registers and memory, we can check whether information can leak to any other bit in registers or memory.
 We expect to find programs that will violate such properties simply because privileged code can do \textit{anything} that is also leaking information.
 
@@ -50,7 +50,7 @@ Therefore another goal of this project is to explore the power of a labeled-IFC 
 \subsection{RISC-V}
 
 RISC-V (RISC stands for \textbf{R}educed \textbf{I}nstruction \textbf{S}et \textbf{C}omputer) is a modular processor architecture specification.
-RISC-V as we will view it here is specified by two documents, the RISC-V User Level ISA \cite{RiscVISA} and the RISC-V Privileged Architectures manuals \cite{RiscVISAP}.
+RISC-V is specified by two documents: the RISC-V User Level ISA \cite{RiscVISA} and the RISC-V Privileged Architectures manuals \cite{RiscVISAP}.
 The User Level ISA describes the basic functionality of the processor which is divided into several modules, e.g. integer arithmetic, floating point arithmetic, debugging, that can freely be combined with each other.
 The only necessity for each RISC-V CPU is to implement the integer arithmetic module.
 
