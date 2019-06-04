@@ -59,48 +59,52 @@ The modularity of the RISC-V architecture allows implementors to easily build ve
 In this thesis, we will model check the RISC-V architecture.
 We will use the base integer instruction set, the standard extension for user-level interrupts and the privileged architecture to model a micro-controller that has all basic instructions needed to perform computational tasks, support for interrupts and exceptions and two or more privilege modes - thus all function necessary to have sufficient complexity in computing but not too many features to make our undertaking infeasible.
 
-\subsection{\muZ{}}
+\subsection{nuXmv}
 
-\muZ{} is a engine that computes fixed points with constraints and comes with the SMT-solver Z3 from Microsoft Research and was introduced in \cite{Hoder11}.
-As input \muZ{} receives a set of relations and rules (Horn clauses) utilizing those relations.
-Facts can be expressed by rules that have an empty body, e.g. $ R := \emptyset \Rightarrow x $ or $ R := \top \Rightarrow x $.
-\muZ{} accepts Datalog and SMT as input languages.
+nuXmv \cite{Cavada14} is a symbolic model checker a predecessor of which was introduced in \textit{NuSMV: A New Symbolic Model Checker} \cite{Cimatti2000}.
+nuXmv extends NuSMV with new data types being integers and reals and enhances on its SMT-based model checking techniques.
 
-\muZ{} solves queries, whether certain rules are derivable.
-This can be used in model checking by using relations to model program states and rules to model program transitions.
-For example, consider a program, where an integer counter is initialized to zero and then incremented indefinitely.
-We could model this program using rules and relations in SMT as follows:
+nuXmv can check linear temporal logic (LTL) formulas, computational tree logic (CTL) formulas, invariants and property specification language (PSL) formulas for unbounded models.
+An example of such a model is given in snippet \ref{snpt:nuxmv}.
+The input language to nuXmv knows modules as the highest tier language objects.
+An entry point to a nuXmv file is given by the module called \texttt{main}.
+In the example, the module has two states the active of which is kept in a dedicated variable and a result variable called \texttt{res}.
+There also is an input variable \texttt{d} that is assigned with a random real number on each step of the system\footnote{%
+    Random in this case means non-deterministicly in regards to the modules state.
+    nuXmv will choose values with some determinism when trying to disprove specifications of the system.
+}
+The \texttt{ASSIGN}, \texttt{INIT} and \texttt{TRANS} expression describe the system by logical formulas.
+nuXmv will try to prove that each specified formula (in this case an invariant) holds for all automata induced by the description given on all execution paths.
 
-\begin{smt2}
-(declare-rel t (Int))
-(declare-rel fail ())
+\begin{smv}[caption={An example for the nuXmv input language \cite{Cavada14}},label={snpt:nuxmv}]
+MODULE main
+IVAR
+    d : real;
+VAR
+    state : {s0, s1};
+    res : real;
+ASSIGN
+    init(state) := s0;
+    next(state) := case
+        state = s0 & res >= 0.10 : s1;
+        state = s1 & res >= 0.20 : s0;
+        TRUE                     : state;
+    esac;
+    next(t) := case
+        state = s0 & res < 0.10 : res + d;
+        state = s1 & res < 0.20 : res + d;
+        TRUE                    : 0.0;
+    esac;
+INIT
+    res >= 0.0;
+TRANS
+    (state = s0 -> (d >= 0 & d < 0.01)) &
+    (state = s1 -> (d >= 0 & d <= 0.02));
+INVARSPEC res <= 0.3;
+\end{smv}
 
-(rule (t 0))
-
-(declare-var x Int)
-(rule   (=> (t x)
-            (t (+ x 1))))
-(rule   (=> (and (t x) (< x 0))
-            fail))
-
-(query fail)
-\end{smt2}
-
-In this example, \smt{t} is the program state and \smt{fail} models a failed state that is reached when the counter variable is strictly smaller than zero.
-We can use \muZ{} to verify that this fail-state will never be reached.
-
-In this thesis, we will use \muZ{} to perform the model checking and will attempt to translate the type system rules of \cite{Ferraiuolo17} into transition rules in SMT.
-
-\subsection{SPACER}
-
-SPACER is an algorithm that uses a Datalog engine to perform automated abstraction on Horn-clauses expressed in propositional Linear Rational Arithmetic and was proposed in \cite{Komuravelli13}.
-It combines two approaches of automatic abstraction in model checking: proof based abstraction (PBA) and counterexample-guided abstraction refinement (CEGAR).
-Categorically, SPACER and \muZ{} perform the same type of tasks.
-Queries solvable by SPACER can also be solved by \muZ{}.
-However, SPACER claims to beat \muZ{} in performance giving examples of problem instance that have been solved by SPACER in under a minute whereas \muZ{} was not seen to terminate.
-Additionally, SPACER gives better output than \muZ{} as for positive instances of queries proofs and for negative queries counterexamples are given.
-
-If the scope of the project does allow for it, we will try to implement SPACER such that it also can work with a theory of bit vectors and thus be applied to the process of model checking a processor specification.
+We will use nuXmv to describe the model we want to check the information flow for.
+We will build a custom model of the RISC-V architecture in the nuXmv input language and phrase properties about information flow for this model in either LTL, CTL or as invariants.
 
 \section{Project Plan}
 
@@ -113,11 +117,8 @@ The project divides itself into the following steps:
         \item A model of memory with secure and non-secure regions
         \item At least 8 instructions: load immediate, load, store, add, subtract, compare, branch, enter privileged mode, leave privileged mode
     \end{itemize}
-    \item Formal implementation of the architectural model in SMT
+    \item Formal implementation of the architectural model in the nuXmv input language
     \item Verification
-    \begin{itemize}
-        \item Verification can be done straight-forward but it might be advisable to use algorithms like SPACER to enhance performance and output
-    \end{itemize}
     \item Iteration \& refinement
     \begin{itemize}
         \item What kind of bad programming patterns can be distinguished?
