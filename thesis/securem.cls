@@ -44,6 +44,15 @@
     sensitive=false,
     morecomment=[l]{\#},
 }
+\lstdefinelanguage{SMV}{
+    morekeywords=[1]{VAR,IVAR,ASSIGN,TRANS,INIT,FROZENVAR,DEFINE,CONSTANTS,FUN,INVAR,FAIRNESS,JUSTICE,COMPASSION,MODULE,PRED,MIRROR,CTLSPEC,SPEC,INVARSPEC,LTLSPEC,PSLSPEC},
+    morekeywords=[2]{boolean,word,unsigned word,signed word,real,integer,array},
+    morekeywords=[3]{AX,AG,AF,EX,EG,EF,E,A,X,G,F,U,V,Y,Z,H,O,S,T,EBF,ABF,EBG,ABG,MIN,MAX,abort,forall,inf,X!,W,always,never,next,next!,eventually!,until!,until,until!_,until_,before!,before,before!_,before_,next_a,next_a!,next_e,next_e!,next_event!,next_event,next_event_a!,next_event_a,next_event_e!,next_event_e,within!,within,within!_,within_,whilenot!,whilenote,whilenot!_,whilenot_},
+    morekeywords=[4]{abs,max,min,xor,xnor,mod,word1,bool,toint,count,swconst,uwconst,signed,unsigned,sizeof,floor,extend,resize,union,in,next,init},
+    sensitive=true,
+    morecomment=[l]{--},
+    alsoletter={!,_},
+}
 \lstdefinestyle{PSLstyle}{
     language=PSL,
     basicstyle=\ttfamily,
@@ -111,6 +120,25 @@
     escapechar=~,
     aboveskip=10pt,
 }
+\lstdefinestyle{SMVstyle}{
+    language=SMV,
+    basicstyle=\ttfamily,
+    keywordstyle={[1]\bfseries},
+    keywordstyle={[2]\bfseries},
+    keywordstyle={[3]\bfseries},
+    keywordstyle={[4]\bfseries},
+    frame=shadowbox,
+    framesep=5pt,
+    rulesep=2.5pt,
+    rulesepcolor=\color{gray},
+    captionpos=b,
+    abovecaptionskip=10pt,
+    numbers=left,
+    xleftmargin=2em,
+    framexleftmargin=1.5em,
+    escapechar=\#,
+    aboveskip=10pt,
+}
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
 \lstnewenvironment{psl}[1][]
@@ -124,6 +152,9 @@
     {}
 \lstnewenvironment{assmblr}[1][]
     {\lstset{style=assemblerstyle,#1}}
+    {}
+\lstnewenvironment{smv}[1][]
+    {\lstset{style=SMVstyle,#1}}
     {}
 \newcommand{\pslinline}[1]{\lstinline[style=PSLstyle]{#1}}
 \newcommand{\aslinline}[1]{\lstinline[style=ASLstyle]{#1}}
