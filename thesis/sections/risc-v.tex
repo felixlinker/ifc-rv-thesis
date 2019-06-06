@@ -1,7 +1,7 @@
 \section{An Introduction to RISC-V}
 
 \gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and since then has undergone many changes.
-\gls{riscv} divides its architectural specification into two volumes: in volume 1 the base user-level \gls{isa} is described which is seperated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
+\gls{riscv} divides its architectural specification into two volumes: in volume 1 the base user-level \gls{isa} is described which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
 The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
 Such groups include for example machine- and supervisor-level \glspl{isa} and the description of platform level interrupt controllers.
 
@@ -56,18 +56,18 @@ A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{Ri
     <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
 \end{grammar}
 
-An example for a naming string is the very common subset of the \gls{isa} RV64IMAFD which officially is abbrevated by RV64G.
+An example for a naming string is the very common subset of the \gls{isa} RV64IMAFD which officially is abbreviated by RV64G.
 This subset includes the integer multiplication and division, user-level interrupts, atomic instructions, single-precision and double-precision floating-point arithmetic extensions.
 
 We chose to go with the \gls{riscv} architecture for the approach of this thesis because of its high customizability.
 More specifically, we will be working with the RV32EN \gls{isa} subset, i.e. a 32-bit word-length core that supports integer arithmetic for embedded systems and user-level interrupts.
-The base integer instrutcion set only offers some core functionality that can easily be understood and modelled while it is not artificially or overly simplified thus we hope that our findings are relevant to and applicable for other real-world architectures.
+The base integer instruction set only offers some core functionality that can easily be understood and modeled while it is not artificially or overly simplified thus we hope that our findings are relevant to and applicable for other real-world architectures.
 
 \subsection{Core Functionality of RISC-V}
 
 Let us first take a look at how the base integer arithmetic \gls{isa} works.
 A \gls{riscv} core consists of multiple \glspl{hart}.
-Each \gls{hart} has its own registers including a \gls{pc} and its own indepedent instruction fetch unit.
+Each \gls{hart} has its own registers including a \gls{pc} and its own independent instruction fetch unit.
 However, multiple \glspl{hart} share the same memory.
 In this work, we only consider single \gls{hart} cores as an asynchronous model of memory and interleaving computations is out of scope.
 
@@ -78,7 +78,7 @@ General purpose registers are named x1-x31.
 Additionally, there is the register x0 which is hardwired to zero and may be targeted by instructions like any other general purpose register.
 
 In \gls{riscv}, there is no dedicated \gls{lr} or \gls{sp}.
-Instead, it is the obligation of the software to imlement certain calling conventions.
+Instead, it is the obligation of the software to implement certain calling conventions.
 Both jump instructions of \gls{riscv}, \gls{jal} and \gls{jalr}, receive a general purpose register as argument to which they store the return address of the respective jump.
 
 \gls{riscv} supports up to 4096 \glspl{csr} for additional state.
@@ -87,14 +87,14 @@ On the user-level without any extension, there are no \glspl{csr} present so we 
 \subsubsection{Instructions}
 
 \paragraph{Integer arithmetic and boolean instructions}
-The base integer instruction set supports a cuple of instructions for $ + $ and $ - $ and integer comparisons as well as the boolean operators $ \land $, $ \lor $ and $ \oplus $.
+The base integer instruction set supports a couple of instructions for $ + $ and $ - $ and integer comparisons as well as the boolean operators $ \land $, $ \lor $ and $ \oplus $.
 Most of these instructions are implemented in two version: a register version (or R-type instruction) and an immediate version (or I-type instruction).
 In the first case the two operands are given as registers and in the second case one operand is given as register and the other as an immediate value read from memory.
 In either case the value is stored in a destination register.
 
 These basic instructions are all side effect free besides from advancing the program counter which means that if the destination register is x0, each of them encodes a no-operation instruction.
-This property makes them particuarily easy to analyse.
-However, as a sideeffect, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
+This property makes them particularly easy to analyze.
+However, as a side-effect, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
 There also are no special instructions to handle this.
 The authors of the manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
 
@@ -105,11 +105,11 @@ slt  t4, t0, t1          # Set R[t4] to R[t0] < R[t1]
 bne  t3, t4, overflow    # If R[t3] != R[t4] branch to overflow
 \end{assmblr}
 
-The gist of snippet \ref{snpt:rv-overflow} boilds down to: we can check if there was overflow when calculating $ a + b $ by checking whether $ b < 0 \leftrightarrow a + b < a $ is false, i.e. \textcquote{RiscVISA}{the sum should be less than one of the operands if and only if the other operand is negative}.
+The gist of snippet \ref{snpt:rv-overflow} boils down to: we can check if there was overflow when calculating $ a + b $ by checking whether $ b < 0 \leftrightarrow a + b < a $ is false, i.e. \textcquote{RiscVISA}{the sum should be less than one of the operands if and only if the other operand is negative}.
 
 \paragraph{Memory operations}
 There are two types of instructions that deal with external memory.
-Firtly, simple load and store instructions that or write to memory.
+Firstly, simple load and store instructions that or write to memory.
 Secondly, FENCE instructions that synchronize memory access between multiple \glspl{hart}.
 We will ignore the category of FENCE instructions in this thesis as we already declared \gls{riscv} cores with multiple \glspl{hart} to be out of scope.
 Handling instructions that have the sole purpose to synchronize the operations of multiple \glspl{hart} where only one \gls{hart} is present does not make sense.
@@ -117,7 +117,7 @@ Handling instructions that have the sole purpose to synchronize the operations o
 Furthermore, the investigation of safety of memory models as a field in its own right, c.f. the works of .
 
 Load and store operations in \gls{riscv} can read or write words of size 8-, 16-, 32-, 64- or 128-bits, depending on the maximum word length of the base instruction set of choice.
-Therefore, memory in \gls{riscv} is byte-adressable.
+Therefore, memory in \gls{riscv} is byte-addressable.
 Read- and write-addresses don't have to be aligned by software before using them, however, if they are not, the architecture must first align them before fetching from or storing to them, i.e. reading a 32-bit word from memory at address 0x1 is impossible.
 If this address is given as argument to a respective load instruction it'll be aligned to the address 0x0.
 
@@ -128,11 +128,11 @@ In short, jumps are performed unconditionally and can target a wider range in me
 In contrast to memory operations, addresses targeted by jumps must be aligned correctly otherwise an exception will be generated.
 
 Jumps are intended to call routines and functions whereas branches are intended to control the program flow of one such routine or function.
-\gls{riscv} is agnostic about the details of calling conventions for routies, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
+\gls{riscv} is agnostic about the details of calling conventions for routines, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
 
 \paragraph{System instructions}
 The last type of instructions we will have a look at are system instructions.
-The \gls{riscv} manual also knows this category and distincts it into two subcategories: instructions that deal with \glspl{csr} and other instructions that perform operations that potentially need some form of privilege.
+The \gls{riscv} manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions that perform operations that potentially need some form of privilege.
 Examples for the former category are straight forward, e.g. \gls{riscv} knows instruction to read or write complete \glspl{csr} but also knows operations to modify single bits only.
 For the latter category, \gls{riscv} only knows two instructions at the base instruction set level which are \gls{ecall} and \gls{ebreak} instructions.
 We will inspect these instructions in more detail in section \ref{sec:rv-priv-arch}.
@@ -155,7 +155,7 @@ Besides this, there are two other choices of privilege levels netting in three d
 \end{enumerate}
 
 A visualization of these three combinations is given in figure \ref{fig:rv-priv-lvls} where they are depicted from left to right.
-A simple embedded system might be the cheapest to implement and manufacteur, however, this system lacks any protection against malicious application code, i.e. one would only want to run such a system in very basic scenarios where full control over all source code and the device itself can be guaranteed.
+A simple embedded system might be the cheapest to implement and manufacture, however, this system lacks any protection against malicious application code, i.e. one would only want to run such a system in very basic scenarios where full control over all source code and the device itself can be guaranteed.
 
 A secure embedded system supports some application to be run on it while an \gls{aee} running in machine-mode controls the execution of this application.
 The application communicates to the \gls{aee} via an \gls{abi} that defines the possible interactions between an application and an \gls{aee}.
@@ -195,7 +195,7 @@ The \gls{see} runs in machine-mode.
             \multicolumn{3}{| c |}{SEE} \\ \hline
         \end{tabular}
     }
-    \caption{Privlege level combinations \cite{RiscVISA}}
+    \caption{Privilege level combinations \cite{RiscVISA}}
     \label{fig:rv-priv-lvls}
 \end{figure}
 
@@ -245,7 +245,7 @@ We want to keep our architectural model simple and easy to analyze which is aide
 \paragraph{Static \glspl{csr}}
 There are a couple of \glspl{csr} in the \gls{riscv} architecture that hold static information that can be used by software to determine what specific platform it is running on and to identify the processor or \gls{hart} itself.
 Each of these registers can't be changed by any \gls{csr}-targeting instruction.
-We chose to not model these registers as they don't contain any information that either is relevant to this thesis or couldn't be modelled in another way.
+We chose to not model these registers as they don't contain any information that either is relevant to this thesis or couldn't be modeled in another way.
 You can find an overview over these registers in table \ref{tbl:static-csrs}.
 
 \begin{table}
@@ -254,7 +254,7 @@ You can find an overview over these registers in table \ref{tbl:static-csrs}.
     \begin{tabular}{| r | p{8cm} |}
         \hline
         \textbf{\acrshort{misa}} & Stores the word-length and implemented extensions of a given processor \\
-        \textbf{\acrshort{mvendorid}} & Stores an ID of the manufacteurer of the processor \\
+        \textbf{\acrshort{mvendorid}} & Stores an ID of the manufacturer of the processor \\
         \textbf{\acrshort{marchid}} & Stores an ID of the concrete architecture that a given processor implements \\
         \textbf{\acrshort{mimpid}} & Stores a version number of the architecture \\
         \textbf{\acrshort{mhartid}} & Stores a unique ID per \gls{hart} of the processor \\
@@ -269,9 +269,9 @@ There also is a group of registers dealing with timers and hardware performance 
 The reasoning for skipping these is not as straight-forward as for the previously introduced registers.
 In general, timer and performance counting registers can be used for side channel attacks.
 In \cite{Qian16} the authors give an overview over timing-side-channel-attacks which by their very nature always need to rely on some notion of time.
-This notion can be given by timer and performance counter registers which for example hold the number of instructions exectued since a given point in time.
-For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplcations and squarings being performed.
-Such a differentation could be easily done if performance counter registers where to count such instructions and were to leak information to lower privilege levels.
+This notion can be given by timer and performance counter registers which for example hold the number of instructions executed since a given point in time.
+For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplications and squarings being performed.
+Such a differentiation could be easily done if performance counter registers where to count such instructions and were to leak information to lower privilege levels.
 This means that in principle, timer and performance counter registers are relevant for the security of an architecture.
 However, we find that they do not introduce new notions of information flow to the architecture and are therefore redundant to our thesis.
 
@@ -345,7 +345,7 @@ Interrupt handling can be understood as a generalized form of exception handling
             $ x\text{epc} := a $\\
             $ x\text{cause}[31] := 1 $\\
             $ x\text{cause}[30..0] := i $\\
-            Write $ x\text{tval} $ accorindgly\\
+            Write $ x\text{tval} $ accordingly\\
             Let $ t := x\text{tvec} $
         };
         \draw[->] (takePre) to node[right] {
@@ -414,7 +414,7 @@ Additionally, interrupts and exceptions can be delegated to less privileged mode
 Similar to \gls{mip} and \gls{mie}, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
 Exceptions are also assigned with an code and thus, fields of \gls{medeleg} correspond to these codes.
 An interrupt or exception can only be delegated to modes equally or more privleged than the mode the interrupt or exception was targeting originally.
-If an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and $ x\text{ie} $ becomes writeable otherwise both registers appear to be heardwired to zero.
+If an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and $ x\text{ie} $ becomes writable otherwise both registers appear to be hardwired to zero.
 Analogously to taking non-delegated interrupts, an interrupt delegated to mode $ x $ is taken if the respective bit in the $ x\text{ie} $ register is set and interrupts are globally enabled.
 In this context, interrupts are considered to be globally enabled if:
 \begin{itemize}
@@ -452,7 +452,7 @@ If MXR is set, such reads can succeed if said region is also marked as readable.
 MXR is only applicable though, if page-based virtual memory is in place.
 
 The last register we will introduce is the \gls{mscratch} which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
-The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapper with a user register upn entry to a \textins{machine}-mode trap handler}.
+The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapped with a user register upon entry to a \textins{machine}-mode trap handler}.
 
 \paragraph{Exception handling}
 In the paragraph about \glspl{csr} that deal with trap handling on page \ref{par:trap-csrs} we mentioned that exception handling works similar to interrupt handling but with fewer steps.
@@ -502,7 +502,7 @@ Still, $ x\text{status}.x\text{IE} $ is set to 0 which means that it is not poss
         0 & 1 & Instruction access fault \\
         0 & 2 & Illegal instruction \\
         0 & 3 & Breakpoint \\
-        0 & 4 & Load address misalgined \\
+        0 & 4 & Load address misaligned \\
         0 & 5 & Load access fault \\
         0 & 6 & Store \textelp{} address misaligned \\
         0 & 7 & Store \textelp{} access fault \\
