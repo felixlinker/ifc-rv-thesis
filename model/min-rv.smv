@@ -1,204 +1,192 @@
 
-#define EX_MEM_SIZE 16
-#define EX_MEM_ADDR_LEN 4
-
-#define MEM_SIZE 8
-#define MEM_ADDR_LEN 3
-#define XLEN 32
-#define MAX_SHIFT_LEN 5
-
-#include "csrs.smv"
-
--- nuXmv can't transform unsigned bitstrings of size > 31 to ints but as we
--- don't need that we constrain the size first
-#define TO_INT( bs, size ) toint(resize( bs, size ))
-#define LOAD_R( ri ) ( ri = 0h_0 ? 0d32_0 : R[ ri ] )
--- Extend does correct sign extension
-#define LOAD_I( width ) (resize(signed(imm), width))
-#define LOAD_I_W( width ) (extend(LOAD_I(width), XLEN - width))
-#define LOAD_IU( width ) (resize(imm, width))
-#define LOAD_IU_W( width ) (extend(LOAD_IU(width), XLEN - width))
-
--- Load the memory offset as defined by load and store instructions,
--- i.e. rs1 + 12-bit-immediate
-#define LOAD_MEMOFF( r, i ) (unsigned(signed(LOAD_R(r)) + LOAD_I_W(i)))
-
-#define LOAD_W( addr ) signed(LOAD_H(addr) :: LOAD_H((addr) + 0ud32_2))
-#define LOAD_H( addr ) signed(LOAD_B(addr) :: LOAD_B((addr) + 0ud32_1))
-#define LOAD_HU( addr ) (LOAD_B(addr) :: LOAD_B((addr) + 0ud32_1))
-#define LOAD_B( addr ) signed(MEM[(addr)[MEM_ADDR_LEN - 1:0]])
-#define LOAD_BU( addr ) (MEM[(addr)[MEM_ADDR_LEN - 1:0]])
-
-#define STORE_W( addr, w ) (STORE_H(addr, ( w )[15:0]) & STORE_H((addr) + 0ud32_2, ( w )[31:16]))
-#define STORE_H( addr, h ) (STORE_B(addr, ( h )[7:0]) & STORE_B((addr) + 0ud32_1, ( h )[15:8]))
-#define STORE_B( addr, b ) (next(MEM)[(addr)[MEM_ADDR_LEN - 1:0]] = b)
-
-#define PC_ADVANCE (PC + 0d4_1)
-
-#define INSTR_CONSTRAINTS( pc_index ) \
-    -- B- and S-type instructions don't have a rd field; require rd to not be \
-    -- zero in all other situations as everything else would result in NOOP \
-    INIT instrs[ pc_index ] in { \
-        BEQ, BNE, BLT, BLTU, BGE, BGEU, SW, SH, SB, ECALL, MRET, URET \
-    } -> rds[ pc_index ] = 0h_0; \
-    INIT instrs[ pc_index ] in { \
-        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, \
-        AUIPC, ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA, LW, \
-        LH, LHU, LB, LBU, CSRRW, CSRRS, CSRRC, CSRRWI, CSRRSI, CSRCI \
-    } -> rds[ pc_index ] != 0h_0; \
-    -- J-type instructions don't have a rs1 field \
-    INIT instrs[ pc_index ] in { LUI, AUIPC, JAL } -> rs1s[ pc_index ] = 0h_0; \
-    -- I- and J-type instructions don't have a rs2 field \
-    INIT instrs[ pc_index ] in { \
-        ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, \
-        AUIPC, JAL, JALR, LW, LH, LHU, LB, LBU, CSRRW, CSRRS, CSRRC, \
-        CSRRWI, CSRRSI, CSRCI \
-    } -> rs2s[ pc_index ] = 0h_0; \
-    -- R-type instructions don't have a immediate value field \
-    INIT instrs[ pc_index ] in { \
-        ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA \
-    } -> imms[ pc_index ] = 0d20_0;
+#define OPLEN 4
+#define RADDRLEN 4
+#define RLEN 16
+-- #define CSRADDRLEN 1
+-- #define CSRLEN 2
+#define XLEN 16
+--// = OPLEN + 3 * RADDRLEN
+#define EXMEMADDRLEN 3
+#define EXMEMLEN 16
+#define RMEMADDRLEN 3
+#define RMEMLEN 16
+#define MEMADDRLEN (EXMEMADDRLEN + 1)
+#define MEMLEN (EXMEMLEN + RMEMADDRLEN)
 
 MODULE main
     FROZENVAR
-        INSTRS : array 0..(EX_MEM_SIZE) of {
-            ADDI, SLTI, SLTIU, ANDI, ORI, XORI, SLLI, SRLI, SRAI, LUI, AUIPC,
-            ADD, SLT, SLTU, AND, OR, XOR, SLL, SRL, SUB, SRA, JAL, JALR, BEQ,
-            BNE, BLT, BLTU, BGE, BGEU, LW, LH, LHU, LB, LBU, SW, SH, SB, CSRRW,
-            CSRRS, CSRRC, CSRRWI, CSRRSI, CSRCI, ECALL, MRET, URET, ILLEGAL,
-            NOOP
-        };
-        rds : array 0..(EX_MEM_SIZE) of unsigned word[4];
-        rs1s : array 0..(EX_MEM_SIZE) of unsigned word[4];
-        rs2s : array 0..(EX_MEM_SIZE) of unsigned word[4];
-        -- longest possible immediate value; we
-        -- might select prefixes where necessary
-        imms : array 0..(EX_MEM_SIZE) of unsigned word[20];
-
-    -- Add constraints for each exectuable instruction to restrict search space
-    INSTR_CONSTRAINTS(0)
-    INSTR_CONSTRAINTS(1)
-    INSTR_CONSTRAINTS(2)
-    INSTR_CONSTRAINTS(3)
-    INSTR_CONSTRAINTS(4)
-    INSTR_CONSTRAINTS(5)
-    INSTR_CONSTRAINTS(6)
-    INSTR_CONSTRAINTS(7)
-    INSTR_CONSTRAINTS(8)
-    INSTR_CONSTRAINTS(9)
-    INSTR_CONSTRAINTS(10)
-    INSTR_CONSTRAINTS(11)
-    INSTR_CONSTRAINTS(12)
-    INSTR_CONSTRAINTS(13)
-    INSTR_CONSTRAINTS(14)
-    INSTR_CONSTRAINTS(15)
+        executable_memory : array 0..(EXMEMLEN - 1) of unsigned word[XLEN];
+    VAR
+        memory : array 0..(RMEMLEN - 1) of signed word[XLEN];
+        priv : {machine, user};
+        regs : array 0..(RLEN - 1) of signed word[XLEN];
+        pc : unsigned word[MEMADDRLEN];
 
     DEFINE
-        INSTR := INSTRS[PC];
-        rd := rds[PC];
-        rs1 := rs1s[PC];
-        rs2 := rs2s[PC];
-        imm := imms[PC];
+        --// op-codes
+        LUI := 0h_0;  --// load upper immediate
+        LLI := 0h_1;  --// load lower immediate
+        AUIPC := 0h_2;  --// add upper immediate to PC
+        ADD := 0h_3;  --// add
+        SUB := 0h_4;  --// subtract
+        SLT := 0h_5;  --// set if less
+        SLL := 0h_6;  --// shift left logically
+        SRA := 0h_7;  --// shift right arithmetically
+        JALR := 0h_8;  --// jump and link register
+        LW := 0h_9;  --// load word
+        CSRRS := 0h_A;  --// csr read and set
+        CSRRC := 0h_B;  --// csr read and clear
+        --// Opcodes >= 0h_C don't have rd
+        BNL := 0h_C;  --// branch if not low
+        SW := 0h_D;  --// store word
+        ECALL := 0h_E;  --// environment call
+        MRET := 0h_F;  --// machine return
 
-    -- general purpose registers and constraints on how they can change
-    VAR R : array 0..15 of unsigned word[XLEN];
-    TRANS (R[1] != next(R[1])) -> (rd = 0d4_1);
-    TRANS (R[2] != next(R[2])) -> (rd = 0d4_2);
-    TRANS (R[3] != next(R[3])) -> (rd = 0d4_3);
-    TRANS (R[4] != next(R[4])) -> (rd = 0d4_4);
-    TRANS (R[5] != next(R[5])) -> (rd = 0d4_5);
-    TRANS (R[6] != next(R[6])) -> (rd = 0d4_6);
-    TRANS (R[7] != next(R[7])) -> (rd = 0d4_7);
-    TRANS (R[8] != next(R[8])) -> (rd = 0d4_8);
-    TRANS (R[9] != next(R[9])) -> (rd = 0d4_9);
-    TRANS (R[10] != next(R[10])) -> (rd = 0d4_10);
-    TRANS (R[11] != next(R[11])) -> (rd = 0d4_11);
-    TRANS (R[12] != next(R[12])) -> (rd = 0d4_12);
-    TRANS (R[13] != next(R[13])) -> (rd = 0d4_13);
-    TRANS (R[14] != next(R[14])) -> (rd = 0d4_14);
-    TRANS (R[15] != next(R[15])) -> (rd = 0d4_15);
+        --// machine constants
+        reset_addr := 4;
+        trap_vector := 0uh_0;
+        vectored := FALSE;
 
-    VAR MSTATUS : mstatus();
-    VAR USTATUS : ustatus(MSTATUS);
-    VAR MTVEC : Xtvec();
-    VAR UTVEC : Xtvec();
-    VAR MIP : miX();
-    VAR MIE : miX();
-    VAR UIP : uiX(MIP);
-    VAR UIE : uiX(MIE);
-    VAR MCAUSE : Xcause();
-    VAR UCAUSE : Xcause();
-    VAR MEDELEG : unsigned word[12];
-    VAR MIDELEG : unsigned word[4];
-    VAR MSCRATCH : unsigned word[XLEN];
-    VAR USCRATCH : unsigned word[XLEN];
-    VAR MTVAL : unsigned word[XLEN];
-    VAR UTVAL : unsigned word[XLEN];
-    VAR MEPC : unsigned word[MEM_ADDR_LEN];
-    VAR UEPC : unsigned word[MEM_ADDR_LEN];
+        --// instruction stream decoding
+        op_code := executable_memory[pc][3:0];
+        rd := executable_memory[pc][7:4];
+        rd_int := toint(rd);
+        csr_rd := resize(rd, CSRADDRLEN);
+        rs1 := executable_memory[pc][11:8];
+        rs2 := executable_memory[pc][15:12];
+        imm_short := executable_memory[pc][15:12];
+        imm := executable_memory[pc][15:8];
+        op_result := case
+            op_code = LUI : signed(resize(imm, XLEN) << 8);
+            op_code = LLI : signed(resize(imm, XLEN));
+            --// TODO: It's idiotic to use AUIPC because our memory is too small
+            op_code = AUIPC : resize(
+                signed(pc) + signed(resize(imm << 8, MEMADDRLEN)),
+                XLEN
+            );
+            op_code = ADD : regs[rs1] + regs[rs2];
+            op_code = SUB : regs[rs1] - regs[rs2];
+            op_code = SLT : (regs[rs1] < regs[rs2] ? 0sh_0001 : 0sh_0000);
+            op_code = SLL : regs[rs1] << toint(regs[rs2]);
+            op_code = SRA : regs[rs1] >> toint(regs[rs2]);
+            --// result is return address
+            op_code = JALR : signed(resize(pc + 0uh_1, XLEN));
+            op_code = LW : memory[
+                resize(unsigned(regs[rs1]) + resize(rs2, XLEN), MEMADDRLEN)
+            ];
+            (op_code = CSRRS) | (op_code = CSRRC): mstatus;
+        esac;
 
-    VAR PC : unsigned word[EX_MEM_ADDR_LEN];
-    -- Advance PC by default unless a branch or jump instruction is taken
-    TRANS (PC_ADVANCE != next(PC) -> INSTR in {
-        JAL, JALR, BEQ, BNE, BLT, BLTU, BGE, BGEU
-    });
+        --// processor state
+        -- TODO: there are more possibilities to take exceptions
+        interrupt_taken := mstatus.MIE & (
+            (mstatus.MEIP & mstatus.MEIE) | (mstatus.MSIP & mstatus.MSIE)
+        );
+        exception_taken := interrupt_taken | op_code = ECALL;
+        trap_return := op_code = MRET & priv = machine;
 
-    VAR MEM : array 0..(MEM_SIZE) of unsigned word[8];
+    VAR
+        mstatus : unsigned word[XLEN];
+    #define MIE 0:0
+    #define MPIE 1:1
+    #define MPP 2:2
+    #define MEIP 3:3
+    #define UEIP 4:4
+    #define USIP 5:5
+    #define MEIE 6:6
+    #define UEIE 7:7
+    #define USIE 8:8
+    #define MCAUSE_INTERRUPT 9:9
+    #define MCAUSE 11:10
+    #define MEPC 15:12
 
-    -- R-type instructions; we already required in a FAIRNESS constraint that
-    -- rd != 0h_0 so we can safely assign to R[rd]
-    TRANS INSTR = ADD -> next(R)[rd] = unsigned(signed(LOAD_R(rs1)) + signed(LOAD_R(rs2)));
-    TRANS INSTR = SLT -> next(R)[rd] = (signed(LOAD_R(rs1)) < signed(LOAD_R(rs2)) ? 0d32_1 : 0d32_0);
-    TRANS INSTR = SLTU -> next(R)[rd] = (LOAD_R(rs1) < LOAD_R(rs2) ? 0d32_1 : 0d32_0);
-    TRANS INSTR = AND -> next(R)[rd] = (LOAD_R(rs1) & LOAD_R(rs2));
-    TRANS INSTR = OR -> next(R)[rd] = (LOAD_R(rs1) | LOAD_R(rs2));
-    TRANS INSTR = XOR -> next(R)[rd] = (LOAD_R(rs1) xor LOAD_R(rs2));
-    -- nuXmv bit shift right on signed words works as specified by RISC-V
-    TRANS INSTR = SLL -> next(R)[rd] = (LOAD_R(rs1) << TO_INT(LOAD_R(rs2), MAX_SHIFT_LEN));
-    TRANS INSTR = SRL -> next(R)[rd] = (LOAD_R(rs1) >> TO_INT(LOAD_R(rs2), MAX_SHIFT_LEN));
-    TRANS INSTR = SRA -> next(R)[rd] = unsigned(signed(LOAD_R(rs1)) >> TO_INT(LOAD_R(rs2), MAX_SHIFT_LEN));
-    TRANS INSTR = SUB -> next(R)[rd] = unsigned(signed(LOAD_R(rs1)) - signed(LOAD_R(rs2)));
+    #define UEI 0
+    #define MEI 1
+    #define USI 2
+    #define ECALL_FROM_U 0
+    #define ECALL_FROM_M 1
 
-    -- I-type instructions
-    TRANS INSTR = ADDI -> next(R)[rd] = unsigned(LOAD_I_W(12) + signed(LOAD_R(rs1)));
-    TRANS INSTR = SLTI -> next(R)[rd] = (signed(LOAD_R(rs1)) < LOAD_I_W(12) ? 0d32_1 : 0d32_0);
-    TRANS INSTR = SLTIU -> next(R)[rd] = (LOAD_R(rs1) < LOAD_IU_W(12) ? 0d32_1 : 0d32_0);
-    TRANS INSTR = ANDI -> next(R)[rd] = (LOAD_R(rs1) & LOAD_IU_W(12));
-    TRANS INSTR = ORI -> next(R)[rd] = (LOAD_R(rs1) | LOAD_IU_W(12));
-    TRANS INSTR = XORI -> next(R)[rd] = (LOAD_R(rs1) xor LOAD_IU_W(12));
-    TRANS INSTR = SLLI -> next(R)[rd] = (LOAD_R(rs1) << toint(LOAD_IU(5)));
-    TRANS INSTR = SRLI -> next(R)[rd] = (LOAD_R(rs1) >> toint(LOAD_IU(5)));
-    TRANS INSTR = SRAI -> next(R)[rd] = unsigned(signed(LOAD_R(rs1)) >> toint(LOAD_IU(5)));
+    DEFINE
+        highest_pending := case
+            bool(mstatus[MEIP]) : MEI;
+            bool(mstatus[UEIP]) : UEI;
+            bool(mstatus[USIP]) : USI;
+            !interrupt_taken : (priv = user
+                ? ECALL_FROM_U
+                : ECALL_FROM_M);
+        esac;
 
-    -- Memory related instructions
-    -- TODO: Is this interpretation of unsigned + signed right? I think it is because sign extending the immediate value wouldn't make sense otherwise
-    TRANS INSTR = LW -> next(R)[rd] = unsigned(LOAD_W(LOAD_MEMOFF(rs1, 12)));
-    TRANS INSTR = LH -> next(R)[rd] = unsigned(extend(LOAD_H(LOAD_MEMOFF(rs1, 12)), 32 - 16));
-    TRANS INSTR = LHU -> next(R)[rd] = extend(LOAD_HU(LOAD_MEMOFF(rs1, 12)), 32 - 16);
-    TRANS INSTR = LB -> next(R)[rd] = unsigned(extend(LOAD_B(LOAD_MEMOFF(rs1, 12)), 32 - 8));
-    TRANS INSTR = LBU -> next(R)[rd] = extend(LOAD_BU(LOAD_MEMOFF(rs1, 12)), 32 - 8);
+    --// mstatus
+    --// TODO: Make
+    TRANS next(mstatus) = (exception_taken
+        ? ( next(mstatus)[MIE] = 0b_0 &
+            next(mstatus)[MPIE] = mstatus[0:0] &
+            next(mstatus)[MPP] = case
+                priv = machine: 0b_1;
+                TRUE: 0b_0;
+            esac &
+            next(mstatus)[MCAUSE_INTERRUPT] = word1(interrupt_taken) &
+            next(mstatus)[MCAUSE] = highest_pending &
+            next(mstatus)[MEPC] = pc
+        )
+        : (trap_return
+            ? mstatus
+            : case
+                op_code = CSRRS : mstatus | regs[rs1];
+                op_code = CSRRC : mstatus & regs[rs1];
+                TRUE : mstatus;
+            esac));
 
-    TRANS INSTR = SW -> STORE_W(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2))
-    TRANS INSTR = SH -> STORE_H(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[15:0])
-    TRANS INSTR = SB -> STORE_B(LOAD_MEMOFF(rs1, 12), LOAD_R(rs2)[7:0])
+    --// Register transitions
+    #define TRANS_R_REL( i ) \
+        next(regs)[i] = (((i != rd_int) | BNL <= op_code) \
+            ? regs[i] \
+            : op_result)
+    TRANS TRANS_R_REL(0);
+    TRANS TRANS_R_REL(1);
+    TRANS TRANS_R_REL(2);
+    TRANS TRANS_R_REL(3);
+    TRANS TRANS_R_REL(4);
+    TRANS TRANS_R_REL(5);
+    TRANS TRANS_R_REL(6);
+    TRANS TRANS_R_REL(7);
+    TRANS TRANS_R_REL(8);
+    TRANS TRANS_R_REL(9);
+    TRANS TRANS_R_REL(10);
+    TRANS TRANS_R_REL(11);
+    TRANS TRANS_R_REL(12);
+    TRANS TRANS_R_REL(13);
+    TRANS TRANS_R_REL(14);
+    TRANS TRANS_R_REL(15);
 
-    TRANS INSTR = LUI -> next(R)[rd] = resize(imm, 32) >> 12;
-    TRANS INSTR = AUIPC -> next(R)[rd] = (resize(imm, 32) >> 12) + resize(PC, XLEN);
+    TRANS next(pc) = (exception_taken
+        --// trap
+        ? trap_vector
+        : case
+            --// jump
+            op_code = JALR : resize(
+                regs[rs1] + resize(imm_short, XLEN),
+                MEMADDRLEN
+            );
+            --// branch
+            (op_code = BNL) & (regs[rd] != 0uh_0000): pc + unsigned(resize(
+                imm,
+                MEMADDRLEN
+            ));
+            --// trap-return
+            trap_return : resize(mstatus.MEPC, MEMADDRLEN);
+            --// advance
+            TRUE: pc + 0uh_1;
+        esac);
 
-    -- For jumps, rd can be zero so this must be handled accordingly
-    TRANS INSTR = JAL -> (
-        (rd != 0h_0 -> next(R)[rd] = resize(PC_ADVANCE, XLEN)) &
-        (next(PC) = PC + resize(resize(imm, 32) << 12, EX_MEM_ADDR_LEN))
-    );
-    TRANS INSTR = JALR -> (
-        (rd != 0h_0 -> next(R)[rd] = resize(PC_ADVANCE, XLEN)) &
-        (next(PC) = PC + resize(unsigned(signed(LOAD_R(rs1)) + LOAD_I_W(12)), EX_MEM_ADDR_LEN))
-    );
-
-    #define BRANCH_BY( s_off ) unsigned(signed(PC) + (resize(s_off, EX_MEM_ADDR_LEN)))
-    TRANS INSTR = BEQ -> next(PC) = (LOAD_R(rs1) = LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
-    TRANS INSTR = BNE -> next(PC) = (LOAD_R(rs1) != LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
-    TRANS INSTR = BLT -> next(PC) = (signed(LOAD_R(rs1)) < signed(LOAD_R(rs2)) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
-    TRANS INSTR = BLTU -> next(PC) = (LOAD_R(rs1) < LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
-    TRANS INSTR = BGE -> next(PC) = (signed(LOAD_R(rs1)) >= signed(LOAD_R(rs2)) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
-    TRANS INSTR = BGEU -> next(PC) = (LOAD_R(rs1) >= LOAD_R(rs2) ? BRANCH_BY(LOAD_I_W(12)) : PC_ADVANCE);
+    TRANS next(priv) = (exception_taken
+        --// always trap into machine mode
+        ? machine
+        : (trap_return
+            --// return from trap into mode we originated from
+            ? case
+                mstatus.MPP: machine
+                TRUE: user
+            esac
+            --// else stable
+            : priv));
