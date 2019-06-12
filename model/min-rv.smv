@@ -1,192 +1,85 @@
 
-#define OPLEN 4
-#define RADDRLEN 4
-#define RLEN 16
--- #define CSRADDRLEN 1
--- #define CSRLEN 2
-#define XLEN 16
---// = OPLEN + 3 * RADDRLEN
-#define EXMEMADDRLEN 3
-#define EXMEMLEN 16
-#define RMEMADDRLEN 3
-#define RMEMLEN 16
-#define MEMADDRLEN (EXMEMADDRLEN + 1)
-#define MEMLEN (EXMEMLEN + RMEMADDRLEN)
+#define XLEN 8
+
+#define least_one_extended(w) \
+    (0h_00 < (w & 0h_FF) \
+        ? (0h_00 < (w & 0h_0F) \
+            ? (0h_00 < (w & 0h_03) \
+                ? (0h_00 < (w & 0h_01) ? 0h_FF : 0h_FE) \
+                : (0h_00 < (w & 0h_04) ? 0h_FC : 0h_F8) \
+            ) \
+            : (0h_00 < (w & 0h_30) \
+                ? (0h_00 < (w & 0h_10) ? 0h_F0 : 0h_E0) \
+                : (0h_00 < (w & 0h_40) ? 0h_C0 : 0h_80) \
+            )) \
+        : 0h_00)
 
 MODULE main
-    FROZENVAR
-        executable_memory : array 0..(EXMEMLEN - 1) of unsigned word[XLEN];
     VAR
-        memory : array 0..(RMEMLEN - 1) of signed word[XLEN];
-        priv : {machine, user};
-        regs : array 0..(RLEN - 1) of signed word[XLEN];
-        pc : unsigned word[MEMADDRLEN];
+        priv : boolean;
+        regs : array 0..3 of signed word[XLEN];
+        regs_conf : array 0..3 of unsigned word[XLEN];
+        memory : array 0..3 of signed word[XLEN];
+        memory_conf : array 0..3 of unsigned word[XLEN];
 
-    DEFINE
-        --// op-codes
-        LUI := 0h_0;  --// load upper immediate
-        LLI := 0h_1;  --// load lower immediate
-        AUIPC := 0h_2;  --// add upper immediate to PC
-        ADD := 0h_3;  --// add
-        SUB := 0h_4;  --// subtract
-        SLT := 0h_5;  --// set if less
-        SLL := 0h_6;  --// shift left logically
-        SRA := 0h_7;  --// shift right arithmetically
-        JALR := 0h_8;  --// jump and link register
-        LW := 0h_9;  --// load word
-        CSRRS := 0h_A;  --// csr read and set
-        CSRRC := 0h_B;  --// csr read and clear
-        --// Opcodes >= 0h_C don't have rd
-        BNL := 0h_C;  --// branch if not low
-        SW := 0h_D;  --// store word
-        ECALL := 0h_E;  --// environment call
-        MRET := 0h_F;  --// machine return
+    INIT priv = TRUE;
 
-        --// machine constants
-        reset_addr := 4;
-        trap_vector := 0uh_0;
-        vectored := FALSE;
+    IVAR
+        op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT};
+        rd : 0..3;
+        rs1 : 0..3;
+        rs2 : 0..3;
 
-        --// instruction stream decoding
-        op_code := executable_memory[pc][3:0];
-        rd := executable_memory[pc][7:4];
-        rd_int := toint(rd);
-        csr_rd := resize(rd, CSRADDRLEN);
-        rs1 := executable_memory[pc][11:8];
-        rs2 := executable_memory[pc][15:12];
-        imm_short := executable_memory[pc][15:12];
-        imm := executable_memory[pc][15:8];
-        op_result := case
-            op_code = LUI : signed(resize(imm, XLEN) << 8);
-            op_code = LLI : signed(resize(imm, XLEN));
-            --// TODO: It's idiotic to use AUIPC because our memory is too small
-            op_code = AUIPC : resize(
-                signed(pc) + signed(resize(imm << 8, MEMADDRLEN)),
-                XLEN
-            );
-            op_code = ADD : regs[rs1] + regs[rs2];
-            op_code = SUB : regs[rs1] - regs[rs2];
-            op_code = SLT : (regs[rs1] < regs[rs2] ? 0sh_0001 : 0sh_0000);
-            op_code = SLL : regs[rs1] << toint(regs[rs2]);
-            op_code = SRA : regs[rs1] >> toint(regs[rs2]);
-            --// result is return address
-            op_code = JALR : signed(resize(pc + 0uh_1, XLEN));
-            op_code = LW : memory[
-                resize(unsigned(regs[rs1]) + resize(rs2, XLEN), MEMADDRLEN)
-            ];
-            (op_code = CSRRS) | (op_code = CSRRC): mstatus;
-        esac;
+    -- privelege mode transitions
+    TRANS next(priv) = case
+        op = MRET: FALSE;
+        op = ECALL: TRUE;
+        TRUE: priv;
+    esac;
 
-        --// processor state
-        -- TODO: there are more possibilities to take exceptions
-        interrupt_taken := mstatus.MIE & (
-            (mstatus.MEIP & mstatus.MEIE) | (mstatus.MSIP & mstatus.MSIE)
-        );
-        exception_taken := interrupt_taken | op_code = ECALL;
-        trap_return := op_code = MRET & priv = machine;
+    -- register transitions
+    #define next_reg(i) \
+        (case \
+            rd != i: regs[i]; \
+            op = LOAD: memory[rs1]; \
+            op = ADD: regs[rs1] + regs[rs2]; \
+            op = SUB: regs[rs1] - regs[rs2]; \
+            op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
+            TRUE: regs[i]; \
+        esac)
 
-    VAR
-        mstatus : unsigned word[XLEN];
-    #define MIE 0:0
-    #define MPIE 1:1
-    #define MPP 2:2
-    #define MEIP 3:3
-    #define UEIP 4:4
-    #define USIP 5:5
-    #define MEIE 6:6
-    #define UEIE 7:7
-    #define USIE 8:8
-    #define MCAUSE_INTERRUPT 9:9
-    #define MCAUSE 11:10
-    #define MEPC 15:12
+    #define loadi_targeted(i) (rd = i & op = LOADI)
+    TRANS loadi_targeted(0) | (next(regs)[0] = next_reg(0));
+    TRANS loadi_targeted(1) | (next(regs)[1] = next_reg(1));
+    TRANS loadi_targeted(2) | (next(regs)[2] = next_reg(2));
+    TRANS loadi_targeted(3) | (next(regs)[3] = next_reg(3));
 
-    #define UEI 0
-    #define MEI 1
-    #define USI 2
-    #define ECALL_FROM_U 0
-    #define ECALL_FROM_M 1
+    #define next_reg_conf(i) \
+        (case \
+            rd != i: regs_conf[i]; \
+            op = LOAD: memory_conf[rs1]; \
+            op = LOADI: unsigned(resize(signed(word1(priv)), 8)); \
+            op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
+            op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
+            op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
+            TRUE: regs_conf[i]; \
+        esac)
 
-    DEFINE
-        highest_pending := case
-            bool(mstatus[MEIP]) : MEI;
-            bool(mstatus[UEIP]) : UEI;
-            bool(mstatus[USIP]) : USI;
-            !interrupt_taken : (priv = user
-                ? ECALL_FROM_U
-                : ECALL_FROM_M);
-        esac;
+    TRANS next(regs_conf)[0] = next_reg_conf(0);
+    TRANS next(regs_conf)[1] = next_reg_conf(1);
+    TRANS next(regs_conf)[2] = next_reg_conf(2);
+    TRANS next(regs_conf)[3] = next_reg_conf(3);
 
-    --// mstatus
-    --// TODO: Make
-    TRANS next(mstatus) = (exception_taken
-        ? ( next(mstatus)[MIE] = 0b_0 &
-            next(mstatus)[MPIE] = mstatus[0:0] &
-            next(mstatus)[MPP] = case
-                priv = machine: 0b_1;
-                TRUE: 0b_0;
-            esac &
-            next(mstatus)[MCAUSE_INTERRUPT] = word1(interrupt_taken) &
-            next(mstatus)[MCAUSE] = highest_pending &
-            next(mstatus)[MEPC] = pc
-        )
-        : (trap_return
-            ? mstatus
-            : case
-                op_code = CSRRS : mstatus | regs[rs1];
-                op_code = CSRRC : mstatus & regs[rs1];
-                TRUE : mstatus;
-            esac));
+    -- memory transitions
+    #define store_targeted(i) (rd = i & op = STORE)
+    TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
+    TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
+    TRANS next(memory)[2] = (store_targeted(2) ? regs[rs1] : memory[2]);
+    TRANS next(memory)[3] = (store_targeted(3) ? regs[rs1] : memory[3]);
 
-    --// Register transitions
-    #define TRANS_R_REL( i ) \
-        next(regs)[i] = (((i != rd_int) | BNL <= op_code) \
-            ? regs[i] \
-            : op_result)
-    TRANS TRANS_R_REL(0);
-    TRANS TRANS_R_REL(1);
-    TRANS TRANS_R_REL(2);
-    TRANS TRANS_R_REL(3);
-    TRANS TRANS_R_REL(4);
-    TRANS TRANS_R_REL(5);
-    TRANS TRANS_R_REL(6);
-    TRANS TRANS_R_REL(7);
-    TRANS TRANS_R_REL(8);
-    TRANS TRANS_R_REL(9);
-    TRANS TRANS_R_REL(10);
-    TRANS TRANS_R_REL(11);
-    TRANS TRANS_R_REL(12);
-    TRANS TRANS_R_REL(13);
-    TRANS TRANS_R_REL(14);
-    TRANS TRANS_R_REL(15);
+    TRANS next(memory_conf)[0] = (store_targeted(0) ? regs_conf[rs1] : memory_conf[0]);
+    TRANS next(memory_conf)[1] = (store_targeted(1) ? regs_conf[rs1] : memory_conf[1]);
+    TRANS next(memory_conf)[2] = (store_targeted(2) ? regs_conf[rs1] : memory_conf[2]);
+    TRANS next(memory_conf)[3] = (store_targeted(3) ? regs_conf[rs1] : memory_conf[3]);
 
-    TRANS next(pc) = (exception_taken
-        --// trap
-        ? trap_vector
-        : case
-            --// jump
-            op_code = JALR : resize(
-                regs[rs1] + resize(imm_short, XLEN),
-                MEMADDRLEN
-            );
-            --// branch
-            (op_code = BNL) & (regs[rd] != 0uh_0000): pc + unsigned(resize(
-                imm,
-                MEMADDRLEN
-            ));
-            --// trap-return
-            trap_return : resize(mstatus.MEPC, MEMADDRLEN);
-            --// advance
-            TRUE: pc + 0uh_1;
-        esac);
-
-    TRANS next(priv) = (exception_taken
-        --// always trap into machine mode
-        ? machine
-        : (trap_return
-            --// return from trap into mode we originated from
-            ? case
-                mstatus.MPP: machine
-                TRUE: user
-            esac
-            --// else stable
-            : priv));
+    LTLSPEC G (priv | (regs_conf[0] = 0h_00 & regs_conf[1] = 0h_00 & regs_conf[2] = 0h_00 & regs_conf[3] = 0h_00));
