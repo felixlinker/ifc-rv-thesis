@@ -19,6 +19,7 @@
 MODULE main
     VAR
         priv : boolean;
+        csrs : array 0..3 of unsigned word[XLEN];
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
         memory : array 0..3 of signed word[XLEN];
@@ -26,8 +27,22 @@ MODULE main
 
     INIT priv = TRUE;
 
+    DEFINE
+        mstatus := csrs[0];
+        mtval := csrs[1];
+        mcause := csrs[2];
+        mscratch := csrs[3];
+        MPP := mstatus[0:0];
+        MPIE := mstatus[1:1];
+        MIE := mstatus[2:2];
+        MEIP := mstatus[3:3];
+        MSIP := mstatus[4:4];
+        MEIE := mstatus[5:5];
+        MSIE := mstatus[6:6];
+        INTERRUPT := mstatus[7:7];
+
     IVAR
-        op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA};
+        op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA, CSRRS, CSRRC};
         rd : 0..3;
         rs1 : 0..3;
         rs2 : 0..3;
@@ -39,6 +54,23 @@ MODULE main
         TRUE: priv;
     esac;
 
+    #define next_csr(i) \
+        (case \
+            rd != i | !priv: csrs[i]; \
+            op = CSRRC: csrs[i] & unsigned(regs[rs1]); \
+            op = CSRRS: csrs[i] | unsigned(regs[rs1]); \
+            TRUE: csrs[i]; \
+        esac)
+
+    -- mstatus
+    TRANS next(csrs)[0] = next_csr(0);
+    -- mtval
+    TRANS next(csrs)[1] = next_csr(1);
+    -- mcause
+    TRANS next(csrs)[2] = next_csr(2);
+    -- mscratch
+    TRANS next(csrs)[3] = next_csr(3);
+
     -- register transitions
     #define next_reg(i) \
         (case \
@@ -49,6 +81,7 @@ MODULE main
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
             op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, 8); \
             op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, 8); \
+            priv & (op = CSRRS | op = CSRRC): signed(csrs[rs1]); \
             TRUE: regs[i]; \
         esac)
 
@@ -69,6 +102,7 @@ MODULE main
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
             op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, 8); \
             op = SLL: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, 8)); \
+            priv & (op = CSRRS | op = CSRRC): 0h_FF; \
             TRUE: regs_conf[i]; \
         esac)
 
