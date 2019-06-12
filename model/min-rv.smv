@@ -14,6 +14,8 @@
             )) \
         : 0h_00)
 
+#define clamp(v, l, h) (min(max((v), l), h))
+
 MODULE main
     VAR
         priv : boolean;
@@ -25,7 +27,7 @@ MODULE main
     INIT priv = TRUE;
 
     IVAR
-        op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT};
+        op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA};
         rd : 0..3;
         rs1 : 0..3;
         rs2 : 0..3;
@@ -45,6 +47,8 @@ MODULE main
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
+            op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, 8); \
+            op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, 8); \
             TRUE: regs[i]; \
         esac)
 
@@ -54,6 +58,7 @@ MODULE main
     TRANS loadi_targeted(2) | (next(regs)[2] = next_reg(2));
     TRANS loadi_targeted(3) | (next(regs)[3] = next_reg(3));
 
+    -- Cast conf reg to signed on right shift for correct sign extension
     #define next_reg_conf(i) \
         (case \
             rd != i: regs_conf[i]; \
@@ -62,6 +67,8 @@ MODULE main
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
+            op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, 8); \
+            op = SLL: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, 8)); \
             TRUE: regs_conf[i]; \
         esac)
 
