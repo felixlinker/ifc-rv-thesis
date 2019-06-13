@@ -29,7 +29,7 @@ MODULE main
 
     INIT priv = TRUE;
     -- Initialize mstatus to have interrupts enable and nothing else
-    INIT mstatus = 0b_01100000;
+    INIT mstatus = 0b_00000110;
     INIT regs_conf = init_conf;
 
     DEFINE
