@@ -80,6 +80,7 @@ MODULE main
     -- register transitions
     #define next_reg(i) \
         (case \
+            priv & op = MRET & !next(priv): 0sh_00; \
             rd != i: regs[i]; \
             op = LOAD: memory[rs1]; \
             op = ADD: regs[rs1] + regs[rs2]; \
@@ -100,6 +101,7 @@ MODULE main
     -- Cast conf reg to signed on right shift for correct sign extension
     #define next_reg_conf(i) \
         (case \
+            priv & op = MRET & !next(priv): 0h_00; \
             rd != i: regs_conf[i]; \
             op = LOAD: memory_conf[rs1]; \
             op = LOADI: unsigned(resize(signed(word1(priv)), 8)); \
