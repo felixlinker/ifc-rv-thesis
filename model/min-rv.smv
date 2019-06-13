@@ -30,11 +30,13 @@ MODULE main
     DEFINE
         MPP := mstatus[0:0];
         MPIE := mstatus[1:1];
-        MIE := mstatus[2:2];
+        MIE := mstatus[2:2] | word1(!priv);
         MEIP := mstatus[3:3];
         MSIP := mstatus[4:4];
         mscratch := mstatus[5:5];
         mcause := mstatus[7:6];
+
+        do_trap := (op = ECALL) | (bool(MIE) & bool(MEIP | MSIP));
 
     IVAR
         op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA, CSRRS, CSRRC};
@@ -44,16 +46,29 @@ MODULE main
 
     -- privelege mode transitions
     TRANS next(priv) = case
-        op = MRET: FALSE;
+        op = MRET: bool(MPP);
         op = ECALL: TRUE;
         TRUE: priv;
     esac;
 
     -- mstatus
-    TRANS next(mstatus) = case
+    TRANS next(mstatus) = (do_trap
+        ? (case                     -- set mcause
+                bool(MEIP): 0b_00;
+                bool(MSIP): 0b_01;
+                TRUE: 0b_10;        -- op = ECALL
+            esac)
+            :: mstatus[5:5]         -- preserve mscratch
+            :: (MEIP & MSIP)        -- MSIP can only be taken if !MEIP
+            :: 0b_00                -- MEIP := 0 and MIE := 0
+            :: MIE                  -- MPIE := MIE
+            :: word1(priv)          -- MPP := priv
+        : case
             !priv: mstatus;     -- ignore unprivileged writes
             op = CSRRC: mstatus & unsigned(regs[rs1]);
             op = CSRRS: mstatus | unsigned(regs[rs1]);
+            -- on a trap return, set MPIE to 1 and MPP to user mode
+            op = MRET: mstatus[7:2] :: 0b_10;
             TRUE: mstatus;      -- do nothing on all others ops that do not trap
         esac);
 
