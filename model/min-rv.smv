@@ -25,7 +25,10 @@ MODULE main
         memory : array 0..3 of signed word[XLEN];
         memory_conf : array 0..3 of unsigned word[XLEN];
 
+    DEFINE init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+
     INIT priv = TRUE;
+    INIT regs_conf = init_conf;
 
     DEFINE
         MPP := mstatus[0:0];
