@@ -44,6 +44,8 @@ MODULE main
     DEFINE
         __mem_read_privs := [ TRUE, TRUE, FALSE, FALSE ];
         __write_mem_privs := [ TRUE, TRUE, FALSE, FALSE ];
+        __mstatus_high_guard := 0b_00001000;
+        __mstatus_low_guard := 0b_11110111;
         MPP := mstatus[0:0];
         MPIE := mstatus[1:1];
         MIE := mstatus[2:2] | word1(!priv);
@@ -59,6 +61,7 @@ MODULE main
         rd : 0..3;
         rs1 : 0..3;
         rs2 : 0..3;
+        m_external_interrupt : unsigned word[1];
 
     -- privelege mode transitions
     TRANS next(priv) = case
@@ -68,6 +71,8 @@ MODULE main
     esac;
 
     -- mstatus
+    -- Scale m_external_interrupt to a bitmask
+    #define meip_input (resize(m_external_interrupt, XLEN) << 3)
     TRANS next(mstatus) = (do_trap
         ? (case                     -- set mcause
                 bool(MEIP): 0b_00;
@@ -80,12 +85,12 @@ MODULE main
             :: MIE                  -- MPIE := MIE
             :: word1(priv)          -- MPP := priv
         : case
-            !priv: mstatus;     -- ignore unprivileged writes
-            op = CSRRC: mstatus & unsigned(regs[rs1]);
-            op = CSRRS: mstatus | unsigned(regs[rs1]);
+            !priv: mstatus | meip_input;    -- ignore unprivileged writes
+            op = CSRRC: mstatus & (unsigned(regs[rs1]) | __mstatus_high_guard);
+            op = CSRRS: mstatus | (unsigned(regs[rs1]) & __mstatus_low_guard);
             -- on a trap return, set MPIE to 1 and MPP to user mode
             op = MRET: mstatus[7:2] :: 0b_10;
-            TRUE: mstatus;      -- do nothing on all others ops that do not trap
+            TRUE: mstatus | meip_input;     -- do nothing on all others ops that do not trap
         esac);
 
     -- register transitions
