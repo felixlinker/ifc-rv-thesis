@@ -103,8 +103,8 @@ MODULE main
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
-            op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, 8); \
-            op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, 8); \
+            op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
+            op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, XLEN); \
             priv & (op = CSRRS | op = CSRRC): signed(mstatus); \
             TRUE: regs[i]; \
         esac)
@@ -121,12 +121,12 @@ MODULE main
             priv & op = MRET & !next(priv): 0h_00; \
             rd != i | do_trap: regs_conf[i]; \
             op = LOAD & (__mem_read_privs[rs1] -> priv): memory_conf[rs1]; \
-            op = LOADI: unsigned(resize(signed(word1(priv)), 8)); \
+            op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
-            op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, 8); \
-            op = SRA: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, 8)); \
+            op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
+            op = SRA: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, XLEN)); \
             priv & (op = CSRRS | op = CSRRC): 0h_FF; \
             TRUE: regs_conf[i]; \
         esac)
@@ -162,11 +162,11 @@ MODULE main
                         : 0h_00 \
                 ); \
             op = SLL: ( \
-                (priv ? 0h_FF : 0h_00) >> (8 - clamp_buggy(regs[rs2])) \
-            ) | (regs_integrity[rs1] << clamp(toint(regs[rs2]), 0, 8)); \
+                (priv ? 0h_FF : 0h_00) >> (XLEN - clamp_buggy(regs[rs2])) \
+            ) | (regs_integrity[rs1] << clamp(toint(regs[rs2]), 0, XLEN)); \
             op = SRA: ( \
-                (priv ? 0h_FF : 0h_00) << (8 - clamp_buggy(regs[rs2])) \
-            ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, 8)); \
+                (priv ? 0h_FF : 0h_00) << (XLEN - clamp_buggy(regs[rs2])) \
+            ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, XLEN)); \
             priv & (op = CSRRS | op = CSRRC): 0h_FF; \
             TRUE: regs_integrity[i]; \
         esac)
