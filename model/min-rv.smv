@@ -93,7 +93,7 @@ MODULE main
         (case \
             !priv & op = ECALL & next(priv): 0sh_00; \
             priv & op = MRET & !next(priv): 0sh_00; \
-            rd != i: regs[i]; \
+            rd != i | do_trap: regs[i]; \
             op = LOAD & (__mem_read_privs[rs1] -> priv): memory[rs1]; \
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
@@ -114,7 +114,7 @@ MODULE main
     #define next_reg_conf(i) \
         (case \
             priv & op = MRET & !next(priv): 0h_00; \
-            rd != i: regs_conf[i]; \
+            rd != i | do_trap: regs_conf[i]; \
             op = LOAD & (__mem_read_privs[rs1] -> priv): memory_conf[rs1]; \
             op = LOADI: unsigned(resize(signed(word1(priv)), 8)); \
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
@@ -143,7 +143,7 @@ MODULE main
     #define next_reg_integrity(i) \
         (case \
             !priv & op = ECALL & next(priv): 0h_FF; \
-            rd != i: regs_integrity[i]; \
+            rd != i | do_trap: regs_integrity[i]; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
             op = ADD: least_one_extended( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
@@ -172,7 +172,7 @@ MODULE main
     TRANS next(regs_integrity)[3] = next_reg_integrity(3);
 
     -- memory transitions
-    #define store_targeted(i) (rd = i & op = STORE \
+    #define store_targeted(i) (rd = i & !do_trap & op = STORE \
         & (__write_mem_privs[rd] -> priv))
     TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
     TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
