@@ -27,22 +27,23 @@ MODULE main
         memory_conf : array 0..3 of unsigned word[XLEN];
         memory_integrity : array 0..3 of unsigned word[XLEN];
 
-    DEFINE init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
-        mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
-        init_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
-        mem_init_integrity := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
+    DEFINE
+        __init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
+        __init_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __mem_init_integrity := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
 
     INIT priv = TRUE;
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
-    INIT regs_conf = init_conf;
-    INIT memory_conf = mem_init_conf;
-    INIT regs_integrity = init_integrity;
-    INIT memory_integrity = mem_init_integrity;
+    INIT regs_conf = __init_conf;
+    INIT memory_conf = __mem_init_conf;
+    INIT regs_integrity = __init_integrity;
+    INIT memory_integrity = __mem_init_integrity;
 
     DEFINE
-        mem_read_privs := [ TRUE, TRUE, FALSE, FALSE ];
-        write_mem_privs := [ TRUE, TRUE, FALSE, FALSE ];
+        __mem_read_privs := [ TRUE, TRUE, FALSE, FALSE ];
+        __write_mem_privs := [ TRUE, TRUE, FALSE, FALSE ];
         MPP := mstatus[0:0];
         MPIE := mstatus[1:1];
         MIE := mstatus[2:2] | word1(!priv);
@@ -92,7 +93,7 @@ MODULE main
         (case \
             priv & op = MRET & !next(priv): 0sh_00; \
             rd != i: regs[i]; \
-            op = LOAD & (mem_read_privs[rs1] -> priv): memory[rs1]; \
+            op = LOAD & (__mem_read_privs[rs1] -> priv): memory[rs1]; \
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
@@ -113,7 +114,7 @@ MODULE main
         (case \
             priv & op = MRET & !next(priv): 0h_00; \
             rd != i: regs_conf[i]; \
-            op = LOAD & (mem_read_privs[rs1] -> priv): memory_conf[rs1]; \
+            op = LOAD & (__mem_read_privs[rs1] -> priv): memory_conf[rs1]; \
             op = LOADI: unsigned(resize(signed(word1(priv)), 8)); \
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
@@ -170,7 +171,7 @@ MODULE main
 
     -- memory transitions
     #define store_targeted(i) (rd = i & op = STORE \
-        & (write_mem_privs[rd] -> priv))
+        & (__write_mem_privs[rd] -> priv))
     TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
     TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
     TRANS next(memory)[2] = (store_targeted(2) ? regs[rs1] : memory[2]);
@@ -183,15 +184,15 @@ MODULE main
 
     TRANS next(memory_integrity)[0] = (store_targeted(0)
         ? regs_integrity[rs1]
-        : mem_init_integrity[0]);
+        : __mem_init_integrity[0]);
     TRANS next(memory_integrity)[1] = (store_targeted(1)
         ? regs_integrity[rs1]
-        : mem_init_integrity[1]);
+        : __mem_init_integrity[1]);
     TRANS next(memory_integrity)[2] = (store_targeted(2)
         ? regs_integrity[rs1]
-        : mem_init_integrity[2]);
+        : __mem_init_integrity[2]);
     TRANS next(memory_integrity)[3] = (store_targeted(3)
         ? regs_integrity[rs1]
-        : mem_init_integrity[3]);
+        : __mem_init_integrity[3]);
 
     LTLSPEC G (priv | (regs_conf[0] = 0h_00 & regs_conf[1] = 0h_00 & regs_conf[2] = 0h_00 & regs_conf[3] = 0h_00));
