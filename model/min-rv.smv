@@ -91,6 +91,7 @@ MODULE main
     -- register transitions
     #define next_reg(i) \
         (case \
+            !priv & op = ECALL & next(priv): 0sh_00; \
             priv & op = MRET & !next(priv): 0sh_00; \
             rd != i: regs[i]; \
             op = LOAD & (__mem_read_privs[rs1] -> priv): memory[rs1]; \
@@ -141,6 +142,7 @@ MODULE main
 
     #define next_reg_integrity(i) \
         (case \
+            !priv & op = ECALL & next(priv): 0h_FF; \
             rd != i: regs_integrity[i]; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
             op = ADD: least_one_extended( \
