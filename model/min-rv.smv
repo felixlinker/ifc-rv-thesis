@@ -22,17 +22,23 @@ MODULE main
         mstatus : unsigned word[XLEN];
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
+        regs_integrity : array 0..3 of unsigned word[XLEN];
         memory : array 0..3 of signed word[XLEN];
         memory_conf : array 0..3 of unsigned word[XLEN];
+        memory_integrity : array 0..3 of unsigned word[XLEN];
 
     DEFINE init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
         mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
+        init_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        mem_init_integrity := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
 
     INIT priv = TRUE;
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
     INIT regs_conf = init_conf;
     INIT memory_conf = mem_init_conf;
+    INIT regs_integrity = init_integrity;
+    INIT memory_integrity = mem_init_integrity;
 
     DEFINE
         mem_read_privs := [ TRUE, TRUE, FALSE, FALSE ];
@@ -123,6 +129,45 @@ MODULE main
     TRANS next(regs_conf)[2] = next_reg_conf(2);
     TRANS next(regs_conf)[3] = next_reg_conf(3);
 
+    -- This pseudo-function casts a signed bitvector into an int in the range of
+    -- [0, 8] by hand. Doing this with the macro clamp leads to a bug when used
+    -- in a bit-shift, cf. https://essvn.fbk.eu/bugs/view.php?id=5410.
+    #define clamp_buggy(w) (case \
+        w < 0sd8_0: 0; \
+        0sd8_8 <= w: 8; \
+        TRUE: toint(resize(unsigned(w), 3)); \
+    esac)
+
+    #define next_reg_integrity(i) \
+        (case \
+            rd != i: regs_integrity[i]; \
+            op = LOADI: (priv ? 0h_FF : 0h_00); \
+            op = ADD: least_one_extended( \
+                regs_integrity[rs1] & regs_integrity[rs2] \
+            ); \
+            op = SUB: least_one_extended( \
+                regs_integrity[rs1] & regs_integrity[rs2] \
+            ); \
+            op = SLT: (priv ? 0h_FE : 0h_00) | ( \
+                    0h_FF = (regs_integrity[rs1] & regs_integrity[rs2]) \
+                        ? 0h_FF \
+                        : 0h_00 \
+                ); \
+            op = SLL: ( \
+                (priv ? 0h_FF : 0h_00) >> (8 - clamp_buggy(regs[rs2])) \
+            ) | (regs_integrity[rs1] << clamp(toint(regs[rs2]), 0, 8)); \
+            op = SRA: ( \
+                (priv ? 0h_FF : 0h_00) << (8 - clamp_buggy(regs[rs2])) \
+            ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, 8)); \
+            priv & (op = CSRRS | op = CSRRC): 0h_FF; \
+            TRUE: regs_integrity[i]; \
+        esac)
+
+    TRANS next(regs_integrity)[0] = next_reg_integrity(0);
+    TRANS next(regs_integrity)[1] = next_reg_integrity(1);
+    TRANS next(regs_integrity)[2] = next_reg_integrity(2);
+    TRANS next(regs_integrity)[3] = next_reg_integrity(3);
+
     -- memory transitions
     #define store_targeted(i) (rd = i & op = STORE \
         & (write_mem_privs[rd] -> priv))
@@ -135,5 +180,18 @@ MODULE main
     TRANS next(memory_conf)[1] = (store_targeted(1) ? regs_conf[rs1] : memory_conf[1]);
     TRANS next(memory_conf)[2] = (store_targeted(2) ? regs_conf[rs1] : memory_conf[2]);
     TRANS next(memory_conf)[3] = (store_targeted(3) ? regs_conf[rs1] : memory_conf[3]);
+
+    TRANS next(memory_integrity)[0] = (store_targeted(0)
+        ? regs_integrity[rs1]
+        : mem_init_integrity[0]);
+    TRANS next(memory_integrity)[1] = (store_targeted(1)
+        ? regs_integrity[rs1]
+        : mem_init_integrity[1]);
+    TRANS next(memory_integrity)[2] = (store_targeted(2)
+        ? regs_integrity[rs1]
+        : mem_init_integrity[2]);
+    TRANS next(memory_integrity)[3] = (store_targeted(3)
+        ? regs_integrity[rs1]
+        : mem_init_integrity[3]);
 
     LTLSPEC G (priv | (regs_conf[0] = 0h_00 & regs_conf[1] = 0h_00 & regs_conf[2] = 0h_00 & regs_conf[3] = 0h_00));

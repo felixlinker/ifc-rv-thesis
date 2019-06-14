@@ -1,0 +1,15 @@
+-- This module proves that the constant clamp function introduced as the macro
+-- clamp_buggy in ../min-rv.smv is correct. This function is needed to
+-- circumvent a bug of nuXmv, cf. https://essvn.fbk.eu/bugs/view.php?id=5410.
+MODULE main
+    VAR w : signed word[8];
+
+    DEFINE
+        clamped := max(min(toint(w), 8), 0);
+        casted := case
+            w < 0sd8_0: 0;
+            0sd8_8 <= w: 8;
+            TRUE: toint(resize(unsigned(w), 3));
+        esac;
+
+    LTLSPEC G (clamped = casted);
