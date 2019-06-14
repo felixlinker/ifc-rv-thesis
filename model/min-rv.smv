@@ -62,8 +62,8 @@ MODULE main
 
     -- privelege mode transitions
     TRANS next(priv) = case
+        do_trap: TRUE;
         op = MRET: bool(MPP);
-        op = ECALL: TRUE;
         TRUE: priv;
     esac;
 
