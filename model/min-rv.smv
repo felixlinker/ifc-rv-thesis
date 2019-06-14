@@ -113,7 +113,7 @@ MODULE main
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
             op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, 8); \
-            op = SLL: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, 8)); \
+            op = SRA: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, 8)); \
             priv & (op = CSRRS | op = CSRRC): 0h_FF; \
             TRUE: regs_conf[i]; \
         esac)
