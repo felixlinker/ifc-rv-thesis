@@ -26,13 +26,17 @@ MODULE main
         memory_conf : array 0..3 of unsigned word[XLEN];
 
     DEFINE init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
 
     INIT priv = TRUE;
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
     INIT regs_conf = init_conf;
+    INIT memory_conf = mem_init_conf;
 
     DEFINE
+        mem_read_privs := [ TRUE, TRUE, FALSE, FALSE ];
+        write_mem_privs := [ TRUE, TRUE, FALSE, FALSE ];
         MPP := mstatus[0:0];
         MPIE := mstatus[1:1];
         MIE := mstatus[2:2] | word1(!priv);
@@ -82,7 +86,7 @@ MODULE main
         (case \
             priv & op = MRET & !next(priv): 0sh_00; \
             rd != i: regs[i]; \
-            op = LOAD: memory[rs1]; \
+            op = LOAD & (mem_read_privs[rs1] -> priv): memory[rs1]; \
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
@@ -103,7 +107,7 @@ MODULE main
         (case \
             priv & op = MRET & !next(priv): 0h_00; \
             rd != i: regs_conf[i]; \
-            op = LOAD: memory_conf[rs1]; \
+            op = LOAD & (mem_read_privs[rs1] -> priv): memory_conf[rs1]; \
             op = LOADI: unsigned(resize(signed(word1(priv)), 8)); \
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
@@ -120,7 +124,8 @@ MODULE main
     TRANS next(regs_conf)[3] = next_reg_conf(3);
 
     -- memory transitions
-    #define store_targeted(i) (rd = i & op = STORE)
+    #define store_targeted(i) (rd = i & op = STORE \
+        & (write_mem_privs[rd] -> priv))
     TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
     TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
     TRANS next(memory)[2] = (store_targeted(2) ? regs[rs1] : memory[2]);
