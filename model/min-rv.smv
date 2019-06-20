@@ -24,19 +24,10 @@ MODULE pmpcfg_module(base_reg)
         write := bool(base_reg[1:1]);
         read := bool(base_reg[0:0]);
 
-MODULE pmacfg_module(base_reg)
-    DEFINE
-        coherent := bool(base_reg[0:0]);
-        uncacheable := (base_reg[3:1] = 0b_000);
-        write_combining := (base_reg[3:1] = 0b_001);
-        write_through := (base_reg[3:1] = 0b_010);
-        write_protected := (base_reg[3:1] = 0b_011);
-        write_back := (base_reg[3:1] = 0b_100);
-
 MODULE main
     VAR
         priv : boolean;
-        csrs : array 0..2 of unsigned word[XLEN];
+        csrs : array 0..1 of unsigned word[XLEN];
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
         regs_integrity : array 0..3 of unsigned word[XLEN];
@@ -45,14 +36,13 @@ MODULE main
         memory_integrity : array 0..3 of unsigned word[XLEN];
 
     DEFINE
-        __csrs_read_privs := [ 0h_FF, 0h_00, 0h_00 ];
-        __csrs_write_privs := [ 0h_FF, 0h_FF, 0h_FF ];
+        __csrs_read_privs := [ 0h_FF, 0h_00 ];
+        __csrs_write_privs := [ 0h_FF, 0h_FF ];
         __priv_vec := resize(word1(priv), XLEN);
-        __csrs_conf := [ 0h_FF, 0h_00, 0h_00 ];
-        __csrs_integrity := [ 0h_FF, 0h_FF, 0h_FF ];
+        __csrs_conf := [ 0h_FF, 0h_00 ];
+        __csrs_integrity := [ 0h_FF, 0h_FF ];
         mstatus := csrs[0];
         pmpcfg := csrs[1];
-        pmacfg := csrs[2];
         __init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
         __mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
         __init_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
@@ -82,8 +72,6 @@ MODULE main
     VAR
         pmpcfg0 : pmpcfg_module(pmpcfg[3:0]);
         pmpcfg1 : pmpcfg_module(pmpcfg[7:4]);
-        pmacfg0 : pmacfg_module(pmacfg[3:0]);
-        pmacfg1 : pmacfg_module(pmacfg[7:4]);
 
     IVAR
         op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA, CSRRS, CSRRC};
@@ -92,8 +80,8 @@ MODULE main
         rs2 : 0..3;
         m_external_interrupt : unsigned word[1];
     DEFINE
-        csr_rd := min(rd, 2);
-        csr_rs := min(rs1, 2);
+        csr_rd := min(rd, 1);
+        csr_rs := min(rs1, 1);
 
     DEFINE
         -- TODO: Throw on a load without privileges?
@@ -158,12 +146,6 @@ MODULE main
             ));
             TRUE: pmpcfg;
         esac;
-    TRANS next(pmacfg) = case
-        do_trap | csr_rd != 2: pmacfg;
-        op = CSRRC: pmacfg & (unsigned(regs[rs1]) | csr_write_mask);
-        op = CSRRS: pmacfg & (unsigned(regs[rs2]) & !csr_write_mask);
-        TRUE: pmacfg;
-    esac;
 
     #define csr_read_mask (__csrs_read_privs[csr_rs] -> __priv_vec)
     -- register transitions
