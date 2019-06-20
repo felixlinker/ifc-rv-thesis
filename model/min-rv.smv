@@ -1,5 +1,6 @@
 
 #define XLEN 8
+#define REGION0_SIZE 2
 
 #define least_one_extended(w) \
     (0h_00 < (w & 0h_FF) \
@@ -35,7 +36,7 @@ MODULE pmacfg_module(base_reg)
 MODULE main
     VAR
         priv : boolean;
-        csrs : array 0..3 of unsigned word[XLEN];
+        csrs : array 0..2 of unsigned word[XLEN];
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
         regs_integrity : array 0..3 of unsigned word[XLEN];
@@ -44,15 +45,14 @@ MODULE main
         memory_integrity : array 0..3 of unsigned word[XLEN];
 
     DEFINE
-        __csrs_read_privs := [ 0h_FF, 0h_00, 0h_00, 0h_00 ];
-        __csrs_write_privs := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __csrs_read_privs := [ 0h_FF, 0h_00, 0h_00 ];
+        __csrs_write_privs := [ 0h_FF, 0h_FF, 0h_FF ];
         __priv_vec := resize(word1(priv), XLEN);
-        __csrs_conf := [ 0h_FF, 0h_00, 0h_00, 0h_00 ];
-        __csrs_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __csrs_conf := [ 0h_FF, 0h_00, 0h_00 ];
+        __csrs_integrity := [ 0h_FF, 0h_FF, 0h_FF ];
         mstatus := csrs[0];
         pmpcfg := csrs[1];
-        pmpaddr := csrs[2];
-        pmacfg := csrs[3];
+        pmacfg := csrs[2];
         __init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
         __mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
         __init_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
@@ -77,9 +77,6 @@ MODULE main
         mscratch := mstatus[5:5];
         mcause := mstatus[7:6];
 
-        pmpaddr0 := toint(pmpaddr[3:0]);
-        pmpaddr1 := toint(pmpaddr[7:4]);
-
         do_trap := (op = ECALL) | (bool(MIE) & bool(MEIP | MSIP));
 
     VAR
@@ -94,6 +91,9 @@ MODULE main
         rs1 : 0..3;
         rs2 : 0..3;
         m_external_interrupt : unsigned word[1];
+    DEFINE
+        csr_rd := min(rd, 2);
+        csr_rs := min(rs1, 2);
 
     -- privelege mode transitions
     TRANS next(priv) = case
@@ -102,7 +102,7 @@ MODULE main
         TRUE: priv;
     esac;
 
-    #define csr_write_mask (__csrs_write_privs[rd] -> __priv_vec)
+    #define csr_write_mask (__csrs_write_privs[csr_rd] -> __priv_vec)
     -- mstatus
     -- Scale m_external_interrupt to a bitmask
     #define meip_input (resize(m_external_interrupt, XLEN) << 3)
@@ -119,28 +119,25 @@ MODULE main
             :: word1(priv)          -- MPP := priv
         : meip_input | case
             priv & op = MRET: mstatus[7:2] :: 0b_10;
-            rd != 0: mstatus;
+            csr_rd != 0: mstatus;
             op = CSRRC: mstatus & (unsigned(regs[rs1]) | csr_write_mask | __mstatus_high_guard);
             op = CSRRS: mstatus | (unsigned(regs[rs1]) & !csr_write_mask & __mstatus_low_guard);
             -- on a trap return, set MPIE to 1 and MPP to user mode
             TRUE: mstatus;     -- do nothing on all others ops that do not trap
         esac);
 
-    #define next_pmpreg(register, i) \
-        (case \
-            do_trap | rd != i: register; \
-            op = CSRRC: register & (unsigned(regs[rs1]) | csr_write_mask | ( \
-                (pmpcfg1.locked ? 0h_F : 0h_0) :: (pmpcfg0.locked ? 0h_F : 0h_0) \
-            )); \
-            op = CSRRS: register | (unsigned(regs[rs1]) & !csr_write_mask & ( \
-                (pmpcfg1.locked ? 0h_0 : 0h_F) :: (pmpcfg0.locked ? 0h_0 : 0h_F) \
-            )); \
-            TRUE: register; \
-        esac)
-    TRANS next(pmpcfg) = next_pmpreg(pmpcfg, 1);
-    TRANS next(pmpaddr) = next_pmpreg(pmpaddr, 2);
+    TRANS next(pmpcfg) = case
+            do_trap | csr_rd != 1: pmpcfg;
+            op = CSRRC: pmpcfg & (unsigned(regs[rs1]) | csr_write_mask | (
+                (pmpcfg1.locked ? 0h_F : 0h_0) :: (pmpcfg0.locked ? 0h_F : 0h_0)
+            ));
+            op = CSRRS: pmpcfg | (unsigned(regs[rs1]) & !csr_write_mask & (
+                (pmpcfg1.locked ? 0h_0 : 0h_F) :: (pmpcfg0.locked ? 0h_0 : 0h_F)
+            ));
+            TRUE: pmpcfg;
+        esac;
     TRANS next(pmacfg) = case
-        do_trap | rd != 3: pmacfg;
+        do_trap | csr_rd != 2: pmacfg;
         op = CSRRC: pmacfg & (unsigned(regs[rs1]) | csr_write_mask);
         op = CSRRS: pmacfg & (unsigned(regs[rs2]) & !csr_write_mask);
         TRUE: pmacfg;
@@ -149,16 +146,16 @@ MODULE main
     -- TODO: Throw on a load without privileges?
     #define can_load \
         (priv \
-            ? (pmpaddr1 <= rs1 | (pmpaddr0 <= rs1 \
+            ? (rs1 < REGION0_SIZE \
                 ? (!pmpcfg1.locked | pmpcfg1.read) \
                 : (!pmpcfg0.locked | pmpcfg0.read) \
-            )) \
-            : (!priv & rs1 < pmpaddr1 & (pmpaddr0 <= rs1 \
+            ) \
+            : (rs1 < REGION0_SIZE \
                 ? pmpcfg1.read \
                 : pmpcfg0.read \
-            )) \
+            ) \
         )
-    #define csr_read_mask (__csrs_read_privs[rs1] -> __priv_vec)
+    #define csr_read_mask (__csrs_read_privs[csr_rs] -> __priv_vec)
     -- register transitions
     #define next_reg(i) \
         (case \
@@ -171,7 +168,7 @@ MODULE main
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
             op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
             op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, XLEN); \
-            op = CSRRS | op = CSRRC: signed(csrs[rs1] & csr_read_mask); \
+            op = CSRRS | op = CSRRC: signed(csrs[csr_rs] & csr_read_mask); \
             TRUE: regs[i]; \
         esac)
 
@@ -193,7 +190,7 @@ MODULE main
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
             op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
             op = SRA: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, XLEN)); \
-            op = CSRRS | op = CSRRC: __csrs_conf[rs1] & csr_read_mask; \
+            op = CSRRS | op = CSRRC: __csrs_conf[csr_rs] & csr_read_mask; \
             TRUE: regs_conf[i]; \
         esac)
 
@@ -234,7 +231,7 @@ MODULE main
             op = SRA: ( \
                 (priv ? 0h_FF : 0h_00) << (XLEN - clamp_buggy(regs[rs2])) \
             ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, XLEN)); \
-            op = CSRRS | op = CSRRC: __csrs_integrity[rs1] & csr_read_mask; \
+            op = CSRRS | op = CSRRC: __csrs_integrity[csr_rs] & csr_read_mask; \
             TRUE: regs_integrity[i]; \
         esac)
 
@@ -247,14 +244,14 @@ MODULE main
     -- TODO: Throw on a write without privileges?
     #define store_targeted(i) (rd = i & !do_trap & op = STORE \
         & (priv \
-            ? (pmpaddr1 <= rd | (pmpaddr0 <= rd \
+            ? (rd < REGION0_SIZE \
                 ? (!pmpcfg1.locked | pmpcfg1.write) \
                 : (!pmpcfg0.locked | pmpcfg0.write) \
-            )) \
-            : (!priv & rd < pmpaddr1 & (pmpaddr0 <= rd \
+            ) \
+            : (rd < REGION0_SIZE \
                 ? pmpcfg1.write \
                 : pmpcfg0.write \
-            )) \
+            ) \
         ))
     TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
     TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
