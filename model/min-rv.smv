@@ -95,6 +95,28 @@ MODULE main
         csr_rd := min(rd, 2);
         csr_rs := min(rs1, 2);
 
+    DEFINE
+        -- TODO: Throw on a load without privileges?
+        can_load := (priv
+            ? (rs1 < REGION0_SIZE
+                ? (!pmpcfg0.locked | pmpcfg0.read)
+                : (!pmpcfg1.locked | pmpcfg1.read)
+            )
+            : (rs1 < REGION0_SIZE
+                ? pmpcfg0.read
+                : pmpcfg1.read
+            ));
+        -- TODO: Throw on a write without privileges?
+        can_write := (priv
+            ? (rd < REGION0_SIZE
+                ? (!pmpcfg0.locked | pmpcfg0.write)
+                : (!pmpcfg1.locked | pmpcfg1.write)
+            )
+            : (rd < REGION0_SIZE
+                ? pmpcfg0.write
+                : pmpcfg1.write
+            ));
+
     -- privelege mode transitions
     TRANS next(priv) = case
         do_trap: TRUE;
@@ -143,18 +165,6 @@ MODULE main
         TRUE: pmacfg;
     esac;
 
-    -- TODO: Throw on a load without privileges?
-    #define can_load \
-        (priv \
-            ? (rs1 < REGION0_SIZE \
-                ? (!pmpcfg1.locked | pmpcfg1.read) \
-                : (!pmpcfg0.locked | pmpcfg0.read) \
-            ) \
-            : (rs1 < REGION0_SIZE \
-                ? pmpcfg1.read \
-                : pmpcfg0.read \
-            ) \
-        )
     #define csr_read_mask (__csrs_read_privs[csr_rs] -> __priv_vec)
     -- register transitions
     #define next_reg(i) \
@@ -241,18 +251,7 @@ MODULE main
     TRANS next(regs_integrity)[3] = next_reg_integrity(3);
 
     -- memory transitions
-    -- TODO: Throw on a write without privileges?
-    #define store_targeted(i) (rd = i & !do_trap & op = STORE \
-        & (priv \
-            ? (rd < REGION0_SIZE \
-                ? (!pmpcfg1.locked | pmpcfg1.write) \
-                : (!pmpcfg0.locked | pmpcfg0.write) \
-            ) \
-            : (rd < REGION0_SIZE \
-                ? pmpcfg1.write \
-                : pmpcfg0.write \
-            ) \
-        ))
+    #define store_targeted(i) (rd = i & !do_trap & op = STORE & can_write)
     TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
     TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
     TRANS next(memory)[2] = (store_targeted(2) ? regs[rs1] : memory[2]);
