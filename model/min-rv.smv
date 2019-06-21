@@ -82,7 +82,6 @@ MODULE main
         rs2 : 0..3;
         m_external_interrupt : unsigned word[1];
     DEFINE
-        csr_rd := min(rd, 1);
         csr_rs := min(rs1, 1);
 
     DEFINE
@@ -114,7 +113,7 @@ MODULE main
         TRUE: priv;
     esac;
 
-    #define csr_write_mask (__csrs_write_privs[csr_rd] -> __priv_vec)
+    #define csr_write_mask (__csrs_write_privs[csr_rs] -> __priv_vec)
     -- mstatus
     -- Scale m_external_interrupt to a bitmask
     #define meip_input (resize(m_external_interrupt, XLEN) << 3)
@@ -131,19 +130,19 @@ MODULE main
             :: word1(priv)          -- MPP := priv
         : meip_input | case
             priv & op = MRET: mstatus[7:2] :: 0b_10;
-            csr_rd != 0: mstatus;
-            op = CSRRC: mstatus & (unsigned(regs[rs1]) | csr_write_mask | __mstatus_high_guard);
-            op = CSRRS: mstatus | (unsigned(regs[rs1]) & !csr_write_mask & __mstatus_low_guard);
+            csr_rs != 0: mstatus;
+            op = CSRRC: mstatus & (unsigned(regs[rs2]) | csr_write_mask | __mstatus_high_guard);
+            op = CSRRS: mstatus | (unsigned(regs[rs2]) & !csr_write_mask & __mstatus_low_guard);
             -- on a trap return, set MPIE to 1 and MPP to user mode
             TRUE: mstatus;     -- do nothing on all others ops that do not trap
         esac);
 
     TRANS next(pmpcfg) = case
-            do_trap | csr_rd != 1: pmpcfg;
-            op = CSRRC: pmpcfg & (unsigned(regs[rs1]) | csr_write_mask | (
+            do_trap | csr_rs != 1: pmpcfg;
+            op = CSRRC: pmpcfg & (unsigned(regs[rs2]) | csr_write_mask | (
                 (pmpcfg1.locked ? 0h_F : 0h_0) :: (pmpcfg0.locked ? 0h_F : 0h_0)
             ));
-            op = CSRRS: pmpcfg | (unsigned(regs[rs1]) & !csr_write_mask & (
+            op = CSRRS: pmpcfg | (unsigned(regs[rs2]) & !csr_write_mask & (
                 (pmpcfg1.locked ? 0h_0 : 0h_F) :: (pmpcfg0.locked ? 0h_0 : 0h_F)
             ));
             TRUE: pmpcfg;
