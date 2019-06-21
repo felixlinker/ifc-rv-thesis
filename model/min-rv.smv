@@ -206,7 +206,7 @@ MODULE main
             do_trap: regs_integrity[i]; \
             op = SAN: 0h_FF; \
             rd != i: regs_integrity[i]; \
-            op = LOAD & can_load: memory_integrity[i]; \
+            op = LOAD & can_load: memory_integrity[rs1]; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
             op = ADD: least_one_extended( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
