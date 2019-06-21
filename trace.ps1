@@ -2,6 +2,7 @@ param(
     [string]$in = ".\model\min-rv.smv",
     [string]$out = ".\dist\trace.html",
     [string]$cmd = ".\trace-bmc.template",
+    [int]$tracelen = 10,
     [string]$prop
 )
 
@@ -19,6 +20,7 @@ $cmds = get-content $cmd
 $cmds = $cmds.Replace("[INPUT]", $preprocessed.FullName)
 $cmds = $cmds.Replace("[PROPNAME]", $prop)
 $cmds = $cmds.Replace("[OUTPUT]", $trace.FullName)
+$cmds = $cmds.Replace("[MAXLEN]", $tracelen)
 $cmds | Out-File -encoding ascii $replaced_cmd.FullName
 
 # Run nuXmv
