@@ -26,3 +26,8 @@ nuXmv.exe -source $replaced_cmd.FullName
 
 # Map the trace to an html table
 smvtrcviz.bat $trace.FullName $out
+
+# Clean up temporary files
+Remove-Item -Path $preprocessed
+Remove-Item -Path $trace
+Remove-Item -Path $replaced_cmd
