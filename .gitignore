@@ -11,3 +11,4 @@
 *.tex.bak
 *.toc
 *.o.smv
+/dist
