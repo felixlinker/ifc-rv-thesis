@@ -358,3 +358,11 @@ MODULE main
             & regs_conf[2] = 0h_00
             & regs_conf[3] = 0h_00
         ));
+
+    -- Control and status registers are only written with machine-mode
+    -- controlled values
+    LTLSPEC NAME NO_INFLUENCE :=
+        G (
+            priv & op in { CSRRS, CSRRC }
+            -> regs_integrity[rs2] = 0h_FF
+        );
