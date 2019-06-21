@@ -255,4 +255,4 @@ MODULE main
         ? regs_integrity[rs1]
         : __mem_init_integrity[3]);
 
-    LTLSPEC G (priv | (regs_conf[0] = 0h_00 & regs_conf[1] = 0h_00 & regs_conf[2] = 0h_00 & regs_conf[3] = 0h_00));
+    LTLSPEC NAME NO_LEAK := G (priv | (regs_conf[0] = 0h_00 & regs_conf[1] = 0h_00 & regs_conf[2] = 0h_00 & regs_conf[3] = 0h_00));
