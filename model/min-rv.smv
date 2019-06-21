@@ -43,20 +43,16 @@ MODULE main
         __csrs_integrity := [ 0h_FF, 0h_FF ];
         mstatus := csrs[0];
         pmpcfg := csrs[1];
-        __init_conf := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __init_conf_leak := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __init_conf_influence := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
         __mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
-        __init_integrity := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __init_integrity_leak := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __init_integrity_influence := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
         __mem_init_integrity := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
 
-    INIT priv = TRUE;
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
     --            0b_reg1_reg0
-    INIT pmpcfg = 0b_0111_0000;
-    INIT regs_conf = __init_conf;
-    INIT memory_conf = __mem_init_conf;
-    INIT regs_integrity = __init_integrity;
-    INIT memory_integrity = __mem_init_integrity;
 
     DEFINE
         __mstatus_high_guard := 0b_00001000;
@@ -263,9 +259,17 @@ MODULE main
         ? regs_integrity[rs1]
         : __mem_init_integrity[3]);
 
+    DEFINE
+        leak_assumptions := priv = TRUE
+            & pmpcfg = 0b_0111_0000
+            & regs_conf = __init_conf_leak
+            & memory_conf = __mem_init_conf
+            & regs_integrity = __init_integrity_leak
+            & memory_integrity = __mem_init_integrity;
+
     -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
-    LTLSPEC NAME NO_LEAK := G (priv | (
+    LTLSPEC NAME NO_LEAK := leak_assumptions -> G (priv | (
         regs_conf[0] = 0h_00
         & regs_conf[1] = 0h_00
         & regs_conf[2] = 0h_00
@@ -273,7 +277,8 @@ MODULE main
     ));
     -- ... if machine mode clears its registers before returning
     LTLSPEC NAME NO_LEAK_SANITIZED :=
-        G (
+        leak_assumptions
+        & G (
             priv & op = MRET
             -> regs_conf[0] = 0h_00
                 & regs_conf[1] = 0h_00
@@ -289,7 +294,8 @@ MODULE main
     -- ... and if machine mode does not write confidential information outside
     -- of memory region 0
     LTLSPEC NAME NO_LEAK_SANITIZED_NO_REGION1_STORE :=
-            G (
+            leak_assumptions
+            & G (
                 priv & op = STORE & 0h_00 < regs_conf[rs1]
                 -> rd < REGION0_SIZE
             )
@@ -309,7 +315,8 @@ MODULE main
     -- ... and if machine mode does not declassify memory regions that have
     -- confidential data in them
     LTLSPEC NAME NO_LEAK_SANITIZED_NO_MEM_DECLASSIFICATION :=
-            G (
+            leak_assumptions
+            & G (
                 priv & op in { CSRRS, CSRRC } & 0 < rs1
                 ->
                     ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
@@ -333,7 +340,8 @@ MODULE main
             ));
     -- ... and if machine mode does not write into memory that is publicly readable
     LTLSPEC NAME NO_LEAK_SANITIZED_NO_USE_DECLASSIFIED_MEM :=
-            G (
+            leak_assumptions
+            & G (
                 priv & op in { CSRRS, CSRRC } & 0 < rs1
                 ->
                     ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
@@ -359,10 +367,19 @@ MODULE main
             & regs_conf[3] = 0h_00
         ));
 
+    DEFINE
+        influence_assumptions := priv = FALSE
+            & pmpcfg = 0b_0111_0000
+            & regs_conf = __init_conf_influence
+            & memory_conf = __mem_init_conf
+            & regs_integrity = __init_integrity_influence
+            & memory_integrity = __mem_init_integrity;
+
     -- Control and status registers are only written with machine-mode
     -- controlled values
     LTLSPEC NAME NO_INFLUENCE :=
-        G (
+        influence_assumptions
+        -> G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
