@@ -76,7 +76,10 @@ MODULE main
         pmpcfg1 : pmpcfg_module(pmpcfg[7:4]);
 
     IVAR
-        op : {LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA, CSRRS, CSRRC};
+        op : {
+            LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA, CSRRS,
+            CSRRC, SAN, CLR
+        };
         rd : 0..3;
         rs1 : 0..3;
         rs2 : 0..3;
@@ -172,7 +175,9 @@ MODULE main
     -- Cast conf reg to signed on right shift for correct sign extension
     #define next_reg_conf(i) \
         (case \
-            rd != i | do_trap: regs_conf[i]; \
+            do_trap: regs_conf[i]; \
+            op = CLR: 0h_00; \
+            rd != i: regs_conf[i]; \
             op = LOAD & can_load: memory_conf[rs1]; \
             op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
@@ -200,7 +205,9 @@ MODULE main
 
     #define next_reg_integrity(i) \
         (case \
-            rd != i | do_trap: regs_integrity[i]; \
+            do_trap: regs_integrity[i]; \
+            op = SAN: 0h_FF; \
+            rd != i: regs_integrity[i]; \
             op = LOAD & can_load: memory_integrity[i]; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
             op = ADD: least_one_extended( \
