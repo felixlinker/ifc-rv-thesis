@@ -116,10 +116,11 @@ MODULE main
         TRUE: priv;
     esac;
 
-    #define csr_write_mask (__csrs_write_privs[csr_rs] -> __priv_vec)
     -- mstatus
     -- Scale m_external_interrupt to a bitmask
-    #define meip_input (resize(m_external_interrupt, XLEN) << 3)
+    DEFINE
+        csr_write_mask := __csrs_write_privs[csr_rs] -> __priv_vec;
+        meip_input := resize(m_external_interrupt, XLEN) << 3;
     TRANS next(mstatus) = (do_trap
         ? (case                     -- set mcause
                 bool(MEIP): 0b_00;
@@ -151,7 +152,8 @@ MODULE main
             TRUE: pmpcfg;
         esac;
 
-    #define csr_read_mask (__csrs_read_privs[csr_rs] -> __priv_vec)
+    DEFINE
+        csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
     -- register transitions
     #define next_reg(i) \
         (case \
