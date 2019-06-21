@@ -51,6 +51,8 @@ MODULE main
     INIT priv = TRUE;
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
+    --            0b_reg1_reg0
+    INIT pmpcfg = 0b_0111_0000;
     INIT regs_conf = __init_conf;
     INIT memory_conf = __mem_init_conf;
     INIT regs_integrity = __init_integrity;
