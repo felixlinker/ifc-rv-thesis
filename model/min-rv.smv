@@ -263,4 +263,98 @@ MODULE main
         ? regs_integrity[rs1]
         : __mem_init_integrity[3]);
 
-    LTLSPEC NAME NO_LEAK := G (priv | (regs_conf[0] = 0h_00 & regs_conf[1] = 0h_00 & regs_conf[2] = 0h_00 & regs_conf[3] = 0h_00));
+    -- The following properties about information leakage are incremental:
+    -- Confidential information can never leak into user mode
+    LTLSPEC NAME NO_LEAK := G (priv | (
+        regs_conf[0] = 0h_00
+        & regs_conf[1] = 0h_00
+        & regs_conf[2] = 0h_00
+        & regs_conf[3] = 0h_00
+    ));
+    -- ... if machine mode clears its registers before returning
+    LTLSPEC NAME NO_LEAK_SANITIZED :=
+        G (
+            priv & op = MRET
+            -> regs_conf[0] = 0h_00
+                & regs_conf[1] = 0h_00
+                & regs_conf[2] = 0h_00
+                & regs_conf[3] = 0h_00
+        )
+        -> G (priv | (
+            regs_conf[0] = 0h_00
+            & regs_conf[1] = 0h_00
+            & regs_conf[2] = 0h_00
+            & regs_conf[3] = 0h_00
+        ));
+    -- ... and if machine mode does not write confidential information outside
+    -- of memory region 0
+    LTLSPEC NAME NO_LEAK_SANITIZED_NO_REGION1_STORE :=
+            G (
+                priv & op = STORE & 0h_00 < regs_conf[rs1]
+                -> rd < REGION0_SIZE
+            )
+            & G (
+                priv & op = MRET
+                -> regs_conf[0] = 0h_00
+                    & regs_conf[1] = 0h_00
+                    & regs_conf[2] = 0h_00
+                    & regs_conf[3] = 0h_00
+            )
+        -> G (priv | (
+            regs_conf[0] = 0h_00
+            & regs_conf[1] = 0h_00
+            & regs_conf[2] = 0h_00
+            & regs_conf[3] = 0h_00
+        ));
+    -- ... and if machine mode does not declassify memory regions that have
+    -- confidential data in them
+    LTLSPEC NAME NO_LEAK_SANITIZED_NO_MEM_DECLASSIFICATION :=
+            G (
+                priv & op in { CSRRS, CSRRC } & 0 < rs1
+                ->
+                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
+                        | X !pmpcfg0.read)
+                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3])
+                        | X !pmpcfg1.read)
+                )
+            & G (priv & op = STORE -> rd < REGION0_SIZE)
+            & G (
+                priv & op = MRET
+                -> regs_conf[0] = 0h_00
+                    & regs_conf[1] = 0h_00
+                    & regs_conf[2] = 0h_00
+                    & regs_conf[3] = 0h_00
+            )
+        -> G (priv | (
+                regs_conf[0] = 0h_00
+                & regs_conf[1] = 0h_00
+                & regs_conf[2] = 0h_00
+                & regs_conf[3] = 0h_00
+            ));
+    -- ... and if machine mode does not write into memory that is publicly readable
+    LTLSPEC NAME NO_LEAK_SANITIZED_NO_USE_DECLASSIFIED_MEM :=
+            G (
+                priv & op in { CSRRS, CSRRC } & 0 < rs1
+                ->
+                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
+                        | X !pmpcfg0.read)
+                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3])
+                        | X !pmpcfg1.read)
+            )
+            & G (
+                priv & op = STORE & 0h_00 < regs_conf[rs1]
+                -> (rd < REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read)
+            )
+            & G (
+                priv & op = MRET
+                -> regs_conf[0] = 0h_00
+                    & regs_conf[1] = 0h_00
+                    & regs_conf[2] = 0h_00
+                    & regs_conf[3] = 0h_00
+            )
+        -> G (priv | (
+            regs_conf[0] = 0h_00
+            & regs_conf[1] = 0h_00
+            & regs_conf[2] = 0h_00
+            & regs_conf[3] = 0h_00
+        ));
