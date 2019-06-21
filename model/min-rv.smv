@@ -116,7 +116,7 @@ MODULE main
     -- Scale m_external_interrupt to a bitmask
     DEFINE
         csr_write_mask := __csrs_write_privs[csr_rs] -> __priv_vec;
-        meip_input := resize(m_external_interrupt, XLEN) << 3;
+        __meip_input := resize(m_external_interrupt, XLEN) << 3;
     TRANS next(mstatus) = (do_trap
         ? (case                     -- set mcause
                 bool(MEIP): 0b_00;
@@ -128,7 +128,7 @@ MODULE main
             :: 0b_00                -- MEIP := 0 and MIE := 0
             :: MIE                  -- MPIE := MIE
             :: word1(priv)          -- MPP := priv
-        : meip_input | case
+        : __meip_input | case
             priv & op = MRET: mstatus[7:2] :: 0b_10;
             csr_rs != 0: mstatus;
             op = CSRRC: mstatus & (unsigned(regs[rs2]) | !csr_write_mask | __mstatus_high_guard);
