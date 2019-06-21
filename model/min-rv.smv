@@ -153,8 +153,6 @@ MODULE main
     -- register transitions
     #define next_reg(i) \
         (case \
-            !priv & op = ECALL & next(priv): 0sh_00; \
-            priv & op = MRET & !next(priv): 0sh_00; \
             rd != i | do_trap: regs[i]; \
             op = LOAD & can_load: memory[rs1]; \
             op = ADD: regs[rs1] + regs[rs2]; \
@@ -175,7 +173,6 @@ MODULE main
     -- Cast conf reg to signed on right shift for correct sign extension
     #define next_reg_conf(i) \
         (case \
-            priv & op = MRET & !next(priv): 0h_00; \
             rd != i | do_trap: regs_conf[i]; \
             op = LOAD & can_load: memory_conf[rs1]; \
             op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
@@ -204,7 +201,6 @@ MODULE main
 
     #define next_reg_integrity(i) \
         (case \
-            !priv & op = ECALL & next(priv): 0h_FF; \
             rd != i | do_trap: regs_integrity[i]; \
             op = LOAD & can_load: memory_integrity[i]; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
