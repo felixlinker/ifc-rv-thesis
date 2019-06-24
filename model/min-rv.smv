@@ -352,15 +352,15 @@ MODULE main
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
-    -- ... if machine-mode sanitizes user-mode input
-    LTLSPEC NAME NO_INFLUENCE_WHEN_SANITIZED :=
-        G (!priv & X priv -> X (op = SAN))
+    -- ... and if machine mode only loads from regions user-mode can't write to
+    LTLSPEC NAME NO_INFLUENCE_NO_PUBLIC_READS :=
+        G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
         -> G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
-    -- ... and if machine mode only loads from regions user-mode can't write to
-    LTLSPEC NAME NO_INFLUENCE_WHEN_SANITIZED_ONLY_PROTECTED_READS :=
+    -- ... if machine-mode sanitizes user-mode input
+    LTLSPEC NAME NO_INFLUENCE_NO_PUBLIC_READS_SANITIZED :=
         G (!priv & X priv -> X (op = SAN))
         & G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
         -> G (
