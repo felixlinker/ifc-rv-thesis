@@ -248,16 +248,16 @@ MODULE main
 
     TRANS next(memory_integrity)[0] = (store_targeted(0)
         ? regs_integrity[rs1]
-        : __mem_init_integrity[0]);
+        : memory_integrity[0]);
     TRANS next(memory_integrity)[1] = (store_targeted(1)
         ? regs_integrity[rs1]
-        : __mem_init_integrity[1]);
+        : memory_integrity[1]);
     TRANS next(memory_integrity)[2] = (store_targeted(2)
         ? regs_integrity[rs1]
-        : __mem_init_integrity[2]);
+        : memory_integrity[2]);
     TRANS next(memory_integrity)[3] = (store_targeted(3)
         ? regs_integrity[rs1]
-        : __mem_init_integrity[3]);
+        : memory_integrity[3]);
 
     DEFINE
         leak_assumptions := priv = TRUE
