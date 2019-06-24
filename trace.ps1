@@ -3,6 +3,7 @@ param(
     [string]$out = ".\dist\trace.html",
     [string]$cmd = ".\trace-bmc.template",
     [int]$tracelen = 10,
+    [Parameter(Mandatory=$True)]
     [string]$prop
 )
 
