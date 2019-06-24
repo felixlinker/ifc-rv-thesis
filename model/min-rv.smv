@@ -43,12 +43,6 @@ MODULE main
         __csrs_integrity := [ 0h_FF, 0h_FF ];
         mstatus := csrs[0];
         pmpcfg := csrs[1];
-        __init_conf_leak := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
-        __init_conf_influence := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
-        __mem_init_conf := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
-        __init_integrity_leak := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
-        __init_integrity_influence := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
-        __mem_init_integrity := [ 0h_FF, 0h_FF, 0h_00, 0h_00 ];
 
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
@@ -70,6 +64,22 @@ MODULE main
     VAR
         pmpcfg0 : pmpcfg_module(pmpcfg[3:0]);
         pmpcfg1 : pmpcfg_module(pmpcfg[7:4]);
+
+    DEFINE
+        __init_high := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
+        __init_low := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
+    INIT priv <-> regs_integrity = __init_high;
+    INIT !priv <-> regs_integrity = __init_low;
+    INIT priv <-> regs_conf = __init_high;
+    INIT !priv <-> regs_conf = __init_low;
+    INIT !pmpcfg0.read <-> memory_conf[0] = 0h_FF & memory_conf[1] = 0h_FF;
+    INIT pmpcfg0.read <-> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00;
+    INIT !pmpcfg0.write <-> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF;
+    INIT pmpcfg0.write <-> memory_integrity[0] = 0h_00 & memory_integrity[1] = 0h_00;
+    INIT !pmpcfg1.read <-> memory_conf[2] = 0h_FF & memory_conf[3] = 0h_FF;
+    INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
+    INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
+    INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
 
     IVAR
         op : {
@@ -259,17 +269,9 @@ MODULE main
         ? regs_integrity[rs1]
         : memory_integrity[3]);
 
-    DEFINE
-        leak_assumptions := priv = TRUE
-            & pmpcfg = 0b_0111_0000
-            & regs_conf = __init_conf_leak
-            & memory_conf = __mem_init_conf
-            & regs_integrity = __init_integrity_leak
-            & memory_integrity = __mem_init_integrity;
-
     -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
-    LTLSPEC NAME NO_LEAK := leak_assumptions -> G (priv | (
+    LTLSPEC NAME NO_LEAK := G (priv | (
         regs_conf[0] = 0h_00
         & regs_conf[1] = 0h_00
         & regs_conf[2] = 0h_00
@@ -277,8 +279,7 @@ MODULE main
     ));
     -- ... if machine mode clears its registers before returning
     LTLSPEC NAME NO_LEAK_SANITIZED :=
-        leak_assumptions
-        & G (
+        G (
             priv & op = MRET
             -> regs_conf[0] = 0h_00
                 & regs_conf[1] = 0h_00
@@ -291,32 +292,10 @@ MODULE main
             & regs_conf[2] = 0h_00
             & regs_conf[3] = 0h_00
         ));
-    -- ... and if machine mode does not write confidential information outside
-    -- of memory region 0
-    LTLSPEC NAME NO_LEAK_SANITIZED_NO_REGION1_STORE :=
-            leak_assumptions
-            & G (
-                priv & op = STORE & 0h_00 < regs_conf[rs1]
-                -> rd < REGION0_SIZE
-            )
-            & G (
-                priv & op = MRET
-                -> regs_conf[0] = 0h_00
-                    & regs_conf[1] = 0h_00
-                    & regs_conf[2] = 0h_00
-                    & regs_conf[3] = 0h_00
-            )
-        -> G (priv | (
-            regs_conf[0] = 0h_00
-            & regs_conf[1] = 0h_00
-            & regs_conf[2] = 0h_00
-            & regs_conf[3] = 0h_00
-        ));
     -- ... and if machine mode does not declassify memory regions that have
     -- confidential data in them
     LTLSPEC NAME NO_LEAK_SANITIZED_NO_MEM_DECLASSIFICATION :=
-            leak_assumptions
-            & G (
+            G (
                 priv & op in { CSRRS, CSRRC } & 0 < rs1
                 ->
                     ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
@@ -340,8 +319,7 @@ MODULE main
             ));
     -- ... and if machine mode does not write into memory that is publicly readable
     LTLSPEC NAME NO_LEAK_SANITIZED_NO_USE_DECLASSIFIED_MEM :=
-            leak_assumptions
-            & G (
+            G (
                 priv & op in { CSRRS, CSRRC } & 0 < rs1
                 ->
                     ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
@@ -367,44 +345,24 @@ MODULE main
             & regs_conf[3] = 0h_00
         ));
 
-    DEFINE
-        influence_assumptions := priv = FALSE
-            & pmpcfg = 0b_0111_0000
-            & regs_conf = __init_conf_influence
-            & memory_conf = __mem_init_conf
-            & regs_integrity = __init_integrity_influence
-            & memory_integrity = __mem_init_integrity;
-
     -- Control and status registers are only written with machine-mode
     -- controlled values
     LTLSPEC NAME NO_INFLUENCE :=
-        influence_assumptions
-        -> G (
+        G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
     -- ... if machine-mode sanitizes user-mode input
     LTLSPEC NAME NO_INFLUENCE_WHEN_SANITIZED :=
-        influence_assumptions
-        & G (!priv & X priv -> X (op = SAN))
+        G (!priv & X priv -> X (op = SAN))
         -> G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
     -- ... and if machine mode only loads from regions user-mode can't write to
     LTLSPEC NAME NO_INFLUENCE_WHEN_SANITIZED_ONLY_PROTECTED_READS :=
-        influence_assumptions
-        & G (!priv & X priv -> X (op = SAN))
+        G (!priv & X priv -> X (op = SAN))
         & G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
-        -> G (
-            priv & op in { CSRRS, CSRRC }
-            -> regs_integrity[rs2] = 0h_FF
-        );
-    -- ... or if we only load from region0
-    LTLSPEC NAME NO_INFLUENCE_WHEN_SANITIZED_ONLY_REGION0_READS :=
-        influence_assumptions
-        & G (!priv & X priv -> X (op = SAN))
-        & G (priv & op = LOAD -> rs1 < REGION0_SIZE)
         -> G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
