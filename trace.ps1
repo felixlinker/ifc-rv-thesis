@@ -36,8 +36,10 @@ foreach ($prop in $props) {
     nuXmv.exe -source $replaced_cmd.FullName
 
     # Map the trace to an html table
-    $out = Join-Path $outDir ($prop + ".html")
-    smvtrcviz.bat $trace.FullName $out
+    if ($Null -ne (Get-Content $trace.FullName)) {
+        $out = Join-Path $outDir ($prop + ".html")
+        smvtrcviz.bat $trace.FullName $out
+    }
 }
 
 # Clean up temporary files
