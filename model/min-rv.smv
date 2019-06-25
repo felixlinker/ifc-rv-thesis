@@ -17,6 +17,69 @@
 
 #define clamp(v, l, h) (min(max((v), l), h))
 
+MODULE cache_line(main_module)
+    VAR
+        addr : 0..3;
+        valid : boolean;
+        line : signed word[XLEN];
+        conf : unsigned word[XLEN];
+        integrity : unsigned word[XLEN];
+
+    DEFINE
+        __can_cache_read := (main_module.rs1 < REGION0_SIZE
+            ? !main_module.pmacfg0.uncached
+            : !main_module.pmacfg1.uncached);
+        __can_cache_write := (main_module.rd < REGION0_SIZE
+            ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
+            : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
+        __read_hit := main_module.rs1 = addr;
+        __write_hit := main_module.rd = addr;
+        __read := (__read_hit & valid ? line : main_module.memory[main_module.rs1]);
+        __read_conf := (__read_hit & valid
+            ? conf
+            : main_module.memory_conf[main_module.rs1]);
+        __read_integrity := (__read_hit & valid
+            ? integrity
+            : main_module.memory_integrity[main_module.rs1]);
+
+        __op := main_module.op;
+        __rd := main_module.rd;
+        __rs1 := main_module.rs1;
+
+    INIT valid = FALSE;
+
+    TRANS next(valid) = case
+        __op = LOAD: __can_cache_read;
+        __op = STORE & __write_hit: __can_cache_write;
+        TRUE: valid;
+    esac;
+
+    TRANS next(addr) = case
+        __op = LOAD & __can_cache_read: __rs1;
+        __op = STORE & __can_cache_write & __write_hit: __rd;
+        TRUE: addr;
+    esac;
+
+    #define trans(read_source, write_source, default) \
+        (case \
+            __op = LOAD & __can_cache_read: read_source[__rs1]; \
+            __op = STORE & __can_cache_write & __write_hit: \
+                write_source[__rs1]; \
+            TRUE: default; \
+        esac)
+
+    TRANS next(line) = trans(main_module.memory, main_module.regs, line);
+    TRANS next(conf) = trans(
+        main_module.memory_conf,
+        main_module.regs_conf,
+        conf
+    );
+    TRANS next(integrity) = trans(
+        main_module.memory_integrity,
+        main_module.regs_integrity,
+        integrity
+    );
+
 MODULE pmpcfg_module(base_reg)
     DEFINE
         locked := bool(base_reg[3:3]);
@@ -24,25 +87,34 @@ MODULE pmpcfg_module(base_reg)
         write := bool(base_reg[1:1]);
         read := bool(base_reg[0:0]);
 
+MODULE pmacfg_module(base_reg)
+    DEFINE
+        uncached := base_reg[1:0] = 0b_00;
+        write_through := base_reg[1:0] = 0b_01;
+        write_back := base_reg[1:0] = 0b_10;
+        write_protected := base_reg[1:0] = 0b_11;
+
 MODULE main
     VAR
         priv : boolean;
-        csrs : array 0..1 of unsigned word[XLEN];
+        csrs : array 0..2 of unsigned word[XLEN];
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
         regs_integrity : array 0..3 of unsigned word[XLEN];
         memory : array 0..3 of signed word[XLEN];
         memory_conf : array 0..3 of unsigned word[XLEN];
         memory_integrity : array 0..3 of unsigned word[XLEN];
+        cache : cache_line(self);
 
     DEFINE
-        __csrs_read_privs := [ 0h_FF, 0h_00 ];
-        __csrs_write_privs := [ 0h_FF, 0h_FF ];
+        __csrs_read_privs := [ 0h_FF, 0h_00, 0h_00 ];
+        __csrs_write_privs := [ 0h_FF, 0h_FF, 0h_FF ];
         __priv_vec := (priv ? 0h_FF : 0h_00);
-        __csrs_conf := [ 0h_FF, 0h_00 ];
-        __csrs_integrity := [ 0h_FF, 0h_FF ];
+        __csrs_conf := [ 0h_FF, 0h_00, 0h_00 ];
+        __csrs_integrity := [ 0h_FF, 0h_FF, 0h_FF ];
         mstatus := csrs[0];
         pmpcfg := csrs[1];
+        pmacfg := csrs[2];
 
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
@@ -64,6 +136,8 @@ MODULE main
     VAR
         pmpcfg0 : pmpcfg_module(pmpcfg[3:0]);
         pmpcfg1 : pmpcfg_module(pmpcfg[7:4]);
+        pmacfg0 : pmacfg_module(pmacfg[3:0]);
+        pmacfg1 : pmacfg_module(pmacfg[7:4]);
 
     DEFINE
         __init_high := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
@@ -80,6 +154,7 @@ MODULE main
     INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
     INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
+    INIT (pmacfg & 0h_CC) = 0h_00;
 
     IVAR
         op : {
@@ -91,7 +166,7 @@ MODULE main
         rs2 : 0..3;
         m_external_interrupt : unsigned word[1];
     DEFINE
-        csr_rs := min(rs1, 1);
+        csr_rs := rs1 mod 3;
 
     DEFINE
         -- TODO: Throw on a load without privileges?
@@ -158,13 +233,21 @@ MODULE main
             TRUE: pmpcfg;
         esac;
 
+    -- pmacfg has four unused bits in total
+    TRANS next(pmacfg) = case
+        do_trap | csr_rs != 2: pmacfg;
+        op = CSRRC: pmacfg & (unsigned(regs[rs2]) | !csr_write_mask | 0h_CC);
+        op = CSRRS: pmacfg | (unsigned(regs[rs2]) & csr_write_mask & 0h_33);
+        TRUE: pmacfg;
+    esac;
+
     DEFINE
         csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
     -- register transitions
     #define next_reg(i) \
         (case \
             rd != i | do_trap: regs[i]; \
-            op = LOAD & can_load: memory[rs1]; \
+            op = LOAD & can_load: cache.__read; \
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
@@ -186,7 +269,7 @@ MODULE main
             do_trap: regs_conf[i]; \
             op = CLR: 0h_00; \
             rd != i: regs_conf[i]; \
-            op = LOAD & can_load: memory_conf[rs1]; \
+            op = LOAD & can_load: cache.__read_conf; \
             op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
@@ -216,7 +299,7 @@ MODULE main
             do_trap: regs_integrity[i]; \
             op = SAN: 0h_FF; \
             rd != i: regs_integrity[i]; \
-            op = LOAD & can_load: memory_integrity[rs1]; \
+            op = LOAD & can_load: cache.__read_integrity; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
             op = ADD: least_one_extended( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
@@ -245,29 +328,70 @@ MODULE main
     TRANS next(regs_integrity)[3] = next_reg_integrity(3);
 
     -- memory transitions
-    #define store_targeted(i) (rd = i & !do_trap & op = STORE & can_write)
-    TRANS next(memory)[0] = (store_targeted(0) ? regs[rs1] : memory[0]);
-    TRANS next(memory)[1] = (store_targeted(1) ? regs[rs1] : memory[1]);
-    TRANS next(memory)[2] = (store_targeted(2) ? regs[rs1] : memory[2]);
-    TRANS next(memory)[3] = (store_targeted(3) ? regs[rs1] : memory[3]);
+    #define store_targeted(i) (rd = i & !do_trap & op = STORE & can_write \
+        & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back))
+    #define try_store(i, r_source, mem_source, write_back_source) \
+        (case \
+            store_targeted(i): r_source[rs1]; \
+            cache.addr = i & next(cache.addr) != i & cache.valid \
+            & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back): \
+                write_back_source; \
+            TRUE: mem_source[i]; \
+        esac)
+    TRANS next(memory)[0] = try_store(0, regs, memory, cache.__read);
+    TRANS next(memory)[1] = try_store(1, regs, memory, cache.__read);
+    TRANS next(memory)[2] = try_store(2, regs, memory, cache.__read);
+    TRANS next(memory)[3] = try_store(3, regs, memory, cache.__read);
 
-    TRANS next(memory_conf)[0] = (store_targeted(0) ? regs_conf[rs1] : memory_conf[0]);
-    TRANS next(memory_conf)[1] = (store_targeted(1) ? regs_conf[rs1] : memory_conf[1]);
-    TRANS next(memory_conf)[2] = (store_targeted(2) ? regs_conf[rs1] : memory_conf[2]);
-    TRANS next(memory_conf)[3] = (store_targeted(3) ? regs_conf[rs1] : memory_conf[3]);
+    TRANS next(memory_conf)[0] = try_store(
+        0,
+        regs_conf,
+        memory_conf,
+        cache.conf
+    );
+    TRANS next(memory_conf)[1] = try_store(
+        1,
+        regs_conf,
+        memory_conf,
+        cache.conf
+    );
+    TRANS next(memory_conf)[2] = try_store(
+        2,
+        regs_conf,
+        memory_conf,
+        cache.conf
+    );
+    TRANS next(memory_conf)[3] = try_store(
+        3,
+        regs_conf,
+        memory_conf,
+        cache.conf
+    );
 
-    TRANS next(memory_integrity)[0] = (store_targeted(0)
-        ? regs_integrity[rs1]
-        : memory_integrity[0]);
-    TRANS next(memory_integrity)[1] = (store_targeted(1)
-        ? regs_integrity[rs1]
-        : memory_integrity[1]);
-    TRANS next(memory_integrity)[2] = (store_targeted(2)
-        ? regs_integrity[rs1]
-        : memory_integrity[2]);
-    TRANS next(memory_integrity)[3] = (store_targeted(3)
-        ? regs_integrity[rs1]
-        : memory_integrity[3]);
+    TRANS next(memory_integrity)[0] = try_store(
+        0,
+        regs_integrity,
+        memory_integrity,
+        cache.integrity
+    );
+    TRANS next(memory_integrity)[1] = try_store(
+        1,
+        regs_integrity,
+        memory_integrity,
+        cache.integrity
+    );
+    TRANS next(memory_integrity)[2] = try_store(
+        2,
+        regs_integrity,
+        memory_integrity,
+        cache.integrity
+    );
+    TRANS next(memory_integrity)[3] = try_store(
+        3,
+        regs_integrity,
+        memory_integrity,
+        cache.integrity
+    );
 
     -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
@@ -298,9 +422,15 @@ MODULE main
             G (
                 priv & op in { CSRRS, CSRRC } & 0 < rs1
                 ->
-                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
+                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1]
+                        & (cache.valid & cache.addr < REGION0_SIZE
+                            -> 0h_00 = cache.conf
+                        ))
                         | X !pmpcfg0.read)
-                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3])
+                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3]
+                        & (cache.valid & REGION0_SIZE <= cache.addr
+                            -> 0h_00 = cache.conf
+                        ))
                         | X !pmpcfg1.read)
                 )
             & G (priv & op = STORE -> rd < REGION0_SIZE)
@@ -322,9 +452,15 @@ MODULE main
             G (
                 priv & op in { CSRRS, CSRRC } & 0 < rs1
                 ->
-                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1])
+                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1]
+                        & (cache.valid & cache.addr < REGION0_SIZE
+                            -> 0h_00 = cache.conf
+                        ))
                         | X !pmpcfg0.read)
-                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3])
+                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3]
+                        & (cache.valid & REGION0_SIZE <= cache.addr
+                            -> 0h_00 = cache.conf
+                        ))
                         | X !pmpcfg1.read)
             )
             & G (
