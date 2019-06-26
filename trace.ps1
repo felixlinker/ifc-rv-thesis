@@ -20,7 +20,7 @@ $trace = New-TemporaryFile
 $replaced_cmd = New-TemporaryFile
 
 # Preprocess the model with the WSL c-preprocessor
-bash -c "cpp $in".replace("\", "/") `
+wsl /bin/bash -c "cpp $in".replace("\", "/") `
     | Out-File -Encoding ascii $preprocessed.FullName
 
 foreach ($prop in $props) {
