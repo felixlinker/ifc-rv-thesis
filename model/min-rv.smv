@@ -214,7 +214,7 @@ MODULE main
             :: MIE                  -- MPIE := MIE
             :: word1(priv)          -- MPP := priv
         : __meip_input | case
-            priv & op = MRET: mstatus[7:2] :: 0b_10;
+            priv & op = MRET: mstatus[7:3] :: MPIE :: 0b_10;
             csr_rs != 0: mstatus;
             op = CSRRC: mstatus & (unsigned(regs[rs2]) | !csr_write_mask | __mstatus_high_guard);
             op = CSRRS: mstatus | (unsigned(regs[rs2]) & csr_write_mask & __mstatus_low_guard);
