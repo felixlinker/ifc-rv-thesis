@@ -97,7 +97,7 @@ MODULE pmacfg_module(base_reg)
 MODULE main
     VAR
         priv : boolean;
-        csrs : array 0..2 of unsigned word[XLEN];
+        csrs : array 0..1 of unsigned word[XLEN];
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
         regs_integrity : array 0..3 of unsigned word[XLEN];
@@ -107,14 +107,14 @@ MODULE main
         cache : cache_line(self);
 
     DEFINE
-        __csrs_read_privs := [ 0h_FF, 0h_00, 0h_00 ];
-        __csrs_write_privs := [ 0h_FF, 0h_FF, 0h_FF ];
+        __csrs_read_privs := [ 0h_F0, 0h_00 ];
+        __csrs_write_privs := [ 0h_FF, 0h_FF ];
         __priv_vec := (priv ? 0h_FF : 0h_00);
-        __csrs_conf := [ 0h_FF, 0h_00, 0h_00 ];
-        __csrs_integrity := [ 0h_FF, 0h_FF, 0h_FF ];
+        __csrs_conf := [ 0h_F0, 0h_00 ];
+        __csrs_integrity := [ 0h_FF, 0h_FF ];
         mstatus := csrs[0];
+        pmacfg := mstatus[7:4];
         pmpcfg := csrs[1];
-        pmacfg := csrs[2];
 
     -- Initialize mstatus to have interrupts enable and nothing else
     INIT mstatus = 0b_00000110;
@@ -127,17 +127,14 @@ MODULE main
         MPIE := mstatus[1:1];
         MIE := mstatus[2:2] | word1(!priv);
         MEIP := mstatus[3:3];
-        MSIP := mstatus[4:4];
-        mscratch := mstatus[5:5];
-        mcause := mstatus[7:6];
 
-        do_trap := (op = ECALL) | (bool(MIE) & bool(MEIP | MSIP));
+        do_trap := (op = ECALL) | (bool(MIE) & bool(MEIP));
 
     VAR
         pmpcfg0 : pmpcfg_module(pmpcfg[3:0]);
         pmpcfg1 : pmpcfg_module(pmpcfg[7:4]);
-        pmacfg0 : pmacfg_module(pmacfg[3:0]);
-        pmacfg1 : pmacfg_module(pmacfg[7:4]);
+        pmacfg0 : pmacfg_module(pmacfg[1:0]);
+        pmacfg1 : pmacfg_module(pmacfg[3:2]);
 
     DEFINE
         __init_high := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
@@ -154,7 +151,6 @@ MODULE main
     INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
     INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
-    INIT (pmacfg & 0h_CC) = 0h_00;
 
     IVAR
         op : {
@@ -166,7 +162,7 @@ MODULE main
         rs2 : 0..3;
         m_external_interrupt : unsigned word[1];
     DEFINE
-        csr_rs := rs1 mod 3;
+        csr_rs := rs1 mod 2;
 
     DEFINE
         -- TODO: Throw on a load without privileges?
@@ -203,13 +199,7 @@ MODULE main
         csr_write_mask := __csrs_write_privs[csr_rs] -> __priv_vec;
         __meip_input := resize(m_external_interrupt, XLEN) << 3;
     TRANS next(mstatus) = (do_trap
-        ? (case                     -- set mcause
-                bool(MEIP): 0b_00;
-                bool(MSIP): 0b_01;
-                TRUE: 0b_10;        -- op = ECALL
-            esac)
-            :: mstatus[5:5]         -- preserve mscratch
-            :: (MEIP & MSIP)        -- MSIP can only be taken if !MEIP
+        ?   pmacfg                  -- preserve pmacfg
             :: 0b_00                -- MEIP := 0 and MIE := 0
             :: MIE                  -- MPIE := MIE
             :: word1(priv)          -- MPP := priv
@@ -232,14 +222,6 @@ MODULE main
             ));
             TRUE: pmpcfg;
         esac;
-
-    -- pmacfg has four unused bits in total
-    TRANS next(pmacfg) = case
-        do_trap | csr_rs != 2: pmacfg;
-        op = CSRRC: pmacfg & (unsigned(regs[rs2]) | !csr_write_mask | 0h_CC);
-        op = CSRRS: pmacfg | (unsigned(regs[rs2]) & csr_write_mask & 0h_33);
-        TRUE: pmacfg;
-    esac;
 
     DEFINE
         csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
@@ -392,6 +374,10 @@ MODULE main
         memory_integrity,
         cache.integrity
     );
+
+    -- This property is here to be targeted by the user to check whether the
+    -- model is syntactically correct without starting expensive proofs.
+    LTLSPEC NAME SYNTAX_CANARY := TRUE;
 
     -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
