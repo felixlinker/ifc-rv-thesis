@@ -19,9 +19,11 @@ $preprocessed = New-TemporaryFile
 $trace = New-TemporaryFile
 $replaced_cmd = New-TemporaryFile
 
-# Preprocess the model with the WSL c-preprocessor
-wsl /bin/bash -c "cpp $in".replace("\", "/") `
-    | Out-File -Encoding ascii $preprocessed.FullName
+# Load command line tools of visual studio as described in
+#  https://stackoverflow.com/a/2124759/7194995
+VsDevCmd.ps1
+# Preprocess the model
+cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed.FullName
 
 foreach ($prop in $props) {
     # Replace template-like variables in the command file
@@ -38,6 +40,7 @@ foreach ($prop in $props) {
     # Map the trace to an html table
     if ($Null -ne (Get-Content $trace.FullName)) {
         $out = Join-Path $outDir ($prop + ".html")
+        # Execute https://github.com/felixlinker/smvtrcviz by script
         smvtrcviz.bat $trace.FullName $out
     }
 }
