@@ -3,15 +3,16 @@
 \gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and since then has undergone many changes.
 \gls{riscv} divides its architectural specification into two volumes: in volume 1 the base user-level \gls{isa} is described which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
 The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
-Such groups include for example machine- and supervisor-level \glspl{isa} and the description of platform level interrupt controllers.
+Such groups include for example machine- and supervisor-level \glspl{isa} and the description of a platform level interrupt controller.
 
 % TODO: Add motiviation/goals of RISC-V
 
 In this thesis, we work with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
 \gls{riscv} understands itself as a highly customizable architecture.
-There are currently four variants of a base integer instruction set - one of which must be implemented by any \gls{riscv} processor - and a couple of optional extensions.
-A base integer instruction set includes instructions for integer arithmetic, memory operations (loads and stores), control transfer (jumps and branches) and some system instructions (environment calls and status register operations).
-They mainly differ in the word-size and register number and make small adjustments to cope with these but only introduce slight changes to the instruction set itself.
+Currently, there are four variants of a base integer instruction set - one of which must be implemented by any \gls{riscv} processor - and 13 of optional extensions.
+The base integer instruction sets include instructions for integer arithmetic, memory operations (loads and stores), control transfer (jumps and branches) and platform management (environment calls and status register operations).
+The base integer instruction sets mainly differ in the word-size and register number.
+To cope with these differences, they also make small adjustments to some functionalities but only introduce slight changes to the instruction set itself.
 These four base integer instruction sets are given by:
 \begin{description}
     \item[RV32I] Base integer instruction set
@@ -56,30 +57,30 @@ A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{Ri
     <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
 \end{grammar}
 
-An example for a naming string is the very common subset of the \gls{isa} RV64IMAFD which officially is abbreviated by RV64G.
+An example for a naming string is the very common \gls{isa}-subset RV64IMAFD which officially is abbreviated by RV64G.
 This subset includes the integer multiplication and division, user-level interrupts, atomic instructions, single-precision and double-precision floating-point arithmetic extensions.
 
-We chose to go with the \gls{riscv} architecture for the approach of this thesis because of its high customizability.
-More specifically, we will be working with the RV32EN \gls{isa} subset, i.e. a 32-bit word-length core that supports integer arithmetic for embedded systems and user-level interrupts.
-The base integer instruction set only offers some core functionality that can easily be understood and modeled while it is not artificially or overly simplified thus we hope that our findings are relevant to and applicable for other real-world architectures.
+This section will introduce the core of the \gls{riscv} architecture by shedding light on the base integer instruction set in section \ref{sec:rv-base-int-isa} and the mechanisms of the privileged part of the architecture in \ref{sec:rv-priv-arch}.
 
-\subsection{Core Functionality of RISC-V}
+\subsection{The Base Integer Instruction Set}
+\label{sec:rv-base-int-isa}
 
-Let us first take a look at how the base integer arithmetic \gls{isa} works.
 A \gls{riscv} core consists of multiple \glspl{hart}.
-Each \gls{hart} has its own registers including a \gls{pc} and its own independent instruction fetch unit.
+Each \gls{hart} controls its own registers including a \gls{pc} and is equipped with its own instruction fetch unit.
 However, multiple \glspl{hart} share the same memory.
-In this work, we only consider single \gls{hart} cores as an asynchronous model of memory and interleaving computations is out of scope.
 
 \subsubsection{Registers}
-A \gls{hart} might either have 15 or 31 general purpose registers.
-All but the RV32E base instruction sets support 31 general purpose registers whereas the base instruction set aimed at embedded computing only supports 15 general purpose registers.
-General purpose registers are named x1-x31.
-Additionally, there is the register x0 which is hardwired to zero and may be targeted by instructions like any other general purpose register.
+A \gls{hart} might either control 16 or 32 general purpose registers which are named from x0 to x32.
+All but the RV32E base instruction sets support 32 general purpose registers whereas the base instruction set aimed at embedded computing only supports 16 general purpose registers.
+
+The first of these general purpose registers is hardwired to zero and might be used as a target register when the result of an instruction is not needed.
+This might seem overly restrictive at first glance but having such a dedicated \enquote{sink}-register serves a purpose as hardware can take benefit of this extra knowledge to perform optimizations.
+For example, \gls{riscv} defines the pseudo-instruction \gls{nop} as \assmblrinline{ADDI x0, x0, 0} the semantics of which is: Add the constant value 0 to x0 and store the result in x0.
+The intention of which is to \textcquote{RiscVISA}{define a canonical NOP encoding to allow microarchitectural optimizations} which is only possible because the hardware can know that no register will \textit{truly} be read or written so a \gls{nop} might terminate directly without waiting for the \gls{alu} to calculate some values which will never be used.
 
 In \gls{riscv}, there is no dedicated \gls{lr} or \gls{sp}.
 Instead, it is the obligation of the software to implement certain calling conventions.
-Both jump instructions of \gls{riscv}, \gls{jal} and \gls{jalr}, receive a general purpose register as argument to which they store the return address of the respective jump.
+Both jump instructions of \gls{riscv}, \gls{jal} and \gls{jalr}, receive a general purpose register as argument to which they store the return address of the respective jump which - in practice - will be the \gls{lr}.
 
 \gls{riscv} supports up to 4096 \glspl{csr} for additional state.
 On the user-level without any extension, there are no \glspl{csr} present so we will postpone a more detailed introduction to \glspl{csr} to section \ref{sec:rv-priv-arch} where we have a look at the privileged architecture of \gls{riscv}.
@@ -87,7 +88,7 @@ On the user-level without any extension, there are no \glspl{csr} present so we 
 \subsubsection{Instructions}
 
 \paragraph{Integer arithmetic and boolean instructions}
-The base integer instruction set supports a couple of instructions for $ + $ and $ - $ and integer comparisons as well as the boolean operators $ \land $, $ \lor $ and $ \oplus $.
+The base integer instruction set provides instructions for plus and minus, integer comparisons and the boolean operators AND, OR and XOR.
 Most of these instructions are implemented in two version: a register version (or R-type instruction) and an immediate version (or I-type instruction).
 In the first case the two operands are given as registers and in the second case one operand is given as register and the other as an immediate value read from memory.
 In either case the value is stored in a destination register.
@@ -95,7 +96,7 @@ In either case the value is stored in a destination register.
 These basic instructions are all side effect free besides from advancing the program counter which means that if the destination register is x0, each of them encodes a no-operation instruction.
 This property makes them particularly easy to analyze.
 However, as a side-effect, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
-There also are no special instructions to handle this.
+There also is no special instruction to handle this.
 The authors of the manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
 
 \begin{assmblr}[caption={General overflow checking \cite{RiscVISA}},label={snpt:rv-overflow}]
@@ -109,15 +110,11 @@ The gist of snippet \ref{snpt:rv-overflow} boils down to: we can check if there 
 
 \paragraph{Memory operations}
 There are two types of instructions that deal with external memory.
-Firstly, simple load and store instructions that or write to memory.
+Firstly, simple load and store instructions that read from or write to memory.
 Secondly, FENCE instructions that synchronize memory access between multiple \glspl{hart}.
-We will ignore the category of FENCE instructions in this thesis as we already declared \gls{riscv} cores with multiple \glspl{hart} to be out of scope.
-Handling instructions that have the sole purpose to synchronize the operations of multiple \glspl{hart} where only one \gls{hart} is present does not make sense.
-% TODO: references
-Furthermore, the investigation of safety of memory models as a field in its own right, c.f. the works of .
 
-Load and store operations in \gls{riscv} can read or write words of size 8-, 16-, 32-, 64- or 128-bits, depending on the maximum word length of the base instruction set of choice.
-Therefore, memory in \gls{riscv} is byte-addressable.
+Memory in \gls{riscv} is byte-addressable.
+Therefore, load and store operations in \gls{riscv} can read or write words of size 8-, 16-, 32-, 64- or 128-bits, depending on the maximum word length of the base instruction set of choice.
 Read- and write-addresses don't have to be aligned by software before using them, however, if they are not, the architecture must first align them before fetching from or storing to them, i.e. reading a 32-bit word from memory at address 0x1 is impossible.
 If this address is given as argument to a respective load instruction it'll be aligned to the address 0x0.
 
@@ -127,15 +124,25 @@ In short, jumps are performed unconditionally and can target a wider range in me
 
 In contrast to memory operations, addresses targeted by jumps must be aligned correctly otherwise an exception will be generated.
 
-Jumps are intended to call routines and functions whereas branches are intended to control the program flow of one such routine or function.
+Jumps are intended to call routines and functions.
+This is why they store a return address to some general purpose register.
+Branches on the other hand are intended to control the program flow of one such routine or function, e.g. to implement an \textit{if-else} structure or \textit{for}-loops where code won't return from the branched execution.
 \gls{riscv} is agnostic about the details of calling conventions for routines, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
 
-\paragraph{System instructions}
-The last type of instructions we will have a look at are system instructions.
+\paragraph{Platform management instructions}
+The last type of instructions we will have a look at are platform management instructions.
 The \gls{riscv} manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions that perform operations that potentially need some form of privilege.
-Examples for the former category are straight forward, e.g. \gls{riscv} knows instruction to read or write complete \glspl{csr} but also knows operations to modify single bits only.
+Examples for the former category are straight forward.
+\gls{riscv} knows instructions to read or write complete \glspl{csr} but also knows operations to modify single bits only.
 For the latter category, \gls{riscv} only knows two instructions at the base instruction set level which are \gls{ecall} and \gls{ebreak} instructions.
 We will inspect these instructions in more detail in section \ref{sec:rv-priv-arch}.
+
+\paragraph{Summary}
+The base integer instruction set of \gls{riscv} gives you everything you need for implementing a comfortable turing-machine but pretty much nothing more.
+You can perform basic arithemtic with integers or bitvectors of booleans, load and store results of your calculations and abstract your code by using jumps and branches.
+At this point, there is no state with predefined semantics, i.e. all state available is given by storage that can only infuence computation when used by a programmer.
+
+Only the platform management instructions give a hint on the complexity that is offered by the \gls{riscv} architecture to allow abstracting processing done on the core.
 
 \subsection{Privileged Architecture of RISC-V}
 \label{sec:rv-priv-arch}
