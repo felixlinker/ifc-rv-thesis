@@ -348,12 +348,12 @@ These interrupt-types are associated with indices in the range from $ 0_{10} $ t
     The two least significant bits of the interrupt indices correspond to their respective mode thus 2, 6 and 10 are reserved as their two least significant bits are 10 corresponding to hypervisor-mode.
 }.
 An overview of all interrupt codes can be found in table \ref{tbl:interrupt-exception-codes}.
-Interrupts can be set pending individually in the \gls{mip}.
+Interrupts can be set pending individually in the \gls{mip} register.
 An interrupt is set pending if the bit corresponding the interrupts index is set to 1.
 
 If an interrupt or exception is pending, it must first be decided which privlege mode should take the trap to handle the exception generated.
 By default, all interrupts and exceptions will be handled by machine-mode.
-However, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg}\footnote{%
+However, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg} register\footnote{%
     It would also be possible to delegate traps by using the \gls{mret} instruction and setting all corresponding \glspl{csr} accordingly.
     However, this would come with a higher latency as a couple of jumps would need to be performed first.
 }.
@@ -369,11 +369,11 @@ Analogously to the \gls{mip} register, an interrupt is enabled if the bit corres
 Additionally, there is the \gls{mstatus} register which can globally dis- or enable interrupt handling for a specific mode via its $ x\text{IE} $ bits ($ x \in \{ \text{M}, \text{S}, \text{U}\} $\footnote{%
     In future, we will simply use $ x $ or other variables as placeholders for a mode-flag without specifically introducing the variable.
 }).
-The \gls{ustatus} only is a restricted view on \gls{mstatus} and therefore \gls{mstatus} holds these bits not only for machine- but any mode.
+The \gls{ustatus} register only is a restricted view on \gls{mstatus} and therefore \gls{mstatus} holds these bits not only for machine- but any mode.
 These $ x\text{IE} $ fields, however, are only taken into account if the \gls{hart} operates at an equal or higher privilege mode than targeted, i.e. interrupts are always enabled globally it is targeting a mode of higher privilege than current operation.
 Finally, an interrupt will be taken if interrupts are globally enabled \textit{and} the interrupt itself is enabled in the \gls{mie} register.
 
-If a pending interrupt is taken, the \gls{mepc}, \gls{mcause} and \gls{mtval} are written and the platform will jump to a base address held by the \gls{mtvec}.
+If a pending interrupt is taken, the \gls{mepc}, \gls{mcause} and \gls{mtval} registers are written and the platform will jump to a base address held by the \gls{mtvec} register.
 \gls{mtvec} also holds a field that controls whether interrupts can be \textit{vectored}, i.e. for interrupts the \gls{pc} is not set to the base address for handling trap but to $ \text{base} + 4 \times \text{cause} $.
 \gls{mepc} holds the address of the original instruction stream that was preempted, i.e. either the address of the instruction that caused the exception or the instruction that was next to be executed as a external interrupt was taken.
 \gls{mcause} holds an identifier of the current interrupt or exception being handled by the trap.
@@ -506,7 +506,7 @@ If MXR is set, such reads can succeed if said region is also marked as readable.
 % TODO: is page-based virutal memory given?
 MXR is only applicable though, if page-based virtual memory is in place.
 
-The last register we will introduce is the \gls{mscratch} which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
+The last register we will introduce is the \gls{mscratch} register which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
 The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapped with a user register upon entry to a \textins{machine}-mode trap handler}.
 
 % TODO: Introduce pma- and pmpcfg
