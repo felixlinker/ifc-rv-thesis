@@ -147,6 +147,23 @@ Only the platform management instructions give a hint on the complexity that is 
 \subsection{Privileged Architecture of RISC-V}
 \label{sec:rv-priv-arch}
 
+The privileged architecture of \gls{riscv} in \cite{RiscVISAP} mainly specifies three concepts:
+\begin{enumerate}
+    \item Three levels of privilege
+    \item Exceptions, traps and interrupts
+    \item Memory attributes
+\end{enumerate}
+
+The three levels of privilege form the basis of everything that is defined by the privileged architecture.
+The purpose of interrupts and exceptions is not only to handle error conditions that arise during runtime but also to communicate between privlege layers.
+Therefore, interrupts and exceptions are being used by up to this point unmentioned auxiliary mechanisms of the architecture that aid the highest privilege in administrating the platform.
+
+Also, memory attributes rely on these levels of privilege as they define which mode is eligble to do some operation on some region of memory.
+
+In this section, we will subsequently introduce the aforementioned concepts and conclude with a sketch of the auxiliary mechanisms that build on top of these.
+
+\subsubsection{Levels of Privilege}
+
 \gls{riscv} knows three privilege levels: user-mode, supervisor-mode and machine-mode\footnote{%
     In an earlier version, there was a fourth privilege-mode being hypervisor-mode that sat between supervisor- and machine-mode.
     However, support for this mode has been dropped.
@@ -206,17 +223,18 @@ The \gls{see} runs in machine-mode.
     \label{fig:rv-priv-lvls}
 \end{figure}
 
-In this thesis, we will focus on secure embedded systems.
-This thesis is not about \glspl{os} but about information flow between different levels of privilege.
-We think that a third layer does not introduce new problems in principle but is mainly intended to help software developers with abstraction when writing code.
-We think that two levels of privilege will be enough to observe all key problems that arise when dealing with information flow.
-
+To keep things simple, we will focus on secure embedded systems in this thesis\footnote{%
+    This will be justified in more detail in section \ref{sec:model} where we introduce the model that will be verified as part of this thesis.
+}.
 This means that the architecture we will be working with supports two modes: user- and machine-mode.
-In volume 2 of the \gls{riscv} specification, \glspl{csr} for machine- and supervisor-mode are introduced.
-In conjunction with the N extension for user-level traps of the first volume, our design decision to support to privilege levels leaves us with 18 \glspl{csr} which are tightly coupled to trap and exception handling in \gls{riscv}.
+Machine-, user- and supervisor-mode do not simply form a linear order of privilege attributes of code execution.
+They differ in the concepts that are available to them and therefore must be handled seperately.
+However, as we will focus on secure embedded systems, we will leave out many parts of the specification which are about supervisor solely.
+Supervisor-mode will be handled wherever it fits in the bigger picture but not on its own.
 
 \subsubsection{Exceptions, traps and interrupts}
-Volume 1 introduces the concept of exceptions, traps and interrupts as follows:
+
+Volume 1 of the specifiction introduces the concept of exceptions, traps and interrupts as follows:
 \begin{displaycquote}{RiscVISA}
     We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
     We use the term \textit{trap} to refer to the synchronous transfer of control to a trap handler caused by an exceptional condition occurring within a RISC-V thread.
@@ -230,7 +248,7 @@ Volume 1 introduces the concept of exceptions, traps and interrupts as follows:
 \end{displaycquote}
 
 This - in short - means that a trigger-hierarchy for interrupts, traps and exceptions can be recognized which is depicted in figure \ref{fig:trigger-hierarch}.
-In general, interrupts occur asynchronously and trigger exceptions to be generated for a \gls{hart} which in turn may generate traps but also might be handled otherwise.
+In general, interrupts occur asynchronously and trigger synchronous exceptions to be generated for a \gls{hart} which in turn may generate traps but also might be handled otherwise.
 The specification mentions the example of the floating-point extension in which exceptions not necessarily generate traps.
 
 \begin{figure}
@@ -243,82 +261,15 @@ The specification mentions the example of the floating-point extension in which 
 \end{figure}
 
 For the sake of simplicity, we will assume that every exception causes a trap.
-As we do not implement any floating-point arithmetic extension, the specification does not demand from us to handle exceptions otherwise and doing so does not serve any purpose at this point.
-We want to keep our architectural model simple and easy to analyze which is aided by handling exceptions uniformly.
-
-\subsubsection{Control and Status Registers}
-% TODO: introduce this paragraph
-
-\paragraph{Static \glspl{csr}}
-There are a couple of \glspl{csr} in the \gls{riscv} architecture that hold static information that can be used by software to determine what specific platform it is running on and to identify the processor or \gls{hart} itself.
-Each of these registers can't be changed by any \gls{csr}-targeting instruction.
-We chose to not model these registers as they don't contain any information that either is relevant to this thesis or couldn't be modeled in another way.
-You can find an overview over these registers in table \ref{tbl:static-csrs}.
-
-\begin{table}
-    \centering
-    \renewcommand{\arraystretch}{1.25}
-    \begin{tabular}{| r | p{8cm} |}
-        \hline
-        \textbf{\acrshort{misa}} & Stores the word-length and implemented extensions of a given processor \\
-        \textbf{\acrshort{mvendorid}} & Stores an ID of the manufacturer of the processor \\
-        \textbf{\acrshort{marchid}} & Stores an ID of the concrete architecture that a given processor implements \\
-        \textbf{\acrshort{mimpid}} & Stores a version number of the architecture \\
-        \textbf{\acrshort{mhartid}} & Stores a unique ID per \gls{hart} of the processor \\
-        \hline
-    \end{tabular}
-    \caption{Static \glspl{csr}}
-    \label{tbl:static-csrs}
-\end{table}
-
-\paragraph{Timer and performance counter \glspl{csr}}
-There also is a group of registers dealing with timers and hardware performance monitoring, namely: \gls{mtime}, \gls{mtimecmp}, \gls{mcycle}, \gls{minstret}, \gls{mhpmcountern}, \gls{mhpmeventn} and \gls{mcounteren} but we won't go into detail here as we will be ignoring these registers as well.
-The reasoning for skipping these is not as straight-forward as for the previously introduced registers.
-In general, timer and performance counting registers can be used for side channel attacks.
-In \cite{Qian16} the authors give an overview over timing-side-channel-attacks which by their very nature always need to rely on some notion of time.
-This notion can be given by timer and performance counter registers which for example hold the number of instructions executed since a given point in time.
-For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplications and squarings being performed.
-Such a differentiation could be easily done if performance counter registers where to count such instructions and were to leak information to lower privilege levels.
-This means that in principle, timer and performance counter registers are relevant for the security of an architecture.
-However, we find that they do not introduce new notions of information flow to the architecture and are therefore redundant to our thesis.
-
-It is the case that contents of these registers are confidential as their contents might be used to introduce side-channels to other applications running on the processor.
-However, their core mechanisms are not unique.
-They can be read and written to and might generate interrupts but this is nothing new to the architecture.
-We therefore think that dealing with information flow in general is sufficient for our approach and will ignore these registers.
-
-\paragraph{Trap handling \glspl{csr}}
-\label{par:trap-csrs}
-By default, all interrupts and exceptions will be handled by machine-mode.
-There are, however, also mechanisms to delegate trap handling to less privileged modes.
-You can find an overview over all registers that have to do with trap handling in table \ref{tbl:trap-csrs}.
-As you can see, many of the machine-mode registers have a user-mode equivalent.
-Those \glspl{csr} which are available to user-mode would also be available to supervisor-mode in this context.
-Registers written in italic font are not actual registers on their own but provide a restricted view on their respective machine-mode counterparts.
-
-We will subsequently give an introduction to these registers by guiding the reader through the control flow on dealing with interrupts which is depicted in figure \ref{fig:interrupt-handling}.
+As we will not implement any floating-point arithmetic extension, the specification does not demand from us to handle exceptions otherwise and doing so does not serve any purpose at this point.
+In following paragraphs, we will give an introduction to the control flow of dealing with interrupts which is depicted in figure \ref{fig:interrupt-handling} and follows these steps:
+\begin{enumerate}
+    \item If an interrupt or exception is pending, determine the privlege mode to take the trap
+    \item Check if the interrupt is enabled
+    \item Take the trap
+    \item Return from trap handler
+\end{enumerate}
 Interrupt handling can be understood as a generalized form of exception handling as exception handling in principle works the same but has fewer steps.
-
-\begin{table}
-    \centering
-    \begin{tabular}{| c c || l |}
-        \hline
-        \textbf{Machine-mode} & \textbf{User-mode} & \textbf{Description} \\
-        \acrshort{mstatus} & \textit{\acrshort{ustatus}} & Status \\
-        \acrshort{mie} & \textit{\acrshort{uie}} & Interrupt enable \\
-        \acrshort{mip} & \textit{\acrshort{uip}} & Interrupt pending \\
-        \acrshort{mtvec} & \acrshort{utvec} & Trap-vector base address \\
-        \acrshort{mscratch} & \acrshort{uscratch} & Scratch \\
-        \acrshort{mepc} & \acrshort{uepc} & Exception program counter \\
-        \acrshort{mcause} & \acrshort{ucause} & Trap cause \\
-        \acrshort{mtval} & \acrshort{utval} & Trap value \\
-        \acrshort{medeleg} & & Exception delegation \\
-        \acrshort{mideleg} & & Interrupt delegation \\
-        \hline
-    \end{tabular}
-    \caption{Trap-handling \glspl{csr}}
-    \label{tbl:trap-csrs}
-\end{table}
 
 \begin{figure}
     \centering
@@ -380,107 +331,65 @@ Interrupt handling can be understood as a generalized form of exception handling
     \label{fig:interrupt-handling}
 \end{figure}
 
+\paragraph{Interrupt and exception handling}
 There are three categories of interrupts: external interrupts, timer interrupts and software interrupts.
+External interrupts are used to signal exceptional events occuring on some external device that is connected to the core.
+Timer interrupts can be used to track time.
+Code can use certain \glspl{csr} to signal to the platform that it needs to be alerted when a given amount of real world time has passed.
+Such an alert will be given by a timer interrupt.
+More on this in section \ref{sec:other-mechs}.
+Software interrupts can be set pending by software running on the same \gls{hart} with equal or higher privilege than the targeted privilege mode.
+Software interrupts have no predefined semantics and thus can be used by programmers or system designers in every imaginable way.
+
 Each of these categories of interrupts can target any privilege-mode netting a total of 6 interrupts available to the platform in our case (or 9 if supervisor-mode is supported).
-Each of these interrupt-types is associated with an index in the range of $ 0_{10} $ to $ 11_{10} $ also called interrupt code\footnote{%
+These interrupt-types are associated with indices in the range from $ 0_{10} $ to $ 11_{10} $, also called interrupt code\footnote{%
     The reader might have noticed that these are more indices than needed to encode all interrupts available - even if supervisor-mode is present.
     Indices 2, 6 and 10 currently are reserved because support for hypervisor-mode was dropped.
     The two least significant bits of the interrupt indices correspond to their respective mode thus 2, 6 and 10 are reserved as their two least significant bits are 10 corresponding to hypervisor-mode.
 }.
 An overview of all interrupt codes can be found in table \ref{tbl:interrupt-exception-codes}.
-Each of these interrupts can individually be dis- or enabled in the \gls{mie} register and also can be set pending individually in the \gls{mip} register.
-In both of these register, an interrupt is enabled or set pending if the bit corresponding the interrupts index is set to 1.
+Interrupts can be set pending individually in the \gls{mip}.
+An interrupt is set pending if the bit corresponding the interrupts index is set to 1.
 
-The \gls{mstatus} register can dis- or enable interrupt handling all in all for a specific mode via its $ x\text{IE} $ bits ($ x \in \{ \text{M}, \text{S}, \text{U}\} $\footnote{%
-    In future, we will simply use $ x $ or other variables as placeholders for a mode-flag without specifically introducing the variable.
-}).
-The \gls{ustatus} only is a restricted view on \gls{mstatus} and therefore \gls{mstatus} holds these bits not only for machine- but any mode.
-\gls{mstatus} also holds bits to \enquote{stack} certain values when handling exceptions or interrupts.
-Nested interrupts are only supported between privilege modes.
-On a trap to handle an interrupt in mode $ x $, interrupts are disabled and the value of the interrupt-enable bit is \enquote{stacked} into a prior-interrupt-enable bit $x\text{PIE} $ for this mode, i.e. $ x\text{PIE} := x\text{IE} $ and $ x\text{IE} := 0 $.
-Also, every interrupt is handled in a mode that is more or equally privileged than the mode it was targeting.
-Therefore there is a prior-privilege bit $ x\text{PP} $ that stores the privilege mode before the trap was taken.
-
-\gls{mstatus} additionally holds some bits that we will skip here as they specifically target supervisor-mode which will be ignored in this thesis.
-It also holds two bits that deal with memory privilege but these will be introduced at a later point in this section.
-
-If an interrupt is set pending via \gls{mip} by default it will be taken by machine-mode if the corresponding bit in \gls{mie} is set and interrupts are enabled globally.
-There are however, certain twists to when \enquote{interrupts are globally enabled}.
-Interrupts are globally enabled for machine-mode if:
-\begin{itemize}
-    \item Current mode is machine-mode and MIE in \gls{mstatus} is set
-    \item Current mode is not machine-mode
-\end{itemize}
-
-This means that machine-mode can only decide to disable machine-mode-targeting interrupts for itself.
-
-Additionally, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg}\footnote{%
+If an interrupt or exception is pending, it must first be decided which privlege mode should take the trap to handle the exception generated.
+By default, all interrupts and exceptions will be handled by machine-mode.
+However, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg}\footnote{%
     It would also be possible to delegate traps by using the \gls{mret} instruction and setting all corresponding \glspl{csr} accordingly.
     However, this would come with a higher latency as a couple of jumps would need to be performed first.
 }.
 Similar to \gls{mip} and \gls{mie}, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
-Exceptions are also assigned with an code and thus, fields of \gls{medeleg} correspond to these codes.
-An interrupt or exception can only be delegated to modes equally or more privleged than the mode the interrupt or exception was targeting originally.
+Exceptions also have an exception code assigned and thus, fields of \gls{medeleg} correspond to these codes.
+An interrupt or exception can only be delegated to modes equally or higher priveleged than the mode the interrupt or exception was targeting originally for example, if an interrupt is targeting supervisor-mode it must be handled by machine-mode or can optionally be delegated to supervisor-mode.
 If an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and $ x\text{ie} $ becomes writable otherwise both registers appear to be hardwired to zero.
-Analogously to taking non-delegated interrupts, an interrupt delegated to mode $ x $ is taken if the respective bit in the $ x\text{ie} $ register is set and interrupts are globally enabled.
-In this context, interrupts are considered to be globally enabled if:
-\begin{itemize}
-    \item Current mode is $ x $ and $ x\text{IE} $ in \gls{mstatus} is set
-    \item Current mode is less privileged than $ x $
-\end{itemize}
 
-More specifically, this means that delegated interrupts will not be taken while the \gls{hart} is in a mode more privileged than $ x $.
+After the mode to be targeted by the trap has been determined, it must be checked whether the given interrupt is actually enabled.
+Exceptions can't be disabled and therefore will always be taken - as a consequence the following checks will be ommited for exceptions.
+Interrupts on the other hand can be dis- or enabled individually in the \gls{mie} register.
+Analogously to the \gls{mip} register, an interrupt is enabled if the bit corresponding the interrupts index is set to 1.
+Additionally, there is the \gls{mstatus} register which can globally dis- or enable interrupt handling for a specific mode via its $ x\text{IE} $ bits ($ x \in \{ \text{M}, \text{S}, \text{U}\} $\footnote{%
+    In future, we will simply use $ x $ or other variables as placeholders for a mode-flag without specifically introducing the variable.
+}).
+The \gls{ustatus} only is a restricted view on \gls{mstatus} and therefore \gls{mstatus} holds these bits not only for machine- but any mode.
+These $ x\text{IE} $ fields, however, are only taken into account if the \gls{hart} operates at an equal or higher privilege mode than targeted, i.e. interrupts are always enabled globally it is targeting a mode of higher privilege than current operation.
+Finally, an interrupt will be taken if interrupts are globally enabled \textit{and} the interrupt itself is enabled in the \gls{mie} register.
 
-If a pending interrupt is taken, the \gls{mepc}, \gls{mcause} and \gls{mtval} are written.
+If a pending interrupt is taken, the \gls{mepc}, \gls{mcause} and \gls{mtval} are written and the platform will jump to a base address held by the \gls{mtvec}.
+\gls{mtvec} also holds a field that controls whether interrupts can be \textit{vectored}, i.e. for interrupts the \gls{pc} is not set to the base address for handling trap but to $ \text{base} + 4 \times \text{cause} $.
 \gls{mepc} holds the address of the original instruction stream that was preempted, i.e. either the address of the instruction that caused the exception or the instruction that was next to be executed as a external interrupt was taken.
 \gls{mcause} holds an identifier of the current interrupt or exception being handled by the trap.
 The most significant bit indicates whether an interrupt is currently being served and all other bits hold the exception or interrupt code.
-The \gls{mtval} serves as a register to hold arguments for a trap handler.
+\gls{mtval} serves as a register to hold arguments for a trap handler.
 Technically, it holds \textcquote{RiscVISAP}{exception-specific information to assist software in handling the trap}.
 One example for such \enquote{exception-specific information} is that \gls{mtval} can contain the faulting bits of an instruction for an illegal instruction exception whereas \gls{mepc} would only point to the instruction in memory as a whole therefore giving no specific information about which part of the instruction caused the exception.
 
-On entering a trap handler, the platform will jump to a base address held by the \gls{mtvec}.
-It also holds a field that controls whether interrupts can be \textit{vectored}, i.e. for interrupts the \gls{pc} is not set to the base address for handling trap but to $ \text{base} + 4 \times \text{cause} $.
-The small
-This means that all differentiation between handling traps must be done by software.
+\gls{mstatus} also holds bits to \enquote{stack} certain values when handling exceptions or interrupts.
+Nested interrupts are only supported between privilege modes.
+On a trap to handle an interrupt in mode $ x $, interrupts are disabled and the value of the interrupt-enable bit is \enquote{stacked} into a prior-interrupt-enable bit $x\text{PIE} $, i.e. $ x\text{PIE} := x\text{IE} $ and $ x\text{IE} := 0 $.
+Additionally, there is a prior-privilege bit $ x\text{PP} $ that stores the privilege mode before the trap was taken.
 
-\paragraph{Other \glspl{csr}}
-In the previous paragraph, we mentioned that \gls{mstatus} contains some bits that are not directly relevant to trap handling.
-Alongside these bits we will introduce another \gls{csr} that is related to trap handling but not directly necessary in this section.
-
-These two remaining fields of \gls{mstatus} deal with memory privilege translation for machine-mode.
-Firstly, there is the MPRV bit which can translate memory access privilege.
-This bit is only available if at least two privilege modes are supported otherwise it is hardwired to zero.
-If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that has was preempted by taking the trap.
-Secondly, there is the MXR field that allows to read executable memory regions.
-If MXR is not set, attempting to read from a memory region marked as executable will fail.
-If MXR is set, such reads can succeed if said region is also marked as readable.
-% TODO: is page-based virutal memory given?
-MXR is only applicable though, if page-based virtual memory is in place.
-
-The last register we will introduce is the \gls{mscratch} which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
-The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapped with a user register upon entry to a \textins{machine}-mode trap handler}.
-
-\paragraph{Exception handling}
-In the paragraph about \glspl{csr} that deal with trap handling on page \ref{par:trap-csrs} we mentioned that exception handling works similar to interrupt handling but with fewer steps.
-Up until now, we haven't given any explanation for how exceptions are handled precisely.
-This gap shall now be filled.
-
-Exceptions are handled as soon as they occur.
-This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
-The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
-% Source: https://stackoverflow.com/a/56402079/7194995
-\gls{riscv} knows no concepts of settings exceptions pending, this however, isn't necessary.
-If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
-
-The differences between handling exceptions and interrupts are the following:
-\begin{itemize}
-    \item Exception can't be disabled therefore they will always be handled
-    \item $ x\text{cause}[31] $ is written with $ 0 $
-    \item Exceptions can't be vectored therefore the \gls{pc} will always be set to $ x\text{tvec} $
-\end{itemize}
-
-Still, $ x\text{status}.x\text{IE} $ is set to 0 which means that it is not possible to preempt handling an exception by handling an interrupt.
+% TODO: Maybe exactly one instruction? How does alignment play into this?
+Note that due to the small offset between vectored interrupt jump destinations, the instructions located there can't perform much more than jumping to the \textit{real} trap handler.
+Furthermore, as exceptions can't be vectored, any differentiation between those must be performed by software.
 
 \begin{table}
     \centering
@@ -528,6 +437,99 @@ Still, $ x\text{status}.x\text{IE} $ is set to 0 which means that it is not poss
     \label{tbl:interrupt-exception-codes}
 \end{table}
 
+\paragraph{Summary}
+You can find an overview over all registers that are involved in trap handling in table \ref{tbl:trap-csrs}.
+Those \glspl{csr} which are available to user-mode would also be available to supervisor-mode in this context.
+Registers written in italic font are not actual registers on their own but provide a restricted view on their respective machine-mode counterparts.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| c c || l |}
+        \hline
+        \textbf{Machine-mode} & \textbf{User-mode} & \textbf{Description} \\
+        \acrshort{mstatus} & \textit{\acrshort{ustatus}} & Status \\
+        \acrshort{mie} & \textit{\acrshort{uie}} & Interrupt enable \\
+        \acrshort{mip} & \textit{\acrshort{uip}} & Interrupt pending \\
+        \acrshort{mtvec} & \acrshort{utvec} & Trap-vector base address \\
+        \acrshort{mscratch} & \acrshort{uscratch} & Scratch \\
+        \acrshort{mepc} & \acrshort{uepc} & Exception program counter \\
+        \acrshort{mcause} & \acrshort{ucause} & Trap cause \\
+        \acrshort{mtval} & \acrshort{utval} & Trap value \\
+        \acrshort{medeleg} & & Exception delegation \\
+        \acrshort{mideleg} & & Interrupt delegation \\
+        \hline
+    \end{tabular}
+    \caption{Trap-handling \glspl{csr}}
+    \label{tbl:trap-csrs}
+\end{table}
+
+To summarize the mechanisms that play into interrupt and exception handling, recall the four steps to interrupt and exception handling we introduced at the beginning of this section.
+These can now be filled with more details:
+\begin{enumerate}
+    \item If an interrupt or exception is pending, determine the privlege mode to take the trap by checking the targeted privelege mode and any delegation settings
+    \item If an interrupt is pending, check that interrupts are enabled globally and the specific interrupt is enabled as well
+    \item Take the trap by jumping to to trap base vector and if an interrupt is being serviced take vectoring into account
+    \item Return from trap handler
+\end{enumerate}
+
+The differences between handling exceptions and interrupts can be summarized by the following:
+\begin{itemize}
+    \item Exception can't be disabled therefore they will always be handled
+    \item $ x\text{cause}[31] $ is written with $ 0 $
+    \item Exceptions can't be vectored therefore the \gls{pc} will always be set to $ x\text{tvec} $
+\end{itemize}
+
+One would need to alter figure \ref{fig:interrupt-handling} by replacing most interrupt-related \glspl{csr} with their exception-related counterpart if possible.
+An eception to this is $ x\text{status}.x\text{IE} $ which still is set to 0 meaning that it is not possible to preempt handling an exception by handling an interrupt.
+
+Finally, note that exceptions are handled as soon as they occur.
+This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
+The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
+% Source: https://stackoverflow.com/a/56402079/7194995
+\gls{riscv} knows no concept of settings exceptions pending, this however, isn't necessary.
+If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
+
+% TODO: Mention what I didn't mention; e.g. specific parts of mstatus
+
+\subsubsection{Memory Attributes}
+
+In the previous paragraph, we mentioned that \gls{mstatus} contains some bits that are not directly relevant to trap handling.
+Alongside these bits we will introduce another \gls{csr} that is related to trap handling but not directly necessary in this section.
+
+These two remaining fields of \gls{mstatus} deal with memory privilege translation for machine-mode.
+Firstly, there is the MPRV bit which can translate memory access privilege.
+This bit is only available if at least two privilege modes are supported otherwise it is hardwired to zero.
+If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that has was preempted by taking the trap.
+Secondly, there is the MXR field that allows to read executable memory regions.
+If MXR is not set, attempting to read from a memory region marked as executable will fail.
+If MXR is set, such reads can succeed if said region is also marked as readable.
+% TODO: is page-based virutal memory given?
+MXR is only applicable though, if page-based virtual memory is in place.
+
+The last register we will introduce is the \gls{mscratch} which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
+The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapped with a user register upon entry to a \textins{machine}-mode trap handler}.
+
+% TODO: Introduce pma- and pmpcfg
+
+\subsubsection{Other Mechanisms}
+\label{sec:other-mechs}
+
+\paragraph{Timer and performance counter \glspl{csr}}
+There also is a group of registers dealing with timers and hardware performance monitoring, namely: \gls{mtime}, \gls{mtimecmp}, \gls{mcycle}, \gls{minstret}, \gls{mhpmcountern}, \gls{mhpmeventn} and \gls{mcounteren} but we won't go into detail here as we will be ignoring these registers as well.
+The reasoning for skipping these is not as straight-forward as for the previously introduced registers.
+In general, timer and performance counting registers can be used for side channel attacks.
+In \cite{Qian16} the authors give an overview over timing-side-channel-attacks which by their very nature always need to rely on some notion of time.
+This notion can be given by timer and performance counter registers which for example hold the number of instructions executed since a given point in time.
+For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplications and squarings being performed.
+Such a differentiation could be easily done if performance counter registers where to count such instructions and were to leak information to lower privilege levels.
+This means that in principle, timer and performance counter registers are relevant for the security of an architecture.
+However, we find that they do not introduce new notions of information flow to the architecture and are therefore redundant to our thesis.
+
+It is the case that contents of these registers are confidential as their contents might be used to introduce side-channels to other applications running on the processor.
+However, their core mechanisms are not unique.
+They can be read and written to and might generate interrupts but this is nothing new to the architecture.
+We therefore think that dealing with information flow in general is sufficient for our approach and will ignore these registers.
+
 Besides the interrupts and exceptions that have been introduced in the last few paragraphs, there are two further \textit{exceptional conditions} that can occur in a \gls{hart}.
 
 \paragraph{Reset}
@@ -560,3 +562,5 @@ For the same reasons given in the paragraph about reset, we will assume that \gl
 
 On jump to the \gls{nmi} handler address, \gls{mepc} is written with the next address to be read and executed and \gls{mcause} is written with information about the cause of the \gls{nmi}.
 Other \glspl{csr} are left untouched.
+
+% TODO: Summarize
