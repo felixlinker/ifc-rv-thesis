@@ -34,6 +34,8 @@ foreach ($prop in $props) {
     $cmds = $cmds.Replace("[MAXLEN]", $tracelen)
     $cmds | Out-File -encoding ascii $replaced_cmd.FullName
 
+    # Clear the trace of any possible previous proof
+    Clear-Content $trace
     # Run nuXmv
     nuXmv.exe -source $replaced_cmd.FullName
 
