@@ -6,7 +6,7 @@
 The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
 Such groups include for example machine- and supervisor-level \glspl{isa} and the description of a platform level interrupt controller.
 
-% TODO: Add motiviation/goals of RISC-V
+% TODO: Add motivation/goals of RISC-V
 
 In this thesis, we work with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
 \gls{riscv} understands itself as a highly customizable architecture.
@@ -88,8 +88,8 @@ On the user-level without any extension, there are no \glspl{csr} present so we 
 
 \subsubsection{Instructions}
 
-\paragraph{Integer arithmetic and boolean instructions}
-The base integer instruction set provides instructions for plus and minus, integer comparisons and the boolean operators AND, OR and XOR.
+\paragraph{Integer arithmetic and Boolean instructions}
+The base integer instruction set provides instructions for plus and minus, integer comparisons and the Boolean operators AND, OR and XOR.
 Most of these instructions are implemented in two version: a register version (or R-type instruction) and an immediate version (or I-type instruction).
 In the first case the two operands are given as registers and in the second case one operand is given as register and the other as an immediate value read from memory.
 In either case the value is stored in a destination register.
@@ -139,13 +139,13 @@ For the latter category, \gls{riscv} only knows two instructions at the base ins
 We will inspect these instructions in more detail in section \ref{sec:rv-priv-arch}.
 
 \paragraph{Summary}
-The base integer instruction set of \gls{riscv} gives you everything you need for implementing a comfortable turing-machine but pretty much nothing more.
-You can perform basic arithemtic with integers or bitvectors of booleans, load and store results of your calculations and abstract your code by using jumps and branches.
-At this point, there is no state with predefined semantics, i.e. all state available is given by storage that can only infuence computation when used by a programmer.
+The base integer instruction set of \gls{riscv} gives you everything you need for implementing a comfortable Turing-machine but pretty much nothing more.
+You can perform basic arithmetic with integers or bit vectors of Booleans, load and store results of your calculations and abstract your code by using jumps and branches.
+At this point, there is no state with predefined semantics, i.e. all state available is given by storage that can only influence computation when used by a programmer.
 
 Only the platform management instructions give a hint on the complexity that is offered by the \gls{riscv} architecture to allow abstracting processing done on the core.
 
-\subsection{Privileged Architecture of RISC-V}
+\subsection{The Privileged Architecture}
 \label{sec:rv-priv-arch}
 
 The privileged architecture of \gls{riscv} in \cite{RiscVISAP} mainly specifies three concepts:
@@ -156,10 +156,10 @@ The privileged architecture of \gls{riscv} in \cite{RiscVISAP} mainly specifies 
 \end{enumerate}
 
 The three levels of privilege form the basis of everything that is defined by the privileged architecture.
-The purpose of interrupts and exceptions is not only to handle error conditions that arise during runtime but also to communicate between privlege layers.
+The purpose of interrupts and exceptions is not only to handle error conditions that arise during runtime but also to communicate between privilege layers.
 Therefore, interrupts and exceptions are being used by up to this point unmentioned auxiliary mechanisms of the architecture that aid the highest privilege in administrating the platform.
 
-Also, memory attributes rely on these levels of privilege as they define which mode is eligble to do some operation on some region of memory.
+Also, memory attributes rely on these levels of privilege as they define which mode is eligible to do some operation on some region of memory.
 
 In this section, we will subsequently introduce the aforementioned concepts and conclude with a sketch of the auxiliary mechanisms that build on top of these.
 
@@ -229,13 +229,13 @@ To keep things simple, we will focus on secure embedded systems in this thesis\f
 }.
 This means that the architecture we will be working with supports two modes: user- and machine-mode.
 Machine-, user- and supervisor-mode do not simply form a linear order of privilege attributes of code execution.
-They differ in the concepts that are available to them and therefore must be handled seperately.
+They differ in the concepts that are available to them and therefore must be handled separately.
 However, as we will focus on secure embedded systems, we will leave out many parts of the specification which are about supervisor solely.
 Supervisor-mode will be handled wherever it fits in the bigger picture but not on its own.
 
 \subsubsection{Exceptions, traps and interrupts}
 
-Volume 1 of the specifiction introduces the concept of exceptions, traps and interrupts as follows:
+Volume 1 of the specification introduces the concept of exceptions, traps and interrupts as follows:
 \begin{displaycquote}{RiscVISA}
     We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
     We use the term \textit{trap} to refer to the synchronous transfer of control to a trap handler caused by an exceptional condition occurring within a RISC-V thread.
@@ -265,7 +265,7 @@ For the sake of simplicity, we will assume that every exception causes a trap.
 As we will not implement any floating-point arithmetic extension, the specification does not demand from us to handle exceptions otherwise and doing so does not serve any purpose at this point.
 In following paragraphs, we will give an introduction to the control flow of dealing with interrupts which is depicted in figure \ref{fig:interrupt-handling} and follows these steps:
 \begin{enumerate}
-    \item If an interrupt or exception is pending, determine the privlege mode to take the trap
+    \item If an interrupt or exception is pending, determine the privilege mode to take the trap
     \item Check if the interrupt is enabled
     \item Take the trap
     \item Return from trap handler
@@ -334,7 +334,7 @@ Interrupt handling can be understood as a generalized form of exception handling
 
 \paragraph{Interrupt and exception handling}
 There are three categories of interrupts: external interrupts, timer interrupts and software interrupts.
-External interrupts are used to signal exceptional events occuring on some external device that is connected to the core.
+External interrupts are used to signal exceptional events occurring on some external device that is connected to the core.
 Timer interrupts can be used to track time.
 Code can use certain \glspl{csr} to signal to the platform that it needs to be alerted when a given amount of real world time has passed.
 Such an alert will be given by a timer interrupt.
@@ -352,7 +352,7 @@ An overview of all interrupt codes can be found in table \ref{tbl:interrupt-exce
 Interrupts can be set pending individually in the \gls{mip} register.
 An interrupt is set pending if the bit corresponding the interrupts index is set to 1.
 
-If an interrupt or exception is pending, it must first be decided which privlege mode should take the trap to handle the exception generated.
+If an interrupt or exception is pending, it must first be decided which privilege mode should take the trap to handle the exception generated.
 By default, all interrupts and exceptions will be handled by machine-mode.
 However, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg} register\footnote{%
     It would also be possible to delegate traps by using the \gls{mret} instruction and setting all corresponding \glspl{csr} accordingly.
@@ -360,11 +360,11 @@ However, interrupts and exceptions can be delegated to less privileged modes via
 }.
 Similar to \gls{mip} and \gls{mie}, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
 Exceptions also have an exception code assigned and thus, fields of \gls{medeleg} correspond to these codes.
-An interrupt or exception can only be delegated to modes equally or higher priveleged than the mode the interrupt or exception was targeting originally for example, if an interrupt is targeting supervisor-mode it must be handled by machine-mode or can optionally be delegated to supervisor-mode.
+An interrupt or exception can only be delegated to modes equally or higher privileged than the mode the interrupt or exception was targeting originally for example, if an interrupt is targeting supervisor-mode it must be handled by machine-mode or can optionally be delegated to supervisor-mode.
 If an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and $ x\text{ie} $ becomes writable otherwise both registers appear to be hardwired to zero.
 
 After the mode to be targeted by the trap has been determined, it must be checked whether the given interrupt is actually enabled.
-Exceptions can't be disabled and therefore will always be taken - as a consequence the following checks will be ommited for exceptions.
+Exceptions can't be disabled and therefore will always be taken - as a consequence the following checks will be omitted for exceptions.
 Interrupts on the other hand can be dis- or enabled individually in the \gls{mie} register.
 Analogously to the \gls{mip} register, an interrupt is enabled if the bit corresponding the interrupts index is set to 1.
 Additionally, there is the \gls{mstatus} register which can globally dis- or enable interrupt handling for a specific mode via its $ x\text{IE} $ bits ($ x \in \{ \text{M}, \text{S}, \text{U}\} $\footnote{%
@@ -467,7 +467,7 @@ Registers written in italic font are not actual registers on their own but provi
 To summarize the mechanisms that play into interrupt and exception handling, recall the four steps to interrupt and exception handling we introduced at the beginning of this section.
 These can now be filled with more details:
 \begin{enumerate}
-    \item If an interrupt or exception is pending, determine the privlege mode to take the trap by checking the targeted privelege mode and any delegation settings
+    \item If an interrupt or exception is pending, determine the privilege mode to take the trap by checking the targeted privilege mode and any delegation settings
     \item If an interrupt is pending, check that interrupts are enabled globally and the specific interrupt is enabled as well
     \item Take the trap by jumping to to trap base vector and if an interrupt is being serviced take vectoring into account
     \item Return from trap handler
@@ -481,7 +481,7 @@ The differences between handling exceptions and interrupts can be summarized by 
 \end{itemize}
 
 One would need to alter figure \ref{fig:interrupt-handling} by replacing most interrupt-related \glspl{csr} with their exception-related counterpart if possible.
-An eception to this is $ x\text{status}.x\text{IE} $ which still is set to 0 meaning that it is not possible to preempt handling an exception by handling an interrupt.
+An exception to this is $ x\text{status}.x\text{IE} $ which still is set to 0 meaning that it is not possible to preempt handling an exception by handling an interrupt.
 
 Finally, note that exceptions are handled as soon as they occur.
 This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
@@ -505,7 +505,7 @@ If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses ar
 Secondly, there is the MXR field that allows to read executable memory regions.
 If MXR is not set, attempting to read from a memory region marked as executable will fail.
 If MXR is set, such reads can succeed if said region is also marked as readable.
-% TODO: is page-based virutal memory given?
+% TODO: is page-based virtual memory given?
 MXR is only applicable though, if page-based virtual memory is in place.
 
 The last register we will introduce is the \gls{mscratch} register which can be used by machine-mode to be read and written to for preserving any value the machine-mode would like to see preserved.
@@ -522,7 +522,7 @@ The reasoning for skipping these is not as straight-forward as for the previousl
 In general, timer and performance counting registers can be used for side channel attacks.
 In \cite{Qian16} the authors give an overview over timing-side-channel-attacks which by their very nature always need to rely on some notion of time.
 This notion can be given by timer and performance counter registers which for example hold the number of instructions executed since a given point in time.
-For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplications and squarings being performed.
+For example, the authors discuss an attack where a side channel to OpenSSL's implementation of \gls{rsa} could be introduced by differentiating between multiplications and squares being performed.
 Such a differentiation could be easily done if performance counter registers where to count such instructions and were to leak information to lower privilege levels.
 This means that in principle, timer and performance counter registers are relevant for the security of an architecture.
 However, we find that they do not introduce new notions of information flow to the architecture and are therefore redundant to our thesis.

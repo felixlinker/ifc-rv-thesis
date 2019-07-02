@@ -2,18 +2,18 @@
 \label{sec:model}
 
 % TODO: Introduction
-% TODO: Add goal of the architecture and in particual, checking it
+% TODO: Add goal of the architecture and in particular, checking it
 
 \subsection{The MINRV8 Architecture}
 
 The architecture that will be model checked in this thesis is a minimal, \gls{riscv}-inspired 8-bit architecture and shall be named MINRV8 from now on.
 A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
 
-MINRV8 supports 4 general purpose registers and has two privlege modes, machine- and user-mode.
+MINRV8 supports 4 general purpose registers and has two privilege modes, machine- and user-mode.
 Besides this, it has 4-bytes of read- and write-memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies all remaining addresses, i.e. 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with AND and OR, a MOV instruction to move a word from one register to another, a conditional instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
-Machine words are generally interpreted as signed-words thus there won't be unsigned counterparts to integer arithemtic or comparison instruction.
+Machine words are generally interpreted as signed-words thus there won't be unsigned counterparts to integer arithmetic or comparison instruction.
 
 \begin{table}
     \centering
@@ -28,7 +28,7 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
         OR $ rd $, $ rs1 $, $ rs2 $ & Same as AND but with the bitwise-OR operation \\
         MOV $ rd $, $ rs1 $ & Set register $ rd $ to the content of register $ rs1 $ \\
         SLL $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to content of register $ rs1 $ shifted left logically (i.e. without sign-extension) by the value in register $ rs2 $ \\
-        SRA $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the content of register $ rs1 $ shifted right arithemtically (i.e. with sign-extension) by the value in register $ rs2 $ \\
+        SRA $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the content of register $ rs1 $ shifted right arithmetically (i.e. with sign-extension) by the value in register $ rs2 $ \\
         SLT $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to 0x01 if the value in register $ rs1 $ is smaller than the value in register $ rs2 $ \\
         ECALL & Environment call to machine-mode \\
         MRET & Machine-mode return from trap handler \\
@@ -45,8 +45,8 @@ These can be seen as three registers logically: there is a \gls{mstatus} equival
 MINRV8 supports external interrupts as the only source of interrupts and an environment call to machine-mode as the only source of exceptions.
 Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits that include two stacking bits for taking traps, a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts.
 
-The \gls{pmacfg} register defines cachability of the two memory regions.
-Each memory region can either be set as uncachable, write-back-cachable, write-through-chachable or write-protected-cachable.
+The \gls{pmacfg} register defines cacheability of the two memory regions.
+Each memory region can either be set as uncacheable, write-back-cacheable, write-through-cacheable or write-protected-cacheable.
 % TODO: Introduce intel architecture
 % TODO: Is it really the x86 architecture?
 % TODO: Introduce caching in detail
