@@ -23,7 +23,7 @@ $replaced_cmd = New-TemporaryFile
 #  https://stackoverflow.com/a/2124759/7194995
 VsDevCmd.ps1
 # Preprocess the model
-cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed.FullName
+cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed
 
 foreach ($prop in $props) {
     # Replace template-like variables in the command file
@@ -32,7 +32,7 @@ foreach ($prop in $props) {
     $cmds = $cmds.Replace("[PROPNAME]", $prop)
     $cmds = $cmds.Replace("[OUTPUT]", $trace.FullName)
     $cmds = $cmds.Replace("[MAXLEN]", $tracelen)
-    $cmds | Out-File -encoding ascii $replaced_cmd.FullName
+    $cmds | Out-File -encoding ascii $replaced_cmd
 
     # Clear the trace of any possible previous proof
     Clear-Content $trace
@@ -40,7 +40,7 @@ foreach ($prop in $props) {
     nuXmv.exe -source $replaced_cmd.FullName
 
     # Map the trace to an html table
-    if ($Null -ne (Get-Content $trace.FullName)) {
+    if ($Null -ne (Get-Content $trace)) {
         $out = Join-Path $outDir ($prop + ".html")
         # Execute https://github.com/felixlinker/smvtrcviz by script
         smvtrcviz.bat $trace.FullName $out
@@ -48,6 +48,6 @@ foreach ($prop in $props) {
 }
 
 # Clean up temporary files
-Remove-Item -Path $preprocessed
-Remove-Item -Path $trace
-Remove-Item -Path $replaced_cmd
+Remove-Item $preprocessed
+Remove-Item $trace
+Remove-Item $replaced_cmd
