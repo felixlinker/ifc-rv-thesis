@@ -25,6 +25,9 @@ VsDevCmd.ps1
 # Preprocess the model
 cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed
 
+# Track property time and success
+$took_millis = @{}
+$succ = @{}
 foreach ($prop in $props) {
     # Replace template-like variables in the command file
     $cmds = get-content $cmd
@@ -37,15 +40,28 @@ foreach ($prop in $props) {
     # Clear the trace of any possible previous proof
     Clear-Content $trace
     # Run nuXmv
-    nuXmv.exe -source $replaced_cmd.FullName
+    $took_millis[$prop] = (Measure-Command {
+        nuXmv.exe -source $replaced_cmd.FullName
+    }).Milliseconds
 
     # Map the trace to an html table
+    $succ[$prop] = $true
     if ($Null -ne (Get-Content $trace)) {
+        $succ[$prop] = $false
         $out = Join-Path $outDir ($prop + ".html")
         # Execute https://github.com/felixlinker/smvtrcviz by script
         smvtrcviz.bat $trace.FullName $out
     }
 }
+
+$took_sum = 0
+foreach ($prop in $props) {
+    $ms = $took_millis[$prop]
+    $took_sum += $ms
+    $proven = $succ[$prop]
+    Write-Host "$prop was proven to be $proven in $ms ms"
+}
+Write-Host "All proofs took $took_sum ms"
 
 # Clean up temporary files
 Remove-Item $preprocessed
