@@ -11,6 +11,7 @@
 \usepackage{colortbl}
 \usepackage{subcaption}
 \usepackage{multirow}
+\usepackage{multicol}
 \usetikzlibrary{positioning,calc,graphs}
 
 \setlength{\grammarindent}{8em}
@@ -90,9 +91,6 @@
 \newacronym{ucause}{ucause}{user cause}
 \newacronym{utval}{utval}{user trap value}
 
-\title{Securing an Architecture \\ \large{Applying Information Flow Control Policie to an Architectural Specification}}
-\author{Felix Linker}
-\date{}
 
 \sloppy
 
@@ -100,7 +98,38 @@
 
 \begin{document}
 
-\maketitle
+\begin{titlepage}
+    \centering
+    \par
+    \vspace{1cm}
+    {\scshape\LARGE Universität Leipzig} \par
+    \vspace{0.3cm}
+    {\scshape\Large Fakultät für Mathematik und Informatik} \par
+    {\scshape\Large Abteilung Technische Informatik} \par
+    \vspace{2.3cm}
+    {\huge\bfseries Securing an Architecture} \par
+    {\Large Applying Information Flow Control Policie to an Architectural Specification} \par
+    \vspace{1.5cm}
+    {\scshape\Large Masterarbeit} \par
+    \vspace{0.3cm}
+    {\large Leipzig, \today} \par
+    \vspace {1.5cm}
+    {
+        vorgelegt von: \par
+        Felix Linker \par
+        M.Sc. Informatik
+    }
+    \vfill
+    \begin{multicols}{2}
+        Betreuender Hochschullehrer: \par
+        Prof. Dr. Martin Bogdan \par
+        \columnbreak
+        Zweitbetreut durch: \par
+        Dr. Alastair Reid
+    \end{multicols}
+\end{titlepage}
+
+\newpage
 
 \tableofcontents
 
