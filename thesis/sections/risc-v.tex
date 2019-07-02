@@ -1,4 +1,5 @@
 \section{An Introduction to RISC-V}
+\label{sec:risc-v-intro}
 
 \gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and since then has undergone many changes.
 \gls{riscv} divides its architectural specification into two volumes: in volume 1 the base user-level \gls{isa} is described which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
@@ -492,6 +493,7 @@ If an exception occurs while an interrupt is set pending, the interrupt can be h
 % TODO: Mention what I didn't mention; e.g. specific parts of mstatus
 
 \subsubsection{Memory Attributes}
+\label{sec:memory-attrs}
 
 In the previous paragraph, we mentioned that \gls{mstatus} contains some bits that are not directly relevant to trap handling.
 Alongside these bits we will introduce another \gls{csr} that is related to trap handling but not directly necessary in this section.

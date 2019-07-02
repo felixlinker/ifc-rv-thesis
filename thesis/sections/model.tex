@@ -1,10 +1,71 @@
 \section{Model}
 \label{sec:model}
 
+% TODO: Introduction
+% TODO: Add goal of the architecture and in particual, checking it
+
 \subsection{The MINRV8 Architecture}
 
+The architecture that will be model checked in this thesis is a minimal, \gls{riscv}-inspired 8-bit architecture and shall be named MINRV8 from now on.
+A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
+
+MINRV8 supports 4 general purpose registers and has two privlege modes, machine- and user-mode.
+Besides this, it has 4-bytes of read- and write-memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies all remaining addresses, i.e. 2 to 3.
+MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with AND and OR, a MOV instruction to move a word from one register to another, a conditional instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
+A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
+Machine words are generally interpreted as signed-words thus there won't be unsigned counterparts to integer arithemtic or comparison instruction.
+
+\begin{table}
+    \centering
+    \begin{tabular}{|l p{10cm}|}
+        \hline
+        LOAD $ rd $, $ rs1 $ & Load the word stored in memory at address $ rs1 $ into register $ rd $ \\
+        STORE $ rd $, $ rs1 $ & Store the word located in register $ rs1 $ into memory at address $ rd $ \\
+        LOADI $ rd $, $ imm $ & Load the 8-bit immediate value $ imm $ into register $ rd $ \\
+        ADD $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the sum of the values in registers $ rs1 $ and $ rs2 $ \\
+        SUB $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the value of register $ rs1 $ minus the value of register $ rs2 $ \\
+        AND $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the result of a bitwise-AND of the values of registers $ rs1 $ and $ rs2 $ \\
+        OR $ rd $, $ rs1 $, $ rs2 $ & Same as AND but with the bitwise-OR operation \\
+        MOV $ rd $, $ rs1 $ & Set register $ rd $ to the content of register $ rs1 $ \\
+        SLL $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to content of register $ rs1 $ shifted left logically (i.e. without sign-extension) by the value in register $ rs2 $ \\
+        SRA $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the content of register $ rs1 $ shifted right arithemtically (i.e. with sign-extension) by the value in register $ rs2 $ \\
+        SLT $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to 0x01 if the value in register $ rs1 $ is smaller than the value in register $ rs2 $ \\
+        ECALL & Environment call to machine-mode \\
+        MRET & Machine-mode return from trap handler \\
+        CSRRS $ rd $, $ rs1 $, $ rs2 $ & Read the value of the \gls{csr} with index $ rs1 $ modulo the number of all CSRs and store it in register $ rd $; additionally, set all bits of the \gls{csr} high that are high in register $ rs2 $ \\
+        CSRRC $ rd $, $ rs1 $, $ rs2 $ & Same as CSRRS but set all bits low that are low in register $ rs2 $ \\
+        \hline
+    \end{tabular}
+    \caption{Instructions of the MINRV8 architecture}
+    \label{tbl:min-arch-instrs}
+\end{table}
+
+Besides the general purpose storage options, MINRV8 also includes two \glspl{csr}.
+These can be seen as three registers logically: there is a \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration of some \glspl{pma} as described in section \ref{sec:memory-attrs}.
+MINRV8 supports external interrupts as the only source of interrupts and an environment call to machine-mode as the only source of exceptions.
+Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits that include two stacking bits for taking traps, a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts.
+
+The \gls{pmacfg} register defines cachability of the two memory regions.
+Each memory region can either be set as uncachable, write-back-cachable, write-through-chachable or write-protected-cachable.
+% TODO: Introduce intel architecture
+% TODO: Is it really the x86 architecture?
+% TODO: Introduce caching in detail
+These caching mechanisms are inspired by the caching mechanisms that are available in the x86 architecture from intel as described in section 11.3 \textit{Methods of Caching Available} of the System Programming Guide in the Software Developer's Manual \cite{IntelSystemProgramming}.
+% TODO: Explain how each of these mechanisms work
+
+The \gls{pmpcfg} register allows to set read and write privileges per memory region and also allows to lock the settings of individual regions.
+
+Someone experienced in the field of microcontrollers and processors might find MINRV8 to lack some crucial features, such as jump and branch instructions and the specification of executable memory or an instruction fetch unit.
+These points were left out or left unspecified deliberately.
+However, a good reasoning for this can not be given at this point.
+The development of the MINRV8 architecture was tightly coupled to its implementation in nuXmv which will presented in section \ref{sec:model-implementation}.
+In section \ref{sec:model-scope}, the scope of the MINRV8 architecture will be analyzed - both in terms of what it tries to achieve and what it actually is capable of representing, i.e. how close it is to real-life architectures.
+In this section, the aforementioned problems will also be reflected.
+
 \subsection{Implementation of MINRV8 in nuXmv}
+\label{sec:model-implementation}
 
 \subsection{Scope of the Model}
+\label{sec:model-scope}
 
 \subsection{Trustworthiness of the Model}
