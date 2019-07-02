@@ -161,8 +161,8 @@ MODULE main
 
     IVAR
         op : {
-            LOAD, STORE, LOADI, ADD, SUB, ECALL, MRET, SLT, SLL, SRA, CSRRS,
-            CSRRC, SAN, CLR, SPSWAP
+            LOAD, STORE, LOADI, ADD, SUB, AND, OR, MOV, SLT, SLL, SRA,
+            ECALL, MRET, CSRRS, CSRRC, SAN, CLR, SPSWAP
         };
         rd : 0..3;
         rs1 : 0..3;
@@ -246,6 +246,9 @@ MODULE main
             op = LOAD & can_load: cache.__read; \
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
+            op = AND: regs[rs1] & regs[rs2]; \
+            op = OR: regs[rs1] | regs[rs2]; \
+            op = MOV: regs[rs1]; \
             op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
             op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
             op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, XLEN); \
