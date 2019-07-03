@@ -113,10 +113,10 @@ MODULE main
         mesp_integrity : unsigned word[XLEN];
 
     DEFINE
-        __csrs_read_privs := [ 0h_F0, 0h_00 ];
+        __csrs_read_privs := [ 0h_0F, 0h_00 ];
         __csrs_write_privs := [ 0h_FF, 0h_FF ];
         __priv_vec := (priv ? 0h_FF : 0h_00);
-        __csrs_conf := [ 0h_F0, 0h_00 ];
+        __csrs_conf := [ 0h_0F, 0h_00 ];
         __csrs_integrity := [ 0h_FF, 0h_FF ];
         mstatus := csrs[0];
         pmacfg := mstatus[7:4];
