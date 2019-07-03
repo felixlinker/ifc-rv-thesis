@@ -50,23 +50,23 @@ MODULE cache_line(main_module)
 
     TRANS next(valid) = case
         main_module.do_trap: valid;
-        __op = LOAD: __can_cache_read;
-        __op = STORE & __write_hit: __can_cache_write;
+        __op = LOAD & main_module.can_load: __can_cache_read;
+        __op = STORE & __write_hit & main_module.can_write: __can_cache_write;
         TRUE: valid;
     esac;
 
     TRANS next(addr) = case
         main_module.do_trap: addr;
-        __op = LOAD & __can_cache_read: __rs1;
-        __op = STORE & __can_cache_write & __write_hit: __rd;
+        __op = LOAD & __can_cache_read & main_module.can_load: __rs1;
+        __op = STORE & __can_cache_write & __write_hit & main_module.can_write: __rd;
         TRUE: addr;
     esac;
 
     #define trans(read_source, write_source, default) \
         (case \
             main_module.do_trap: default; \
-            __op = LOAD & __can_cache_read: read_source[__rs1]; \
-            __op = STORE & __can_cache_write & __write_hit: \
+            __op = LOAD & __can_cache_read & main_module.can_load: read_source[__rs1]; \
+            __op = STORE & __can_cache_write & __write_hit & main_module.can_write: \
                 write_source[__rs1]; \
             TRUE: default; \
         esac)
