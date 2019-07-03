@@ -338,7 +338,7 @@ MODULE main
         (case \
             store_targeted(i): r_source[rs1]; \
             cache.addr = i & next(cache.addr) != i & cache.valid \
-            & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back): \
+            & (i < REGION0_SIZE ? pmacfg0.write_back : pmacfg1.write_back): \
                 write_back_source; \
             TRUE: mem_source[i]; \
         esac)
