@@ -125,9 +125,6 @@ MODULE main
         memory_conf : array 0..3 of unsigned word[XLEN];
         memory_integrity : array 0..3 of unsigned word[XLEN];
         cache : cache_line(self);
-        mesp : signed word[XLEN];
-        mesp_conf : unsigned word[XLEN];
-        mesp_integrity : unsigned word[XLEN];
 
     DEFINE
         __csrs_read_privs := [ 0h_0F, 0h_00 ];
@@ -176,15 +173,11 @@ MODULE main
     INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
     INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
-    INIT priv <-> mesp_conf = 0h_00;
-    INIT priv <-> mesp_integrity = 0h_00;
-    INIT !priv <-> mesp_conf = 0h_FF;
-    INIT !priv <-> mesp_integrity = 0h_FF;
 
     IVAR
         op : {
             LOAD, STORE, LOADI, ADD, SUB, AND, OR, MOV, SLT, SLL, SRA,
-            ECALL, MRET, CSRRS, CSRRC, SAN, CLR, SPSWAP
+            ECALL, MRET, CSRRS, CSRRC, SAN, CLR
         };
         rd : 0..3;
         rs1 : 0..3;
@@ -252,18 +245,11 @@ MODULE main
             TRUE: pmpcfg;
         esac;
 
-    TRANS next(mesp) = (priv & op = SPSWAP ? regs[0] : mesp);
-    TRANS next(mesp_conf) = (priv & op = SPSWAP ? regs_conf[0] : mesp_conf);
-    TRANS next(mesp_integrity) = (priv & op = SPSWAP
-        ? regs_integrity[0]
-        : mesp_integrity);
-
     DEFINE
         csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
     -- register transitions
     #define next_reg(i) \
         (case \
-            priv & op = SPSWAP & i = 0: mesp; \
             rd != i | do_trap: regs[i]; \
             op = LOAD & can_load: cache.__read; \
             op = ADD: regs[rs1] + regs[rs2]; \
@@ -288,7 +274,6 @@ MODULE main
     #define next_reg_conf(i) \
         (case \
             do_trap: regs_conf[i]; \
-            priv & op = SPSWAP & i = 0: mesp_conf; \
             op = CLR: 0h_00; \
             rd != i: regs_conf[i]; \
             op = LOAD & can_load: cache.__read_conf; \
@@ -323,7 +308,6 @@ MODULE main
     #define next_reg_integrity(i) \
         (case \
             do_trap: regs_integrity[i]; \
-            priv & op = SPSWAP & i = 0: mesp_integrity; \
             op = SAN: 0h_FF; \
             rd != i: regs_integrity[i]; \
             op = LOAD & can_load: cache.__read_integrity; \
@@ -556,8 +540,3 @@ MODULE main
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
-
-    LTLSPEC NAME SYSRET :=
-            G (Y !priv & priv -> op = SPSWAP)
-            & G (priv & rd != 0)
-        -> G !(priv & regs_integrity[0] = 0h_00 & do_trap);
