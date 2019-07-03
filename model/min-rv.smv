@@ -511,6 +511,24 @@ MODULE main
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
+    -- ... and if machine-mode does not allocate memory unsanitized
+    LTLSPEC NAME NO_INFLUENCE_NO_PUBLIC_READS_SANITIZED_NO_DECLASSIFICATION :=
+        G (!priv & X priv -> X (op = SAN))
+        & G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
+        & G (
+                priv & op in { CSRRC, CSRRS }
+            -> (
+                pmpcfg0.write & X !pmpcfg0.write
+                -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF
+            ) & (
+                pmpcfg1.write & X !pmpcfg1.write
+                -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF
+            )
+        )
+        -> G (
+            priv & op in { CSRRS, CSRRC }
+            -> regs_integrity[rs2] = 0h_FF
+        );
 
     LTLSPEC NAME SYSRET :=
             G (Y !priv & priv -> op = SPSWAP)
