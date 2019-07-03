@@ -49,12 +49,14 @@ MODULE cache_line(main_module)
     INIT valid = FALSE;
 
     TRANS next(valid) = case
+        main_module.do_trap: valid;
         __op = LOAD: __can_cache_read;
         __op = STORE & __write_hit: __can_cache_write;
         TRUE: valid;
     esac;
 
     TRANS next(addr) = case
+        main_module.do_trap: addr;
         __op = LOAD & __can_cache_read: __rs1;
         __op = STORE & __can_cache_write & __write_hit: __rd;
         TRUE: addr;
@@ -62,6 +64,7 @@ MODULE cache_line(main_module)
 
     #define trans(read_source, write_source, default) \
         (case \
+            main_module.do_trap: default; \
             __op = LOAD & __can_cache_read: read_source[__rs1]; \
             __op = STORE & __can_cache_write & __write_hit: \
                 write_source[__rs1]; \
@@ -256,7 +259,7 @@ MODULE main
             TRUE: regs[i]; \
         esac)
 
-    #define loadi_targeted(i) (rd = i & op = LOADI)
+    #define loadi_targeted(i) (rd = i & op = LOADI & !do_trap)
     TRANS loadi_targeted(0) | (next(regs)[0] = next_reg(0));
     TRANS loadi_targeted(1) | (next(regs)[1] = next_reg(1));
     TRANS loadi_targeted(2) | (next(regs)[2] = next_reg(2));
