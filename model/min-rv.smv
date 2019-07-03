@@ -67,23 +67,23 @@ MODULE cache_line(main_module)
 
     TRANS next(valid) = case
         main_module.do_trap: valid;
-        __op = LOAD & main_module.can_load: __can_cache_read;
-        __op = STORE & __hit & main_module.can_write: __can_cache_write;
+        __op = LOAD: __can_cache_read;
+        __op = STORE & __hit: __can_cache_write;
         TRUE: valid;
     esac;
 
     TRANS next(addr) = case
         main_module.do_trap: addr;
-        __op = LOAD & __can_cache_read & main_module.can_load: read_addr(__rs1);
-        __op = STORE & __can_cache_write & __hit & main_module.can_write: read_addr(__rs1);
+        __op = LOAD & __can_cache_read: read_addr(__rs1);
+        __op = STORE & __can_cache_write & __hit: read_addr(__rs1);
         TRUE: addr;
     esac;
 
     #define trans(read_source, write_source, default) \
         (case \
             main_module.do_trap: default; \
-            __op = LOAD & __can_cache_read & main_module.can_load: read_source[read_addr(__rs1)]; \
-            __op = STORE & __can_cache_write & __hit & main_module.can_write: \
+            __op = LOAD & __can_cache_read: read_source[read_addr(__rs1)]; \
+            __op = STORE & __can_cache_write & __hit: \
                 write_source[__rs2]; \
             TRUE: default; \
         esac)
@@ -128,7 +128,7 @@ MODULE main
 
     DEFINE
         __csrs_read_privs := [ 0h_0F, 0h_00 ];
-        __csrs_write_privs := [ 0h_FF, 0h_FF ];
+        __csrs_write_privs := [ 0h_0F, 0h_FF ];
         __priv_vec := (priv ? 0h_FF : 0h_00);
         __csrs_conf := [ 0h_0F, 0h_00 ];
         __csrs_integrity := [ 0h_FF, 0h_FF ];
