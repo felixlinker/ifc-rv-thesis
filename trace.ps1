@@ -15,15 +15,24 @@ param(
 )
 
 # Create temporary files needed in this script
-$preprocessed = New-TemporaryFile
+$preprocessedPath = Join-Path $outDir (Split-Path $in -Leaf)
+if (!(Test-Path $preprocessedPath)) {
+    New-Item $preprocessedPath
+}
+$preprocessed = Get-Item $preprocessedPath
 $trace = New-TemporaryFile
 $replaced_cmd = New-TemporaryFile
 
-# Load command line tools of visual studio as described in
-#  https://stackoverflow.com/a/2124759/7194995
-VsDevCmd.ps1
-# Preprocess the model
-cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed
+if (
+    ($Null -eq (Get-Content $preprocessed)) -or
+    (($preprocessed.LastWriteTime) -lt (Get-Item $in).LastWriteTime)
+) {
+    # Load command line tools of visual studio as described in
+    #  https://stackoverflow.com/a/2124759/7194995
+    VsDevCmd.ps1
+    # Preprocess the model
+    cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed
+}
 
 # Track property time and success
 $took_millis = @{}
@@ -64,6 +73,5 @@ foreach ($prop in $props) {
 Write-Host "All proofs took $took_sum ms"
 
 # Clean up temporary files
-Remove-Item $preprocessed
 Remove-Item $trace
 Remove-Item $replaced_cmd
