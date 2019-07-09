@@ -63,6 +63,79 @@ The development of the MINRV8 architecture was tightly coupled to its implementa
 In section \ref{sec:model-scope}, the scope of the MINRV8 architecture will be analyzed - both in terms of what it tries to achieve and what it actually is capable of representing, i.e. how close it is to real-life architectures.
 In this section, the aforementioned problems will also be reflected.
 
+\subsection{Information Flow Control}
+
+% TODO: reference to introduction of Ferraiuolo17 paper
+
+% 1. Introduce Ferraiuolo17 type system rules (only relevant ones)
+% 2. Transform lattice transitions to two independent labelings with sup and inf operation
+% 3. Introduce defaults
+% 4. Translate transitions
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{7cm}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; W; \Theta \vdash e_1 : \tau_1, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_1 : \texttt{int} \rightarrow l $}
+
+            \AxiomC{$ \Gamma; W; \Theta \vdash e_2 : \tau_2, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_2 : \texttt{int} \rightarrow l $}
+
+            \BinaryInfC{$ \tau = i \mapsto \tau_1( i) \sqcup \tau_2(i) $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
+        \end{prooftree}
+        \caption{T-Logical for $ \circ \in \{ \land, \lor, \oplus \} $}
+    \end{subfigure}
+
+    \begin{subfigure}{7cm}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; W; \Theta \vdash e_1 : \tau_1, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_1 : \texttt{int} \rightarrow l $}
+
+            \AxiomC{$ \Gamma; W; \Theta \vdash e_1 : \tau_2, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_2 : \texttt{int} \rightarrow l $}
+
+            \BinaryInfC{$ \tau = i \mapsto \bigsqcup_{j \in (1, i)} (\tau_1(j) \sqcup \tau_2(j)) $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
+        \end{prooftree}
+        \caption{T-Arith for $ \circ \in \{ +, - \} $}
+    \end{subfigure}
+
+    \begin{subfigure}{7cm}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; W; \Theta \vdash e : \tau, w $}
+            \AxiomC{$ \Theta \vdash \tau : \texttt{int} \rightarrow l $}
+            \BinaryInfC{$ \tau' = i \mapsto \ite{(i < n)}{\tau(i - n + 1)}{\bot} $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; W; \Theta \vdash e << n : \tau', w $}
+        \end{prooftree}
+        \caption{T-LShift}
+    \end{subfigure}
+
+    \begin{subfigure}{7cm}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; W; \Theta \vdash e : \tau, w $}
+            \AxiomC{$ \Theta \vdash \tau : \texttt{int} \rightarrow l $}
+            \BinaryInfC{$ \tau' = i \mapsto \ite{(i > w - n)}{\bot}{\tau(i + n)} $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; W; \Theta \vdash e >> n : \tau', w $}
+        \end{prooftree}
+        \caption{T-RShift}
+    \end{subfigure}
+    \caption{A selection of typing rules for SecVerilogBL expressions \cite{Ferraiuolo17}}
+\end{figure}
+
 \subsection{Implementation of MINRV8 in nuXmv}
 \label{sec:model-implementation}
 
