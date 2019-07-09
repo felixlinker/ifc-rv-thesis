@@ -277,8 +277,12 @@ MODULE main
             op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
-            op = SLL: regs_conf[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
-            op = SRA: unsigned(signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, XLEN)); \
+            op = SLL: ( \
+                regs_conf[rs1] << clamp(toint(regs[rs2]), 0, XLEN) \
+            ) | (0h_F = (regs_conf[rs2][3:0]) ? 0h_FF : 0h_00); \
+            op = SRA: unsigned( \
+                signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, XLEN) \
+            ) | (0h_F = (regs_conf[rs2][3:0]) ? 0h_FF : 0h_00); \
             op = CSRRS | op = CSRRC: __csrs_conf[csr_rs] & csr_read_mask; \
             TRUE: regs_conf[i]; \
         esac)
@@ -317,11 +321,15 @@ MODULE main
                         : 0h_00 \
                 ); \
             op = SLL: ( \
-                (priv ? 0h_FF : 0h_00) >> (XLEN - clamp_buggy(regs[rs2])) \
-            ) | (regs_integrity[rs1] << clamp(toint(regs[rs2]), 0, XLEN)); \
+                ( \
+                    (priv ? 0h_FF : 0h_00) >> (XLEN - clamp_buggy(regs[rs2])) \
+                ) | (regs_integrity[rs1] << clamp(toint(regs[rs2]), 0, XLEN)) \
+            ) & (0h_F = (regs_integrity[rs2][3:0]) ? 0h_FF : 0h_00); \
             op = SRA: ( \
-                (priv ? 0h_FF : 0h_00) << (XLEN - clamp_buggy(regs[rs2])) \
-            ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, XLEN)); \
+                ( \
+                    (priv ? 0h_FF : 0h_00) << (XLEN - clamp_buggy(regs[rs2])) \
+                ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, XLEN)) \
+            ) & (0h_F = (regs_integrity[rs2][3:0]) ? 0h_FF : 0h_00); \
             op = CSRRS | op = CSRRC: __csrs_integrity[csr_rs] & csr_read_mask; \
             TRUE: regs_integrity[i]; \
         esac)
