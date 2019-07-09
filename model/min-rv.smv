@@ -208,19 +208,19 @@ MODULE main
     DEFINE
         csr_write_mask := __csrs_write_privs[csr_rs] -> __priv_vec;
         __meip_input := resize(m_external_interrupt, XLEN) << 3;
-    TRANS next(mstatus) = (do_trap
+    TRANS next(mstatus) = (__meip_input | (do_trap
         ?   pmacfg                  -- preserve pmacfg
             :: 0b_00                -- MEIP := 0 and MIE := 0
             :: MIE                  -- MPIE := MIE
             :: word1(priv)          -- MPP := priv
-        : __meip_input | case
+        : case
             priv & op = MRET: mstatus[7:3] :: MPIE :: 0b_10;
             csr_rs != 0: mstatus;
             op = CSRRC: mstatus & (unsigned(regs[rs2]) | !csr_write_mask | __mstatus_high_guard);
             op = CSRRS: mstatus | (unsigned(regs[rs2]) & csr_write_mask & __mstatus_low_guard);
             -- on a trap return, set MPIE to 1 and MPP to user mode
             TRUE: mstatus;     -- do nothing on all others ops that do not trap
-        esac);
+        esac));
 
     TRANS next(pmpcfg) = case
             do_trap | csr_rs != 1: pmpcfg;
