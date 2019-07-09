@@ -5,6 +5,7 @@
 % TODO: Add goal of the architecture and in particular, checking it
 
 \subsection{The MINRV8 Architecture}
+\label{sec:minrv8}
 
 The architecture that will be model checked in this thesis is a minimal, \gls{riscv}-inspired 8-bit architecture and shall be named MINRV8 from now on.
 A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
@@ -64,6 +65,128 @@ In this section, the aforementioned problems will also be reflected.
 
 \subsection{Implementation of MINRV8 in nuXmv}
 \label{sec:model-implementation}
+
+% TODO: better introduction, i.e. introduce the parts we will talk about and nuXmv in general (this might have already been done in the introduction then)
+
+\subsubsection{Core Functionality}
+
+\paragraph{Variables}
+In nuXmv, models of a piece of software, hardware or in this case a specification are described using variables with a transition relation.
+For the core of our model, we introduced the four variables:
+\begin{itemize}
+    \item \smvinline{priv : boolean}
+    \item \smvinline{csrs : array 0..1 of unsigned word[8]}
+    \item \smvinline{regs : array 0..3 of signed word[8]}
+    \item \smvinline{memory : array 0..3 of signed word[8]}
+\end{itemize}
+
+As the names suggest: \smvinline{priv} indicates the current privilege mode where \smvinline{TRUE} signals that the \gls{hart} is in machine-mode and \smvinline{FALSE} signals that the \gls{hart} is in user-mode, \smvinline{csrs} hold the three \glspl{csr} of the MINRV8 architecture.
+Technically, only 16 bits are needed to implement all \gls{csr} of the MINRV8 architecture which is why we decided to only model two \enquote{physical} \glspl{csr} as this would allow us to stick with a homogeneous interface for memory/register reads and writes and/or less unused bits, i.e. dead state space that still requires traversal from nuXmv.
+\gls{mstatus} is located in the lower half (bits 0 to 3) of \smvinline{csrs[0]}, \gls{pmacfg} in the upper half (bits 4 to 7) of \smvinline{csrs[1]} and \gls{pmpcfg} in \smvinline{csrs[1]}.
+The variables \smvinline{regs} and \smvinline{memory} implement the registers and memory in a straight-forward fashion.
+
+Furthermore, the model knows five input variables:
+\begin{itemize}
+    \item \smvinline{op}
+    \item \smvinline{rd : 0..3}
+    \item \smvinline{rs1 : 0..3}
+    \item \smvinline{rs2 : 0..3}
+    \item \smvinline{m_external_interrupt : unsigned word[1]}
+\end{itemize}
+
+\smvinline{op}, \smvinline{rd}, \smvinline{rs1} and \smvinline{rs2} represent a fully decoded instruction where \smvinline{op} is the opcode as a symbolic constant and the other arguments point to registers with per-instruction determined semantics.
+When an instruction does not support some or all of the arguments to the instruction, the values of these input variables are simply ignored.
+The variable \smvinline{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
+
+There is no input variable for an immediate value which might be needed by the LOADI instruction because we didn't want to waste extra state space and decided to not constrain the content of the destination register in the case of a LOADI instruction being executed.
+By doing so, we encoded the value written to the destination register by the LOADI instruction in the transition relation rather than in the state space.
+
+\paragraph{Transitions}
+nuXmv allows to constrain the transition of variables by arbitrary formulas expressed in propositional logic.
+Therefore - if full control over the transition is desired - it often is not sufficient to simply constrain transitions by a group of implications\footnote{%
+    The exception to this are groups of implications where the antecedents form a total case differentiation, i.e. where one antecedent is always true.
+}.
+In our implementation for nuXmv of the MINRV8 architecture, we used \smvinline{case}-expressions that always close with a default statement to ensure that transitions of variables are always fully constrained.
+
+In the following, we will introduce the \enquote{formal idea} of the variable transitions of our model and assume that variables are stable unless otherwise mentioned, i.e. we won't list all default statements of our model explicitly.
+
+The transitions of the \smvinline{priv} variable are simple.
+There are two conditions by which \smvinline{priv} can change.
+Firstly, whenever there is an exception - be it an exception triggered by a pending external interrupt or a environment call to machine-mode exception - the \gls{hart} switches to machine-mode and does not execute the current instruction, i.e. the value of \smvinline{op}, \smvinline{rd}, \smvinline{rs1} and \smvinline{rs2} are ignored.
+Secondly, when the MRET instruction is executed, the \gls{hart} sets \smvinline{priv} to the value stored in \gls{mstatus}.MPP (cf. section \ref{sec:rv-exn}).
+
+\gls{mstatus} changes under the same conditions which brings us to the transitions of \smvinline{csrs}.
+On a trap, MPP and MPIE are written accordingly while MEIP and MIE are set to zero.
+MEIP can be set to zero although the trap might have been triggered by an ECALL instruction because interrupts have higher priority in \gls{riscv} than synchronous exceptions - either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
+On return from machine-mode, i.e. execution of MRET, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
+An exception to all rules mentioned above is the field MEIP which can be set high in every transition based on the value of \smvinline{m_externel_interrupt}.
+
+The \glspl{csr} can also be written by the CSRRC or CSRRS instructions.
+This applies to \smvinline{csrs[0]} and \smvinline{csrs[1]}, i.e. \gls{mstatus}, \gls{pmacfg} and \gls{pmpcfg}.
+In order to control read- and write-access to the \glspl{csr}, the model knows to constant arrays:
+\begin{smv}
+__csrs_read_privs := [ 0h_0F, 0h_00 ];
+__csrs_write_privs := [ 0h_FF, 0h_FF ];
+\end{smv}
+
+These arrays store bitmasks that indicate the least privilege level necessary to read or write the \gls{csr} of the corresponding index at the corresponding bit-position.
+For example, all \glspl{csr} besides \gls{mstatus} can be read but but no \gls{csr} can be written by user-mode.
+These constants are transformed to the bitmasks \smvinline{csr_read_mask} or \smvinline{csr_write_mask} respectively by the per-bit $ b $ implication of $ b \rightarrow \texttt{priv} $ based on the index of the currently targeted \gls{csr}.
+This, bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smvinline{csr_write_mask} is high at the corresponding index and other \gls{csr}-specific rules apply - these rules are:
+\begin{itemize}
+    \item \gls{mstatus}.MEIP cannot be written by software
+    \item Once a \gls{pmpcfg} register has been locked, it cannot be changed anymore
+\end{itemize}
+
+The transition-relation of the registers and memory is easier to understand.
+\smvinline{regs} changes at index \smvinline{i} if it is targeted by some instruction and no trap is taken.
+Then, \smvinline{regs[i]} is written with a value determined by the instruction semantics\footnote{%
+    This only applies to instructions that \textit{have} semantics targeting registers, i.e. ECALL will not change values of any register.
+}.
+These per-instruction semantics include considering the \smvinline{csr_read_mask} bitmask on CSRRS and CSRRC.
+
+\smvinline{memory} is written at index \smvinline{i} if it is targeted by the STORE instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} are allow the current privilege mode to write the register.
+Otherwise \smvinline{memory} does not change.
+It does not mark an error, should the current privilege level not suffice to write the targeted memory address.
+No exception will be generated - the memory simply will not be written.
+The same is true for read privileges and \smvinline{regs} on a LOAD.
+
+\subsubsection{Caching}
+
+The cache spices up transitions of memory and registers and comprises three variables:
+\begin{itemize}
+    \item \smvinline{addr : 0..3}
+    \item \smvinline{valid : boolean}
+    \item \smvinline{line : signed word[8]}
+\end{itemize}
+
+These variables transition dependent on the cache-configuration of the respective memory region in \gls{pmacfg}.
+As already introduced in section \ref{sec:minrv8}, a memory region can be either set as uncacheable, write-back-cacheable or write-through-cacheable.
+If a memory region is set as uncacheable, the cache will ignore reads and writes to this region and not make any transition.
+
+\paragraph{Reads}
+If a memory region is not set as uncacheable, reads will trigger a cache-fill.
+On a LOAD if the cache is invalid or currently holds the contents of a different memory address than targeted, \smvinline{addr} gets written with \smvinline{rs1}, \smvinline{valid} becomes \smvinline{TRUE} and \smvinline{line} is written with \smvinline{regs[rs1]}.
+This process is independent of the current privilege level, e.g. user-mode can cause a cache-fill with memory content in regions that are unreadable to it.
+Though, user-mode still won't be able to read the respective word as reads are privileged controlled.
+
+If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smvinline{line} instead of \smvinline{memory[rs1]} will be written into register \smvinline{rd}.
+
+\paragraph{Writes}
+From the cache's perspective, writes to regions which are not uncacheable function equally, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
+For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs1]}, \smvinline{address} with \smvinline{rd} and \smvinline{valid} will become \smvinline{TRUE}.
+However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
+
+This brings the need to persist writes to the cache in memory when cache lines are evicted.
+For example, consider the following program:
+\begin{assmblr}
+STORE 0, 0  # store regs[0] at memory[0]
+LOAD 0, 2   # read memory[2] to regs[0]
+\end{assmblr}
+
+If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen in cache level only.
+If furthermore memory region 1 (spanning addresses 2-3) was not set to be uncacheable, the read in the second line would overwrite changes of the first instruction which is why the cache content must first be written to memory.
+Therefore, if the cache holds some non persisted values of write-back-cacheable memory regions and either the cache's target changes or the \gls{pmacfg} attributes change such that the cache is not write-back-cacheable anymore, the content of the cache will be written to memory as well.
 
 \subsection{Scope of the Model}
 \label{sec:model-scope}
