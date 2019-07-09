@@ -160,3 +160,4 @@
 \newcommand{\aslinline}[1]{\lstinline[style=ASLstyle]{#1}}
 \newcommand{\smt}[1]{\lstinline[style=SMT2style]{#1}}
 \newcommand{\assmblrinline}[1]{\lstinline[style=assemblerstyle]{#1}}
+\newcommand{\smvinline}[1]{\lstinline[style=SMVstyle]{#1}}
