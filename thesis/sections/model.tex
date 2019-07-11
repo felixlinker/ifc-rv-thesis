@@ -20,8 +20,8 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
     \centering
     \begin{tabular}{|l p{10cm}|}
         \hline
-        LOAD $ rd $, $ rs1 $ & Load the word stored in memory at address $ rs1 $ into register $ rd $ \\
-        STORE $ rd $, $ rs1 $ & Store the word located in register $ rs1 $ into memory at address $ rd $ \\
+        LOAD $ rd $, $ rs1 $ & Load the word stored in memory at the address stored in registers $ rs1 $ modulo 4 into register $ rd $ \\
+        STORE $ rs1 $, $ rs2 $ & Store the word located in register $ rs1 $ into memory at address stored in register $ rs2 $ modulo 4 \\
         LOADI $ rd $, $ imm $ & Load the 8-bit immediate value $ imm $ into register $ rd $ \\
         ADD $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the sum of the values in registers $ rs1 $ and $ rs2 $ \\
         SUB $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the value of register $ rs1 $ minus the value of register $ rs2 $ \\
@@ -251,10 +251,10 @@ For such a region, on a STORE \smvinline{line} will be written with \smvinline{r
 However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
-For example, consider the following program:
+For example, consider the following program where we assume that \assmblrinline{regs[1] != regs[2]}:
 \begin{assmblr}
-STORE 0, 0  # store regs[0] at memory[0]
-LOAD 0, 2   # read memory[2] to regs[0]
+STORE 0, 1  # store regs[0] at memory[regs[1] mod 4]
+LOAD 0, 2   # read memory[regs[2] mod 4] to regs[0]
 \end{assmblr}
 
 If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen in cache level only.

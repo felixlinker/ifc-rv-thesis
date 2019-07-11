@@ -16,6 +16,7 @@
         : 0h_00)
 
 #define clamp(v, l, h) (min(max((v), l), h))
+#define read_addr(source) (toint(unsigned(regs[source])) mod 4)
 
 MODULE cache_line(main_module)
     VAR
@@ -29,22 +30,23 @@ MODULE cache_line(main_module)
         __op := main_module.op;
         __rd := main_module.rd;
         __rs1 := main_module.rs1;
+        __rs2 := main_module.rs2;
 
-        __can_cache_read := (main_module.rs1 < REGION0_SIZE
+        __can_cache_read := (read_addr(__rs1) < REGION0_SIZE
             ? !main_module.pmacfg0.uncached
             : !main_module.pmacfg1.uncached);
-        __can_cache_write := (__rd < REGION0_SIZE
+        __can_cache_write := (read_addr(__rs2) < REGION0_SIZE
             ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
             : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
-        __read_hit := __rs1 = addr;
-        __write_hit := __rd = addr;
-        __read := (__read_hit & valid ? line : main_module.memory[__rs1]);
+        __read_hit := read_addr(__rs1) = addr;
+        __write_hit := read_addr(__rs2) = addr;
+        __read := (__read_hit & valid ? line : main_module.memory[read_addr(__rs1)]);
         __read_conf := (__read_hit & valid
             ? conf
-            : main_module.memory_conf[__rs1]);
+            : main_module.memory_conf[read_addr(__rs1)]);
         __read_integrity := (__read_hit & valid
             ? integrity
-            : main_module.memory_integrity[__rs1]);
+            : main_module.memory_integrity[read_addr(__rs1)]);
 
     INIT valid = FALSE;
 
@@ -57,15 +59,15 @@ MODULE cache_line(main_module)
 
     TRANS next(addr) = case
         main_module.do_trap: addr;
-        __op = LOAD & __can_cache_read & main_module.can_load: __rs1;
-        __op = STORE & __can_cache_write & __write_hit & main_module.can_write: __rd;
+        __op = LOAD & __can_cache_read & main_module.can_load: read_addr(__rs1);
+        __op = STORE & __can_cache_write & __write_hit & main_module.can_write: read_addr(__rs2);
         TRUE: addr;
     esac;
 
     #define trans(read_source, write_source, default) \
         (case \
             main_module.do_trap: default; \
-            __op = LOAD & __can_cache_read & main_module.can_load: read_source[__rs1]; \
+            __op = LOAD & __can_cache_read & main_module.can_load: read_source[read_addr(__rs1)]; \
             __op = STORE & __can_cache_write & __write_hit & main_module.can_write: \
                 write_source[__rs1]; \
             TRUE: default; \
@@ -340,7 +342,7 @@ MODULE main
     TRANS next(regs_integrity)[3] = next_reg_integrity(3);
 
     -- memory transitions
-    #define store_targeted(i) (rd = i & !do_trap & op = STORE & can_write \
+    #define store_targeted(i) (read_addr(rs2) = i & !do_trap & op = STORE & can_write \
         & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back))
     #define try_store(i, r_source, mem_source, write_back_source) \
         (case \
