@@ -15,6 +15,19 @@
             )) \
         : 0h_00)
 
+#define least_zero_extended(w) \
+    (w < 0h_FF \
+        ? (w < (w | 0h_0F) \
+            ? (w < (w | 0h_03) \
+                ? (w < (w | 0h_01) ? 0h_00 : 0h_01) \
+                : (w < (w | 0h_04) ? 0h_03 : 0h_07) \
+            ) \
+            : (w < (w | 0h_30) \
+                ? (w < (w | 0h_10) ? 0h_0F : 0h_1F) \
+                : (w < (w | 0h_40) ? 0h_3F : 0h_7F) \
+            )) \
+        : 0h_FF)
+
 #define clamp(v, l, h) (min(max((v), l), h))
 #define read_addr(source) (toint(unsigned(regs[source])) mod 4)
 
@@ -311,10 +324,10 @@ MODULE main
             rd != i: regs_integrity[i]; \
             op = LOAD & can_load: cache.__read_integrity; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
-            op = ADD: least_one_extended( \
+            op = ADD: least_zero_extended( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
             ); \
-            op = SUB: least_one_extended( \
+            op = SUB: least_zero_extended( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
             ); \
             op = SLT: (priv ? 0h_FE : 0h_00) | ( \
