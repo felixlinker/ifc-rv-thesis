@@ -74,62 +74,70 @@ In this section, the aforementioned problems will also be reflected.
 
 \begin{figure}
     \centering
-    \begin{subfigure}{7cm}
+    \begin{subfigure}[t]{.5\linewidth}
+        \begin{prooftree}
+            \AxiomC{}
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash n: \bot, w $}
+        \end{prooftree}
+        \caption{T-Const}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{.5\linewidth}
         \begin{prooftree}
             \alwaysNoLine
-            \AxiomC{$ \Gamma; W; \Theta \vdash e_1 : \tau_1, w $}
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_1 : \tau_1, w $}
             \UnaryInfC{$ \Theta \vdash \tau_1 : \texttt{int} \rightarrow l $}
 
-            \AxiomC{$ \Gamma; W; \Theta \vdash e_2 : \tau_2, w $}
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_2 : \tau_2, w $}
             \UnaryInfC{$ \Theta \vdash \tau_2 : \texttt{int} \rightarrow l $}
 
             \BinaryInfC{$ \tau = i \mapsto \tau_1( i) \sqcup \tau_2(i) $}
 
             \singleLine
-            \UnaryInfC{$ \Gamma; W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
         \end{prooftree}
-        \caption{T-Logical for $ \circ \in \{ \land, \lor, \oplus \} $}
+        \caption{T-Logical for $ \circ \in \{ \land, \lor \} $}
     \end{subfigure}
 
-    \begin{subfigure}{7cm}
+    \begin{subfigure}[t]{.5\linewidth}
         \begin{prooftree}
             \alwaysNoLine
-            \AxiomC{$ \Gamma; W; \Theta \vdash e_1 : \tau_1, w $}
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_1 : \tau_1, w $}
             \UnaryInfC{$ \Theta \vdash \tau_1 : \texttt{int} \rightarrow l $}
 
-            \AxiomC{$ \Gamma; W; \Theta \vdash e_1 : \tau_2, w $}
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_1 : \tau_2, w $}
             \UnaryInfC{$ \Theta \vdash \tau_2 : \texttt{int} \rightarrow l $}
 
-            \BinaryInfC{$ \tau = i \mapsto \bigsqcup_{j \in (1, i)} (\tau_1(j) \sqcup \tau_2(j)) $}
+            \BinaryInfC{$ \tau = i \mapsto \bigsqcup_{j \in [1, i]} (\tau_1(j) \sqcup \tau_2(j)) $}
 
             \singleLine
-            \UnaryInfC{$ \Gamma; W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
         \end{prooftree}
         \caption{T-Arith for $ \circ \in \{ +, - \} $}
     \end{subfigure}
 
-    \begin{subfigure}{7cm}
+    \begin{subfigure}[t]{.5\linewidth}
         \begin{prooftree}
             \alwaysNoLine
-            \AxiomC{$ \Gamma; W; \Theta \vdash e : \tau, w $}
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e : \tau, w $}
             \AxiomC{$ \Theta \vdash \tau : \texttt{int} \rightarrow l $}
             \BinaryInfC{$ \tau' = i \mapsto \ite{(i < n)}{\tau(i - n + 1)}{\bot} $}
 
             \singleLine
-            \UnaryInfC{$ \Gamma; W; \Theta \vdash e << n : \tau', w $}
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e \ll n : \tau', w $}
         \end{prooftree}
         \caption{T-LShift}
     \end{subfigure}
 
-    \begin{subfigure}{7cm}
+    \begin{subfigure}[t]{.5\linewidth}
         \begin{prooftree}
             \alwaysNoLine
-            \AxiomC{$ \Gamma; W; \Theta \vdash e : \tau, w $}
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e : \tau, w $}
             \AxiomC{$ \Theta \vdash \tau : \texttt{int} \rightarrow l $}
             \BinaryInfC{$ \tau' = i \mapsto \ite{(i > w - n)}{\bot}{\tau(i + n)} $}
 
             \singleLine
-            \UnaryInfC{$ \Gamma; W; \Theta \vdash e >> n : \tau', w $}
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e \gg n : \tau', w $}
         \end{prooftree}
         \caption{T-RShift}
     \end{subfigure}
