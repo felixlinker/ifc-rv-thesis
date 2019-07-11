@@ -26,25 +26,25 @@ MODULE cache_line(main_module)
         integrity : unsigned word[XLEN];
 
     DEFINE
-        __can_cache_read := (main_module.rs1 < REGION0_SIZE
-            ? !main_module.pmacfg0.uncached
-            : !main_module.pmacfg1.uncached);
-        __can_cache_write := (main_module.rd < REGION0_SIZE
-            ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
-            : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
-        __read_hit := main_module.rs1 = addr;
-        __write_hit := main_module.rd = addr;
-        __read := (__read_hit & valid ? line : main_module.memory[main_module.rs1]);
-        __read_conf := (__read_hit & valid
-            ? conf
-            : main_module.memory_conf[main_module.rs1]);
-        __read_integrity := (__read_hit & valid
-            ? integrity
-            : main_module.memory_integrity[main_module.rs1]);
-
         __op := main_module.op;
         __rd := main_module.rd;
         __rs1 := main_module.rs1;
+
+        __can_cache_read := (main_module.rs1 < REGION0_SIZE
+            ? !main_module.pmacfg0.uncached
+            : !main_module.pmacfg1.uncached);
+        __can_cache_write := (__rd < REGION0_SIZE
+            ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
+            : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
+        __read_hit := __rs1 = addr;
+        __write_hit := __rd = addr;
+        __read := (__read_hit & valid ? line : main_module.memory[__rs1]);
+        __read_conf := (__read_hit & valid
+            ? conf
+            : main_module.memory_conf[__rs1]);
+        __read_integrity := (__read_hit & valid
+            ? integrity
+            : main_module.memory_integrity[__rs1]);
 
     INIT valid = FALSE;
 
