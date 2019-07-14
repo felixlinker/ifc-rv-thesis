@@ -2,7 +2,8 @@
 #define XLEN 8
 #define REGION0_SIZE 2
 
-#define least_one_extended(w) \
+-- Extend the first one we can find
+#define extend_sup_conf(w) \
     (0h_00 < (w & 0h_FF) \
         ? (0h_00 < (w & 0h_0F) \
             ? (0h_00 < (w & 0h_03) \
@@ -15,7 +16,8 @@
             )) \
         : 0h_00)
 
-#define least_zero_extended(w) \
+-- Extend the first zero we can find
+#define extend_sup_integrity(w) \
     (w < 0h_FF \
         ? (w < (w | 0h_0F) \
             ? (w < (w | 0h_03) \
@@ -289,8 +291,8 @@ MODULE main
             rd != i: regs_conf[i]; \
             op = LOAD & can_load: cache.__read_conf; \
             op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
-            op = ADD: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
-            op = SUB: least_one_extended(regs_conf[rs1] | regs_conf[rs2]); \
+            op = ADD: extend_sup_conf(regs_conf[rs1] | regs_conf[rs2]); \
+            op = SUB: extend_sup_conf(regs_conf[rs1] | regs_conf[rs2]); \
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
             op = SLL: ( \
                 regs_conf[rs1] << clamp(toint(regs[rs2]), 0, XLEN) \
@@ -324,10 +326,10 @@ MODULE main
             rd != i: regs_integrity[i]; \
             op = LOAD & can_load: cache.__read_integrity; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
-            op = ADD: least_zero_extended( \
+            op = ADD: extend_sup_integrity( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
             ); \
-            op = SUB: least_zero_extended( \
+            op = SUB: extend_sup_integrity( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
             ); \
             op = SLT: (priv ? 0h_FE : 0h_00) | ( \
