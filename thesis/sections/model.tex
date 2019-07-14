@@ -64,6 +64,7 @@ In section \ref{sec:model-scope}, the scope of the MINRV8 architecture will be a
 In this section, the aforementioned problems will also be reflected.
 
 \subsection{Information Flow Control}
+\label{sec:ifc-model}
 
 % TODO: reference to introduction of Ferraiuolo17 paper
 
@@ -522,6 +523,127 @@ LOAD 0, 2   # read memory[regs[2] mod 4] to regs[0]
 If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen in cache level only.
 If furthermore memory region 1 (spanning addresses 2-3) was not set to be uncacheable, the read in the second line would overwrite changes of the first instruction which is why the cache content must first be written to memory.
 Therefore, if the cache holds some non persisted values of write-back-cacheable memory regions and either the cache's target changes or the \gls{pmacfg} attributes change such that the cache is not write-back-cacheable anymore, the content of the cache will be written to memory as well.
+
+\subsubsection{Information Flow Tracking}
+\label{sec:ifc-implementation}
+
+In order to implement the information flow tracking semantics as described in section \ref{sec:ifc-model} we define a binary representation of the lattice of security labels given by $ \Sigma $ and $ \sqcup $.
+We define $ \binSigma = \{ 00, 01, 10, 11 \}$ with a mapping $ \varphi : \Sigma \rightarrow \binSigma $:
+\begin{align*}
+    \varphi(\PT) &= 01 \\
+    \varphi(\PU) &= 00 \\
+    \varphi(\CT) &= 11 \\
+    \varphi(\CU) &= 10
+\end{align*}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{scope}
+            \node (pt) {\PT};
+            \node[above right=of pt] (ct) {\CT}
+                edge (pt);
+            \node[above left=of pt] (pu) {\PU}
+                edge (pt);
+            \node[above right=of pu] (cu) {\CU}
+                edge (ct)
+                edge (pu);
+        \end{scope}
+
+        \begin{scope}[xshift=0.7cm,draw=gray,text=gray]
+            \node (01) {$ 01 $};
+            \node[above right=of 01] (11) {$ 11 $}
+                edge (01);
+            \node[above left=of 01] (00) {$ 00 $}
+                edge (01);
+            \node[above right=of 00] (10) {$ 10 $}
+                edge (11)
+                edge (00);
+        \end{scope}
+    \end{tikzpicture}
+    \caption{Security lattice for SecVerilogBL \cite{Ferraiuolo17}}
+    \label{fig:sec-lattice}
+\end{figure}
+
+We define $ \sqcup $ on $ \binSigma $ such that $ \varphi $ is an isomorphism.
+This mapping is depicted in figure \ref{fig:sec-lattice}.
+As you can see, public and untrusted correspond to a 0 whereas confidential and trusted correspond to a 1.
+We can formalize this abstraction by examining two equivalence-relations or -classes on $ \Sigma $ and $ \binSigma $.
+We define two partitionings $ \Sigma/_{\equiv_C} $ and $ \Sigma/_{\equiv_I} $ on $ \Sigma $ which correspond to equivalence classes modulo confidentiality $ \equiv_C $ or modulo integrity respectively $ \equiv_I $.
+\begin{align*}
+    \Sigma /_{\equiv_C} &= \big\{ \{ \PU, \PT \}, \{ \CU, \CT \} \big\} \\
+    \Sigma /_{\equiv_I} &= \big\{ \{ \PU, \CU \}, \{ \PT, \CT \} \big\}
+\end{align*}
+
+We coin the names $ \P = [\PU]_{\equiv_C} $, $ \C = [\CU]_{\equiv_C} $, $ \U = [\PU]_{\equiv_I} $ and $ \T = [\PT]_{\equiv_I} $ and lift $ \sqcup $ to be defined on equivalence-classes in the usual fashion, i.e. $ [x] \sqcup [y] = [x \sqcup y] $.
+Note, that $ \P \preceq \C $ and $ \T \preceq \U $ with $ \preceq $ again being the partial order inferred from $ \sqcup $.
+Note, that it is possible to define $ \sqcup $ by solely working with these equivalence classes:
+\begin{equation*}
+    \{ x \sqcup y \} = \big(([x]_{\equiv_C} \sqcup [y]_{\equiv_C}) \cap ([x]_{\equiv_I} \sqcup [y]_{\equiv_I}) \big)
+\end{equation*}
+
+\begin{example}
+    \begin{align*}
+        \{ \PU \sqcup \CT \} &= \big(([\PU]_{\equiv_C} \sqcup [\CT]_{\equiv_C}) \cap ([\PU]_{\equiv_I} \sqcup [\CT]_{\equiv_I}) \big) \\
+        &= \big((\P \sqcup \C) \cap (\U \sqcup \T) \big) \\
+        &= (\C \cap \U) \\
+        &= \{ \CU \}
+    \end{align*}
+\end{example}
+
+This means that we can track the labels of the lattice of security labels $ \Sigma $ by tracking the confidentiality and integrity labels individually.
+We also find this dealing with labels much more intuitive:
+\begin{itemize}
+    \item Two sources of information combined are considered to be confidential if \textit{any} of the sources is confidential itself.
+    This is sensible as with some result of an operation at least partial information about its confidential source can be inferred if the other public source and the operation are known.
+    \item Two sources of information combined are considered to be trustworthy if \textit{both} of the sources are trustworthy themselves.
+    This is intuitive as well.
+    We assume that non-trustworthy sources of information are controlled by an attacker.
+    We can only say about some piece of information to be trustworthy if we can ensure that the attacker can't control it in any way, shape or form.
+    This is only given if both of the sources of an operation are not controlled by an attacker, i.e. trustworthy.
+\end{itemize}
+
+The intuition behind $ \sqcup $ as described above perfectly matches $ \binSigma $ as well.
+Recall, that \C is represented by a 1 and \P by a 0 in the binary representation.
+That means that two labels $ a = a_1a_0 \in \binSigma $ and $ b = b_1b_0 \in \binSigma $ are in \C, i.e. confidential, if $ a $ or $ b $ is confidential, i.e. if one of the bits representing the confidentiality of the labels is high, i.e. if $ a_1 \lor b_1 $.
+In turn, these two labels are in $ \T $, i.e. trusted, if $ a $ and $ b $ are trusted, i.e. if both of the bits representing the integrity of the labels are high, i.e. if $ a_0 \land b_0 $.
+This allows us to define $ \sqcup $ on $ \binSigma $ again - this time not just semantically:
+\begin{equation*}
+    a_1a_0 \sqcup b_1b_0 = (a_1 \lor b_1) \cdot (a_0 \land b_0)
+\end{equation*}
+
+In summary, these paragraphs showed to things:
+\begin{enumerate}
+    \item We are able to store the security labels of information independently of each other and do not need to work with the full lattice itself.
+    It is sufficient to deal with equivalence classes or individual bits respectively.
+    \item The $ \sqcup $ operation on the binary representation of the security labels $ \binSigma $ can be implemented by deriving the the confidentiality label by or-ing and the integrity label by and-ing the old labels.
+\end{enumerate}
+
+This allows us now to add security label tracking to our model whereby we will will be track the confidentiality and the integrity of labels values.
+We assign labels on a per bit basis to all values in registers, memory, \glspl{csr} and the cache.
+For each variable in the model we add an confidentiality or integrity tracking counterpart as (arrays of) unsigned word; find an overview of all such variables in table \ref{tbl:ifc-vars}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| c | c | c |}
+        \hline
+        \textbf{Variable} & \textbf{Confidentiality Tracking} & \textbf{Integrity Tracking} \\
+        \hline
+        {\smvinline{regs}} & {\smvinline{regs_conf}} & {\smvinline{regs_integrity}} \\
+        {\smvinline{memory}} & {\smvinline{memory_conf}} & {\smvinline{memory_integrity}} \\
+        {\smvinline{csrs}} & {\smvinline{\_\_csrs_conf}} & {\smvinline{\_\_csrs_integrity}} \\
+        {\smvinline{cache.line}} & {\smvinline{cache.conf}} & {\smvinline{cache.integrity}} \\
+        \hline
+    \end{tabular}
+    \caption{Information Flow Control Variables}
+    \label{tbl:ifc-vars}
+\end{table}
+
+These variables transition under the same circumstances as their base variable does, e.g. \smvinline{regs_conf} does a transition if and only if \smvinline{regs} transitions and \smvinline{regs_conf} will deduct its content from sources parallel the those of \smvinline{regs}.
+The values themselves change based on the current instruction and the information flow tracking semantics as described in \ref{sec:ifc-model}.
+
+In other words, the \smvinline{*_conf} and \smvinline{*_integrity} variables perfectly mirror the architecture implementation as described in \ref{sec:model-implementation}.
+Rather than simply simulating the MINRV8 architecture in nuXmv we also track the confidentiality-world and integrity-world of this architecture in parallel to simulating the pure computational-world.
 
 \subsection{Scope of the Model}
 \label{sec:model-scope}
