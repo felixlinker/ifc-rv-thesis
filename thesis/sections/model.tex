@@ -648,4 +648,47 @@ Rather than simply simulating the MINRV8 architecture in nuXmv we also track the
 \subsection{Scope of the Model}
 \label{sec:model-scope}
 
+In summary, the MINRV8 architecture knows three groups of instructions (cf. table \ref{tbl:min-arch-instrs}):
+\begin{itemize}
+    \item Computational instructions such as MOV, AND, ADD, etc.
+    \item Memory instructions LOAD and STORE
+    \item System instructions ECALL, MRET, CSRRS, CSRRC
+\end{itemize}
+
+MINRV8 is meant to be a reasonable abstraction of a real-world \gls{riscv} architecture from a security standpoint.
+However, up to this point nothing has been said about the limits of this abstraction.
+With every abstraction, there is a small chance that it perfectly matches the concept that has been abstracted but in most cases, some corners are cut.
+In this section, we will reflect on the limits of the MINRV8 architecture and its implementation.
+
+% TODO: mention that other fields are well modelled
+% TODO: mention that we actually don't need all computational instructions
+% TODO: mention performance hit of dynamic memory regions
+
+A reader, experienced in the field of microcontrollers or computer-architecture in general might wonder why our model does not include:
+\begin{enumerate}
+    \item Executable memory and a \gls{pc}
+    \item Jump or branch instructions
+    \item A model of a stack pointer
+\end{enumerate}
+
+In the introduction of the MINRV8 architecture in section \ref{sec:minrv8} we mentioned that the idea of the architecture was tightly coupled to its implementation.
+The design of the model had to answer the question: How can a stream of instructions be implemented?
+nuXmv allows to think of the following options:
+\begin{enumerate}
+    \item \label{itm:exmem-frozen}
+    Use \smvinline{FROZENVAR}s to model executable memory - a \smvinline{FROZENVAR} is something like a constant in other programming languages but without a fixed value.
+    nuXmv chooses the value on the first simulation step but does not change it afterwards.
+    This is more efficient than using plain \smvinline{VAR}s with no transitions.
+    \item \label{itm:exmem-var}
+    Use \smvinline{VAR}s to model executable memory.
+    In practice, this would mean that the memory of the implementation as described in section \ref{sec:model-implementation} would be much larger than the current 4 bytes.
+    \item \label{itm:exmem-ivar}
+    Finally, use \smvinline{IVAR}s to model the stream of instruction.
+    This is the option we decided to go for as described in section \ref{sec:model-implementation}.
+    Using \smvinline{IVAR}s means that there is no model of executable memory.
+    % TODO: is the part about the ALU actually true?
+    Instead, the input variables provided to the implementation model the result of an instruction decoder that hands the \gls{alu} the ready-to-use decoded instructions on each transition of the simulated model.
+    As such, the architecture does not need to worry \textit{where} these instructions come from.
+\end{enumerate}
+
 \subsection{Trustworthiness of the Model}
