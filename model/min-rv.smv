@@ -332,10 +332,10 @@ MODULE main
             op = SUB: extend_sup_integrity( \
                 regs_integrity[rs1] & regs_integrity[rs2] \
             ); \
-            op = SLT: (priv ? 0h_FE : 0h_00) | ( \
+            op = SLT: ( \
                     0h_FF = (regs_integrity[rs1] & regs_integrity[rs2]) \
                         ? 0h_FF \
-                        : 0h_00 \
+                        : 0h_FE \
                 ); \
             op = SLL: ( \
                 ( \
