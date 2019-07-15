@@ -10,7 +10,7 @@
 The architecture that will be model checked in this thesis is a minimal, \gls{riscv}-inspired 8-bit architecture and shall be named MINRV8 from now on.
 A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
 
-MINRV8 supports 4 general purpose registers and has two privilege modes, machine- and user-mode.
+MINRV8 supports 4 general purpose registers and has two privilege modes: machine- and user-mode.
 Besides this, it has 4-bytes of read- and write-memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies all remaining addresses, i.e. 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with AND and OR, a MOV instruction to move a word from one register to another, a conditional instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
@@ -41,10 +41,9 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
     \label{tbl:min-arch-instrs}
 \end{table}
 
-Besides the general purpose storage options, MINRV8 also includes two \glspl{csr}.
-These can be seen as three registers logically: there is a \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration of some \glspl{pma} as described in section \ref{sec:memory-attrs}.
+Besides the general purpose storage options, MINRV8 also includes three \glspl{csr}: a \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration of some \glspl{pma} as described in section \ref{sec:memory-attrs}.
 MINRV8 supports external interrupts as the only source of interrupts and an environment call to machine-mode as the only source of exceptions.
-Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits that include two stacking bits for taking traps, a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts.
+Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits that include two stacking bits for taking traps, a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts and excludes other bits that are present in the RV32E architecture such as other interrupt pending bits.
 
 The \gls{pmacfg} register defines cacheability of the two memory regions.
 Each memory region can either be set as uncacheable, write-back-cacheable, write-through-cacheable or write-protected-cacheable.
@@ -86,8 +85,9 @@ In short, the security labels represent the semantics of pieces of information w
 In this section, we will apply these two ideas to an \gls{isa}.
 We will apply the ideas of the type system developed in \cite{Ferraiuolo17} to the semantics of the instructions specified by the \gls{isa} of MINRV8 by giving information flow semantics on a per-instruction basis.
 This transformation is necessary because in our practical scenario, we cannot rely on the same computational power as a static type checker can.
-In our implementation, we will need to realize the information flow control via state-system-transition rules expressed in predicate logic.
+In our implementation, we will need to realize the information flow control via state-system-transition rules expressed in propositional logic.
 
+% TODO: Introduce the lattice of security labels first
 % TODO: Do I need a reference for the sequent calculus?
 Type system rules are written like proofs of sequent calculus.
 Consider this example of a proof written in sequent calculus:
@@ -97,8 +97,8 @@ Consider this example of a proof written in sequent calculus:
     \BinaryInfC{$ C $}
 \end{prooftree}
 
-This proof states that given $ C $ can be derived from $ A $ and $ B $ or more formally that: $ A, B \vdash C $.
-In the context of type systems $ A $, $ B $ and $ C $ often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environments} type some expression, e.g. if $ X $ is a type environment one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
+This proof states that $ C $ can be derived from $ A $ and $ B $ or more formally that: $ A, B \vdash C $.
+In the context of type systems $ A $, $ B $ and $ C $ often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} type some \textit{expression}, e.g. if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
 The authors of \cite{Ferraiuolo17} introduce three environments:
 
 \begin{description}
@@ -107,7 +107,7 @@ The authors of \cite{Ferraiuolo17} introduce three environments:
     \item[Kind environment] $ \Theta $ allows the lifting of security labels to functions mapping bit indices to security labels and can make type judgements of the form $ \Theta \vdash \tau : \texttt{int} \rightarrow l $ where $ l $ is the type of the security labels and $ \tau $ is a type mapped to by $ \Gamma $.
 \end{description}
 
-You can find an overview of the type system rules of \cite{Ferraiuolo17} which are relevant to us in \ref{fig:type-rules}.
+You can find an overview of those type system rules of \cite{Ferraiuolo17} which are relevant to us in figure \ref{fig:type-rules}.
 The most simple type system rule probably is T-Const which types constant expressions $ n $.
 % TODO: reflect on why it is sensible to assume that constants are trusted in their scenario but not in ours
 These are always of type $ \bot $, i.e. \PT, and of the corresponding width $ w $.
@@ -209,14 +209,14 @@ We track the security labelings in the architecture bitwise as words of length 8
 
 As we will be working with formal words, we will introduce some definitions to work with these first.
 For $ w  \in \Sigma^* $, $ |w| $ denotes its length,
-$ \cdot $ is used as word concatenation with its generalization over indices $ \prod $, $ \times $ as repeated concatenation and as we try to stay close to bit vectors with these security label words, we zero index and slice them from right to left, i.e. $ abcd[0] = d $ and $ abcd[1:0] = cd $.
+$ \cdot $ is used as word concatenation with its generalization over indices $ \prod $, $ \times $ is the repeated concatenation of a word and as we try to stay close to bit vectors with these security label words, we zero index and slice them from right to left, i.e. $ abcd[0] = d $ and $ abcd[1:0] = cd $.
 
 \begin{example}
     Let $ w = abcd \in \Sigma^* $.
     \begin{itemize}
         \item $ ab \cdot cd = abcd $
         \item $ \prod_{i \in (|w|, 0]} w[i:0] = abcd \cdot abc \cdot ab \cdot a $
-        \item $ 3 \times abc = abcabcabc $
+        \item $ 3 \times abc = abc \cdot abc \cdot abc $
     \end{itemize}
 \end{example}
 
@@ -240,7 +240,9 @@ Let $ n < 0 $.
     w \gg n &= w \ll |n|
 \end{align*}
 
-As you can see, the left shift behaves as to be expected and shifts in the least element of $ \Sigma $, whereas the right shift operation does a sign extension because MINRV8 knows signed words only.
+As you can see, the left shift behaves as to be expected and shifts in the least element of $ \Sigma $.
+For actual bit vectors this would be the 0.
+The right shift operation on the other hand does a sign extension because MINRV8 knows signed words only.
 
 \begin{example}
     \begin{align*}
@@ -275,14 +277,16 @@ Although we didn't we find mentions whether bit vectors in \cite{Ferraiuolo17} a
     The rule T-Arith must track the bits that are propagated by carry bits.
     The $ i^\textit{th} $ bit of the result is affected by all bits below $ i $ from both inputs.%
 }
-As explained in the quote, the label of each bit of the result is inferred by taking the supremum of all bits that come below.
+As the definition of $ \tau $ uses indexing over the set $ [ 1, i ] $ we can assume bit vectors to be one indexed as the alternative would contradict each bit being affected by \enquote{all bits below}.
+
+The label of each bit of the result is inferred by taking the supremum of all bits that come below.
 This leads to a partially ordered sequence of security labels, i.e. we have $ \forall i' > i. \tau(i) \preceq \tau(i') $ where $ \preceq $ denotes the partial order on $ \Sigma $ induced by $ \sqcup $.
 We express this notion with helper function extendSup which is defined as follows:
 \begin{equation*}
     \text{extendSup} = x \mapsto \prod_{i \in (|x|, 0]} \Big( \bigsqcup_{j \in [0, i]} x[j] \Big)
 \end{equation*}
 
-extendSup implements the idea of $ \tau $ and \textit{extends} the supremum of each label and all following indexes to those which map to a $ \preceq $-smaller label.
+extendSup implements the idea of $ \tau $ and subsequently \textit{extends} the label of each index $ i $ to all indices greater than $ i $ which map to a $ \preceq $-smaller label.
 
 \begin{example}
     \begin{equation*}
@@ -310,7 +314,8 @@ With extendSup we can define the semantics of the ADD and SUB instructions.
 \end{example}
 
 T-LShift and T-RShift infer the type of $ e \ll n $ and $ e \gg n $ by simply shifting the labels.
-Most of the work to translate these type system rules has already been done by our definition of $ \ll $ and $ \gg $ on security label words with the only difference being that shifts in SecVerilogBL are unsigned therefore $ \bot $ will be shifted in not only for left shifts but also for right shifts; we already coped with this exception in our definition of $ \gg $.
+Most of the work to translate these type system rules has already been done by our definition of $ \ll $ and $ \gg $ on security label words with the only difference being that shifts in SecVerilogBL are unsigned.
+Therefore in the type system rules $ \bot $ is shifted in not only for left shifts but also for right shifts; we already coped with this exception in our definition of $ \gg $.
 
 However, in \cite{Ferraiuolo17} the authors also only know one source of labels, i.e. the word that is shifted, because shifts can only occur by constant amounts\footnote{%
     Recall that constants in SecVerilogBL are of type $ \bot $, i.e. do not need to be considered further as $ x \sqcup \bot = x $.
@@ -324,8 +329,8 @@ The reasoning behind this is that each bit of shifted word is influenced by the 
 \end{align*}
 
 This leaves us with the need to give semantics for all the instruction that do not have an analogous type system rule, i.e. LOAD, STORE, LOADI, MOV, SLT, CSRRS and CSRRC.
-SLT sets only one bit of the targeted register thus its semantics also should only \textit{set} only one literal of the resulting security labeling.
-As one a bit comparison of bit vectors all bits are taken into account to produce the comparison result, we set the resulting comparison bit to the maximum of all bits of both arguments.
+SLT sets only one bit of the targeted register thus its semantics also should set only one literal of the resulting security labeling.
+As on a bit comparison of bit vectors all bits are taken into account to produce the comparison result, we set the resulting comparison bit to the maximum of all bits of both arguments.
 \begin{equation*}
     \I(\text{SLT}) = (w, w') \mapsto \bot\bot\bot\bot\bot\bot\bot \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big)
 \end{equation*}
@@ -352,7 +357,7 @@ As \gls{csr} reads happen via index as well, we introduce the magic function csr
 \end{align*}
 
 Finally, we couple the semantics of LOADI to the current execution context.
-We think that under our given threat-scenario it is sensible to assume that constants loaded by machine-mode should always be labelled with \CT and constants loaded by user-mode are always labeled with \PU.
+We think that under our given threat-scenario it is sensible to assume that constants loaded by machine-mode should always be labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
 \begin{equation*}
     \I(\text{LOADI}) = c \mapsto \begin{cases}
         8 \times \CT & \; \text{if current mode is machine-mode} \\
@@ -408,7 +413,7 @@ More on this in section \ref{sec:checking}.
 
 \paragraph{Variables}
 In nuXmv, models of a piece of software, hardware or in this case a specification are described using variables with a transition relation.
-For the core of our model, we introduced the four variables:
+We implement the core of our model with four variables:
 \begin{itemize}
     \item \smvinline{priv : boolean}
     \item \smvinline{csrs : array 0..1 of unsigned word[8]}
@@ -416,9 +421,10 @@ For the core of our model, we introduced the four variables:
     \item \smvinline{memory : array 0..3 of signed word[8]}
 \end{itemize}
 
-As the names suggest: \smvinline{priv} indicates the current privilege mode where \smvinline{TRUE} signals that the \gls{hart} is in machine-mode and \smvinline{FALSE} signals that the \gls{hart} is in user-mode, \smvinline{csrs} hold the three \glspl{csr} of the MINRV8 architecture.
-Technically, only 16 bits are needed to implement all \gls{csr} of the MINRV8 architecture which is why we decided to only model two \enquote{physical} \glspl{csr} as this would allow us to stick with a homogeneous interface for memory/register reads and writes and/or less unused bits, i.e. dead state space that still requires traversal from nuXmv.
-\gls{mstatus} is located in the lower half (bits 0 to 3) of \smvinline{csrs[0]}, \gls{pmacfg} in the upper half (bits 4 to 7) of \smvinline{csrs[1]} and \gls{pmpcfg} in \smvinline{csrs[1]}.
+As the names suggest: \smvinline{priv} indicates the current privilege mode where \smvinline{TRUE} signals that the \gls{hart} is in machine-mode and \smvinline{FALSE} signals that the \gls{hart} is in user-mode and \smvinline{csrs} hold the three \glspl{csr} of the MINRV8 architecture.
+Technically, only 16 bits are needed to implement all \glspl{csr} of the MINRV8 architecture which is why we decided to only model two physical \glspl{csr}.
+This allows implement a homogeneous interface for memory/register reads and writes and does not introduce unused bits to the implementation, i.e. dead state space that still requires traversal from nuXmv.
+\gls{mstatus} is located in the lower half (bits 0 to 3) of \smvinline{csrs[0]}, \gls{pmacfg} in the upper half (bits 4 to 7) of \smvinline{csrs[0]} and \gls{pmpcfg} in \smvinline{csrs[1]}.
 The variables \smvinline{regs} and \smvinline{memory} implement the registers and memory in a straight-forward fashion.
 
 Furthermore, the model knows five input variables:
@@ -455,10 +461,9 @@ Secondly, when the MRET instruction is executed, the \gls{hart} sets \smvinline{
 On a trap, MPP and MPIE are written accordingly while MEIP and MIE are set to zero.
 MEIP can be set to zero although the trap might have been triggered by an ECALL instruction because interrupts have higher priority in \gls{riscv} than synchronous exceptions - either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
 On return from machine-mode, i.e. execution of MRET, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
-An exception to all rules mentioned above is the field MEIP which can be set high in every transition based on the value of \smvinline{m_externel_interrupt}.
+An exception to all rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smvinline{m_externel_interrupt}.
 
 The \glspl{csr} can also be written by the CSRRC or CSRRS instructions.
-This applies to \smvinline{csrs[0]} and \smvinline{csrs[1]}, i.e. \gls{mstatus}, \gls{pmacfg} and \gls{pmpcfg}.
 In order to control read- and write-access to the \glspl{csr}, the model knows to constant arrays:
 \begin{smv}
 __csrs_read_privs := [ 0h_0F, 0h_00 ];
@@ -489,6 +494,7 @@ The same is true for read privileges and \smvinline{regs} on a LOAD.
 
 \subsubsection{Caching}
 
+% TODO: mention that the cache is its own module accessible via \texttt{cache}
 The cache spices up transitions of memory and registers and comprises three variables:
 \begin{itemize}
     \item \smvinline{addr : 0..3}
@@ -520,7 +526,7 @@ STORE 0, 1  # store regs[0] at memory[regs[1] mod 4]
 LOAD 0, 2   # read memory[regs[2] mod 4] to regs[0]
 \end{assmblr}
 
-If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen in cache level only.
+If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen on cache level only.
 If furthermore memory region 1 (spanning addresses 2-3) was not set to be uncacheable, the read in the second line would overwrite changes of the first instruction which is why the cache content must first be written to memory.
 Therefore, if the cache holds some non persisted values of write-back-cacheable memory regions and either the cache's target changes or the \gls{pmacfg} attributes change such that the cache is not write-back-cacheable anymore, the content of the cache will be written to memory as well.
 
@@ -600,12 +606,12 @@ We also find this dealing with labels much more intuitive:
     This is intuitive as well.
     We assume that non-trustworthy sources of information are controlled by an attacker.
     We can only say about some piece of information to be trustworthy if we can ensure that the attacker can't control it in any way, shape or form.
-    This is only given if both of the sources of an operation are not controlled by an attacker, i.e. trustworthy.
+    This is only given if both of the sources of an operation are not controlled by an attacker, i.e. is trustworthy.
 \end{itemize}
 
 The intuition behind $ \sqcup $ as described above perfectly matches $ \binSigma $ as well.
-Recall, that \C is represented by a 1 and \P by a 0 in the binary representation.
-That means that two labels $ a = a_1a_0 \in \binSigma $ and $ b = b_1b_0 \in \binSigma $ are in \C, i.e. confidential, if $ a $ or $ b $ is confidential, i.e. if one of the bits representing the confidentiality of the labels is high, i.e. if $ a_1 \lor b_1 $.
+Recall, that \C{} is represented by a 1 and \P{} by a 0 in the binary representation.
+That means that two labels $ a = a_1a_0 \in \binSigma $ and $ b = b_1b_0 \in \binSigma $ are in \C{}, i.e. confidential, if $ a $ or $ b $ is confidential, i.e. if one of the bits representing the confidentiality of the labels is high, i.e. if $ a_1 \lor b_1 $.
 In turn, these two labels are in $ \T $, i.e. trusted, if $ a $ and $ b $ are trusted, i.e. if both of the bits representing the integrity of the labels are high, i.e. if $ a_0 \land b_0 $.
 This allows us to define $ \sqcup $ on $ \binSigma $ again - this time not just semantically:
 \begin{equation*}
@@ -619,7 +625,7 @@ In summary, these paragraphs showed to things:
     \item The $ \sqcup $ operation on the binary representation of the security labels $ \binSigma $ can be implemented by deriving the the confidentiality label by or-ing and the integrity label by and-ing the old labels.
 \end{enumerate}
 
-This allows us now to add security label tracking to our model whereby we will will be track the confidentiality and the integrity of labels values.
+This allows us now to add security label tracking to our model whereby we will track the confidentiality and the integrity of values.
 We assign labels on a per bit basis to all values in registers, memory, \glspl{csr} and the cache.
 For each variable in the model we add an confidentiality or integrity tracking counterpart as (arrays of) unsigned word; find an overview of all such variables in table \ref{tbl:ifc-vars}.
 
@@ -640,7 +646,7 @@ For each variable in the model we add an confidentiality or integrity tracking c
 \end{table}
 
 These variables transition under the same circumstances as their base variable does, e.g. \smvinline{regs_conf} does a transition if and only if \smvinline{regs} transitions and \smvinline{regs_conf} will deduct its content from sources parallel the those of \smvinline{regs}.
-The values themselves change based on the current instruction and the information flow tracking semantics as described in \ref{sec:ifc-model}.
+The values themselves change based on the current instruction and its information flow tracking semantics as described in \ref{sec:ifc-model}.
 
 In other words, the \smvinline{*_conf} and \smvinline{*_integrity} variables perfectly mirror the architecture implementation as described in \ref{sec:model-implementation}.
 Rather than simply simulating the MINRV8 architecture in nuXmv we also track the confidentiality-world and integrity-world of this architecture in parallel to simulating the pure computational-world.
