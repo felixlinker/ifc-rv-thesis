@@ -440,14 +440,54 @@ Furthermore, the model knows five input variables:
 When an instruction does not support some or all of the arguments to the instruction, the values of these input variables are simply ignored.
 The variable \smvinline{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
-There is no input variable for an immediate value which might be needed by the LOADI instruction because we didn't want to waste extra state space and decided to not constrain the content of the destination register in the case of a LOADI instruction being executed.
-By doing so, we encoded the value written to the destination register by the LOADI instruction in the transition relation rather than in the state space.
+There is no input variable for an immediate value which might be needed by the LOADI instruction because we didn't want to waste extra state.
+Instead, we decided to not constrain the content of the destination register in the case of a LOADI instruction being executed.
+By doing so, we implicitly encoded the value written to the destination register by the LOADI instruction in the transition relation rather than in the state space.
 
 \paragraph{Transitions}
 nuXmv allows to constrain the transition of variables by arbitrary formulas expressed in propositional logic.
 Therefore - if full control over the transition is desired - it often is not sufficient to simply constrain transitions by a group of implications\footnote{%
     The exception to this are groups of implications where the antecedents form a total case differentiation, i.e. where one antecedent is always true.
 }.
+
+\begin{example}
+    Consider this nuXmv model that implements an adder that can store its result in two registers:
+    \begin{smv}
+MODULE main
+    VAR
+        r1 : integer;
+        r2 :integer;
+    IVAR
+        ri : 1..2;
+        summand1 : integer;
+        summand2 : integer;
+
+    DEFINE sum := summand1 + summand2;
+
+    TRANS ri = 1 -> next(r1) = sum;
+    TRANS ri = 2 -> next(r2) = sum;
+
+    LTLSPEC G (ri = 1 -> r2 = next(r2));
+    LTLSPEC G (ri = 2 -> r1 = next(r1));
+    \end{smv}
+
+    Intuitively, this seems right as we imperatively declare that when the selector input variable \smvinline{ri} equals 1, \smvinline{r1} should be updated and when it equals 2, \smvinline{r2} should be updated.
+    However, if we attempt to prove one of the two properties in the model which states that a register doesn't change if it isn't selected, nuXmv quickly gives us a counter-example where this is the case.
+    This is because the implications do not fully cover all possible transitions of the system.
+    On a transition where \smvinline{ri} does not equal 1 (or 2), the next value of \smvinline{r1} (or \smvinline{r2}) is not constrained, i.e. can change to any value.
+    Swapping out the implication \smvinline{->} with a iff \smvinline{<->} does not solve this as now only that whenever the next value chosen randomly for \smvinline{r1} or \smvinline{r2} happens to coincide with the sum of the input variables, \smvinline{ri} must be equal to the appropriate index.
+    In all other cases, nuXmv still can choose whatever next value it wants.
+
+    The only solution to this is covering all other cases and explicitly stating what should happen then as for example can be done by using an inline-if expression:
+    \begin{smv}
+    TRANS next(r1) = (ri = 1 ? sum : r1);
+    TRANS next(r2) = (ri = 2 ? sum : r2);
+    \end{smv}
+
+    Now, whenever \smvinline{ri} is not equal to the respective index, \smvinline{r1} (or \smvinline{r2}) will be stable.
+    With this implementation, nuXmv fails to find a counter-example for the two LTL properties.
+\end{example}
+
 In our implementation for nuXmv of the MINRV8 architecture, we used \smvinline{case}-expressions that always close with a default statement to ensure that transitions of variables are always fully constrained.
 
 In the following, we will introduce the \enquote{formal idea} of the variable transitions of our model and assume that variables are stable unless otherwise mentioned, i.e. we won't list all default statements of our model explicitly.
