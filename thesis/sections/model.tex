@@ -87,8 +87,54 @@ We will apply the ideas of the type system developed in \cite{Ferraiuolo17} to t
 This transformation is necessary because in our practical scenario, we cannot rely on the same computational power as a static type checker can.
 In our implementation, we will need to realize the information flow control via state-system-transition rules expressed in propositional logic.
 
-% TODO: Introduce the lattice of security labels first
+\cite{Ferraiuolo17} introduces four labels for information $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
+As you can see, each of these four labels includes labels from two domains of information flow control.
+The first of these domains is the one of \textit{confidentiality} - each of the labels states that a piece of information is either public (\P{}) or confidential (\C{}).
+The second of these domains is the one of \textit{integrity}, i.e. are the values we deal with integrous or not malicious?
+Each of the labels states that a piece of information is either trusted (\T{}) or untrusted (\U{}).
+
+These labels come with a $ \sqcup $ operation as well as an implicit $ \preceq $ partial order on them which can be derived from $ \sqcup $.
+This partial order is depicted in figure \ref{fig:sec-lattice} as a hasse diagram.
+The intuition behind the ordering is that information is always allowed to flow up while it is not allowed to flown down.
+
+\begin{example}
+    Remember, that this lattice was defined with a type system in mind.
+    For information to flow up in this context is best illustrated with the following code snippet\footnote{%
+        The syntax of this snippet is \textit{not} SecVerilogBL.%
+    }:
+    \begin{asl}
+int a : PT = 0;
+int b : PU = c;
+    \end{asl}
+
+    In this example, first a variable called \aslinline{a} is initialized and labelled with \PT{}.
+    Then, another variable labelled with \PU{} is initialized and assigned to value of \aslinline{a}.
+    This flow of information would be permitted by the lattice of $ \Sigma $ as information that is labelled with \PT{} flows to a destination that is labelled with \PU{} which is $ \preceq $-greater than the value.
+
+    If this flow of information was to occur the other way round, however, it would have been prohibited.
+\end{example}
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \begin{scope}
+            \node (pt) {\PT};
+            \node[above right=of pt] (ct) {\CT}
+                edge (pt);
+            \node[above left=of pt] (pu) {\PU}
+                edge (pt);
+            \node[above right=of pu] (cu) {\CU}
+                edge (ct)
+                edge (pu);
+        \end{scope}
+    \end{tikzpicture}
+    \caption{Security lattice for SecVerilogBL \cite{Ferraiuolo17}}
+    \label{fig:sec-lattice}
+\end{figure}
+
 % TODO: Do I need a reference for the sequent calculus?
+However, there are more complex operations in SecVerilogBL than simply assigned values to variables.
+This is why the authors in \cite{Ferraiuolo17} introduce type system rules to define how information flows throughout the system, i.e. how operations generate new security labelings in the form of types.
 Type system rules are written like proofs of sequent calculus.
 Consider this example of a proof written in sequent calculus:
 \begin{prooftree}
@@ -607,12 +653,12 @@ We define $ \binSigma = \{ 00, 01, 10, 11 \}$ with a mapping $ \varphi : \Sigma 
                 edge (00);
         \end{scope}
     \end{tikzpicture}
-    \caption{Security lattice for SecVerilogBL \cite{Ferraiuolo17}}
-    \label{fig:sec-lattice}
+    \caption{Security lattice for SecVerilogBL \cite{Ferraiuolo17} with binary equivalent}
+    \label{fig:sec-lattice-bin}
 \end{figure}
 
 We define $ \sqcup $ on $ \binSigma $ such that $ \varphi $ is an isomorphism.
-This mapping is depicted in figure \ref{fig:sec-lattice}.
+This mapping is depicted in figure \ref{fig:sec-lattice-bin}.
 As you can see, public and untrusted correspond to a 0 whereas confidential and trusted correspond to a 1.
 We can formalize this abstraction by examining two equivalence-relations or -classes on $ \Sigma $ and $ \binSigma $.
 We define two partitionings $ \Sigma/_{\equiv_C} $ and $ \Sigma/_{\equiv_I} $ on $ \Sigma $ which correspond to equivalence classes modulo confidentiality $ \equiv_C $ or modulo integrity respectively $ \equiv_I $.
