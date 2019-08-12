@@ -74,10 +74,11 @@ In this section, the aforementioned problems will also be reflected.
 
 % TODO: ensure that this introduction is free of redundancies
 In \cite{Ferraiuolo17} the authors introduce an extension to the \gls{hdl} SecVerilog in form of a type system that implements static information flow control forming the new language SecVerilogBL.
-They benchmarked their evaluated their approach by successfully finding some known bugs in the Arm architecture.
+They evaluated their approach by successfully finding some known bugs in the Arm architecture.
 % TODO: evaluate their results more strongly and compare them to mine
 Their approach includes two key ideas:
 \begin{enumerate}
+    % TODO: "that annotate information" is too broad
     \item A lattice of security labels that annotate information
     \item A type system that allows them to statically track information through Verilog code
 \end{enumerate}
@@ -88,14 +89,14 @@ This transformation is necessary because in our practical scenario, we cannot re
 In our implementation, we will need to realize the information flow control via state-system-transition rules expressed in propositional logic.
 
 \cite{Ferraiuolo17} introduces four labels for information $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
-As you can see, each of these four labels includes labels from two domains of information flow control.
+As you can see, each of these four labels comprises two tokens from two domains of information flow control.
 The first of these domains is the one of \textit{confidentiality} - each of the labels states that a piece of information is either public (\P{}) or confidential (\C{}).
-The second of these domains is the one of \textit{integrity}, i.e. are the values we deal with integrous or not malicious?
+The second of these domains is the one of \textit{integrity}, i.e. are the values we deal with integrous or in other words not malicious?
 Each of the labels states that a piece of information is either trusted (\T{}) or untrusted (\U{}).
 
-These labels come with a $ \sqcup $ operation as well as an implicit $ \preceq $ partial order on them which can be derived from $ \sqcup $.
+These labels come with a supremum operation $ \sqcup $ which induces an implicit partial order $ \preceq $ on them.
 This partial order is depicted in figure \ref{fig:sec-lattice} as a hasse diagram.
-The intuition behind the ordering is that information is always allowed to flow up while it is not allowed to flown down.
+The intuition behind the ordering is that information is always allowed to flow up in the hasse diagram while it is not allowed to flown down.
 
 \begin{example}
     Remember, that this lattice was defined with a type system in mind.
@@ -104,14 +105,14 @@ The intuition behind the ordering is that information is always allowed to flow 
     }:
     \begin{asl}
 int a : PT = 0;
-int b : PU = c;
+int b : PU = a;
     \end{asl}
 
     In this example, first a variable called \aslinline{a} is initialized and labelled with \PT{}.
-    Then, another variable labelled with \PU{} is initialized and assigned to value of \aslinline{a}.
-    This flow of information would be permitted by the lattice of $ \Sigma $ as information that is labelled with \PT{} flows to a destination that is labelled with \PU{} which is $ \preceq $-greater than the value.
+    Then, the value of \aslinline{a} is assigned to another newly initialized variable labelled with \PU{}.
+    This flow of information would be permitted by the lattice of $ \Sigma $ as information that is labelled with \PT{} flows to a destination that is labelled with \PU{} which is $ \preceq $-greater than \PT{}.
 
-    If this flow of information was to occur the other way round, however, it would have been prohibited.
+    However, if this flow of information was to occur the other way round, it would have been prohibited.
 \end{example}
 
 \begin{figure}
@@ -133,8 +134,8 @@ int b : PU = c;
 \end{figure}
 
 % TODO: Do I need a reference for the sequent calculus?
-However, there are more complex operations in SecVerilogBL than simply assigned values to variables.
-This is why the authors in \cite{Ferraiuolo17} introduce type system rules to define how information flows throughout the system, i.e. how operations generate new security labelings in the form of types.
+Of course, there are more complex operations in SecVerilogBL than simply assigning values to variables.
+In reaction to that, the authors of \cite{Ferraiuolo17} introduce type system rules to define how information flows throughout the system, i.e. how operations generate new security labelings in the form of types.
 Type system rules are written like proofs of sequent calculus.
 Consider this example of a proof written in sequent calculus:
 \begin{prooftree}
@@ -144,11 +145,12 @@ Consider this example of a proof written in sequent calculus:
 \end{prooftree}
 
 This proof states that $ C $ can be derived from $ A $ and $ B $ or more formally that: $ A, B \vdash C $.
-In the context of type systems $ A $, $ B $ and $ C $ often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} type some \textit{expression}, e.g. if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
+In the context of type systems $ A $, $ B $ and $ C $ often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} types some \textit{expression}, e.g. if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
 The authors of \cite{Ferraiuolo17} introduce three environments:
 
 \begin{description}
     \item[Standard environment] $ \Gamma $ maps variables to their respective security labeling type, i.e. a function mapping \texttt{int}s as bit indices to security labels (more on this later).
+    % TODO: Why must there be a width environment? Introduce how HDLs look like at the beginning of this passage
     \item[Width environment] $ \W $ maps variables to their respective bit vector length.
     \item[Kind environment] $ \Theta $ allows the lifting of security labels to functions mapping bit indices to security labels and can make type judgements of the form $ \Theta \vdash \tau : \texttt{int} \rightarrow l $ where $ l $ is the type of the security labels and $ \tau $ is a type mapped to by $ \Gamma $.
 \end{description}
@@ -160,6 +162,7 @@ These are always of type $ \bot $, i.e. \PT, and of the corresponding width $ w 
 The other type system rules share a pattern.
 They assume one or two expressions ($ e $, $ e_1 $ or $ e_2 $) to be typed in $ \Gamma; \W; \Theta $ and ensure that their corresponding types ($ \tau $, $ \tau_1 $ or $ \tau_2 $) are of the right kind in $ \Theta $.
 Then, they create a new type ($ \tau $ or $ \tau' $) and infer a type judgement for a new expression involving $ e $, $ e_1 $ or $ e_2 $ and maybe some constant $ n $.
+This structure of type system rules follows the pattern of an inductive proof or definition of a set where T-Const is the start of induction.
 
 \begin{figure}
     \centering
@@ -234,12 +237,12 @@ Then, they create a new type ($ \tau $ or $ \tau' $) and infer a type judgement 
     \label{fig:type-rules}
 \end{figure}
 
-In order to apply these type system rules to instructions, we will investigate the idea behind each type system rule and generate information flow semantics for instructions from those.
-We will give the semantics for instruction in a formal way, i.e. as functions.
-We introduce a interpretation function $ \I $ that maps each instruction to its information flow semantics as a function.
-These functions receive the inputs to the instruction as arguments arguments and map these to the new security labels generated by the instruction.
+In order to apply these type system rules to instructions, we will investigate the idea behind each rule and generate information flow semantics for instructions from those.
+We introduce a interpretation function $ \I $ that maps each instruction to its information flow semantics.
+We will give the semantics for instruction in a formal way as functions.
+These functions receive the input values to the instruction as arguments and map these to the new security labels generated by the instruction.
+Such input values are abstract entities.
 We denote the integer value of some input $ x $ by $ v(x) \in \mathbb{Z} $ and its security labeling by $ l(x) $.
-% TODO: introduce security labels and \sqcup
 We track the security labelings in the architecture bitwise as words of length 8 over the alphabet $ \Sigma = \{ \PT, \PU, \CT, \CU \} $, i.e. $ l(x) \in \Sigma^* $.
 
 \begin{example}
@@ -266,15 +269,15 @@ $ \cdot $ is used as word concatenation with its generalization over indices $ \
     \end{itemize}
 \end{example}
 
-Furthermore, we introduce $ \ll : \Sigma^* \times \mathbb{Z} \rightarrow \Sigma^* $ as well as $ \gg : \Sigma^* \times \mathbb{Z} \rightarrow \Sigma^* $ as bit shift counterpart for words; these word shift operators are recursively defined on $ \Sigma $ as follows:
+Furthermore, we introduce $ \ll : \Sigma^8 \times \mathbb{Z} \rightarrow \Sigma^8 $ as well as $ \gg : \Sigma^8 \times \mathbb{Z} \rightarrow \Sigma^8 $ as bit shift counterpart for words; these word shift operators are recursively defined on $ \Sigma $ as follows:
 
-Let $ w \in \Sigma^* $, $ a, a' \in \Sigma $ and $ 1 < n $.
+Let $ w \in \Sigma^8 $ and $ w', w'' \in \Sigma^* $ such that $ a \cdot w' = a \cdot w'' \cdot a' = w $ and $ 1 < n $.
 \begin{align*}
-    (a \cdot w) \ll 1 &= w \cdot \bot \\
+    (a \cdot w') \ll 1 &= w' \cdot \bot \\
     w \ll n &= (w \ll 1) \ll (n - 1)
 \end{align*}
 \begin{align*}
-    (a \cdot w \cdot a') \gg 1 &= a \cdot a \cdot w \\
+    (a \cdot w'' \cdot a') \gg 1 &= a \cdot a \cdot w'' \\
     w \gg n &= (w \gg 1) \gg (n - 1)
 \end{align*}
 
@@ -291,14 +294,16 @@ For actual bit vectors this would be the 0.
 The right shift operation on the other hand does a sign extension because MINRV8 knows signed words only.
 
 \begin{example}
+    Let $ w \in \Sigma^5 $.
+
     \begin{align*}
-        \PT \cdot \PU \cdot \CT \ll 2 &= \PU \cdot \CT \cdot \bot \ll 1 \\
-        &= \CT \cdot \bot \cdot \bot \\
-        &= \CT \cdot \PT \cdot \PT
+        \PT \cdot \PU \cdot w \cdot \CT \ll 2 &= \PU \cdot w \cdot \CT \cdot \bot \ll 1 \\
+        &= w \cdot \CT \cdot \bot \cdot \bot \\
+        &= w \cdot \CT \cdot \PT \cdot \PT
     \end{align*}
     \begin{align*}
-        \PT \cdot \PU \cdot \CT \gg 2 &= \PT \cdot \PT \cdot \PU \gg 1 \\
-        &= \PT \cdot \PT \cdot \PT
+        \CU \cdot w \cdot \PU \cdot \CT \gg 2 &= \CU \cdot \CU \cdot w \cdot \PU \gg 1 \\
+        &= \CU \cdot \CU \cdot \CU \cdot w
     \end{align*}
 \end{example}
 
@@ -396,14 +401,15 @@ This lets us define the semantics of LOAD and STORE as follows:
     \I(\text{STORE}) &= (d, a) \mapsto l(d)
 \end{align*}
 
-A similar magic variable is needed for the semantics of CSRRS and CSRRC.
+A similar magic function is needed for the semantics of CSRRS and CSRRC.
 As \gls{csr} reads happen via index as well, we introduce the magic function csrLabel that maps \gls{csr}-indices to the corresponding security labelings.
 \begin{align*}
     \I(\text{CSRRS}) = \I(\text{CSRRC}) &= (r, w) \mapsto \text{csrLabel}\big(v(r) \big)
 \end{align*}
 
 Finally, we couple the semantics of LOADI to the current execution context.
-We think that under our given threat-scenario it is sensible to assume that constants loaded by machine-mode should always be labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
+% TODO: Did we explain the threat model?
+We think that under our given threat-scenario it is sensible to assume that constants loaded by machine-mode are always labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
 \begin{equation*}
     \I(\text{LOADI}) = c \mapsto \begin{cases}
         8 \times \CT & \; \text{if current mode is machine-mode} \\
@@ -487,12 +493,14 @@ When an instruction does not support some or all of the arguments to the instruc
 The variable \smvinline{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
 There is no input variable for an immediate value which might be needed by the LOADI instruction because we didn't want to waste extra state.
+% TODO: is this understandable?
 Instead, we decided to not constrain the content of the destination register in the case of a LOADI instruction being executed.
 By doing so, we implicitly encoded the value written to the destination register by the LOADI instruction in the transition relation rather than in the state space.
 
 \paragraph{Transitions}
 nuXmv allows to constrain the transition of variables by arbitrary formulas expressed in propositional logic.
-Therefore - if full control over the transition is desired - it often is not sufficient to simply constrain transitions by a group of implications\footnote{%
+The system can make a transition if it satisfies all formulas given as constraints.
+Therefore - if full control over the transition relation is desired - it often is not sufficient to simply constrain transitions by a group of implications\footnote{%
     The exception to this are groups of implications where the antecedents form a total case differentiation, i.e. where one antecedent is always true.
 }.
 
@@ -559,20 +567,20 @@ __csrs_write_privs := [ 0h_FF, 0h_FF ];
 These arrays store bitmasks that indicate the least privilege level necessary to read or write the \gls{csr} of the corresponding index at the corresponding bit-position.
 For example, all \glspl{csr} besides \gls{mstatus} can be read but but no \gls{csr} can be written by user-mode.
 These constants are transformed to the bitmasks \smvinline{csr_read_mask} or \smvinline{csr_write_mask} respectively by the per-bit $ b $ implication of $ b \rightarrow \texttt{priv} $ based on the index of the currently targeted \gls{csr}.
-This, bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smvinline{csr_write_mask} is high at the corresponding index and other \gls{csr}-specific rules apply - these rules are:
+Bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smvinline{csr_write_mask} is high at the corresponding index with two exceptions:
 \begin{itemize}
     \item \gls{mstatus}.MEIP cannot be written by software
     \item Once a \gls{pmpcfg} register has been locked, it cannot be changed anymore
 \end{itemize}
 
-The transition-relation of the registers and memory is easier to understand.
+The transition relation of the registers and memory is easier to understand.
 \smvinline{regs} changes at index \smvinline{i} if it is targeted by some instruction and no trap is taken.
 Then, \smvinline{regs[i]} is written with a value determined by the instruction semantics\footnote{%
     This only applies to instructions that \textit{have} semantics targeting registers, i.e. ECALL will not change values of any register.
 }.
 These per-instruction semantics include considering the \smvinline{csr_read_mask} bitmask on CSRRS and CSRRC.
 
-\smvinline{memory} is written at index \smvinline{i} if it is targeted by the STORE instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} are allow the current privilege mode to write the register.
+\smvinline{memory} is written at index \smvinline{i} if it is targeted by the STORE instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} allow the current privilege mode to write the register.
 Otherwise \smvinline{memory} does not change.
 It does not mark an error, should the current privilege level not suffice to write the targeted memory address.
 No exception will be generated - the memory simply will not be written.
@@ -601,7 +609,7 @@ Though, user-mode still won't be able to read the respective word as reads are p
 If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smvinline{line} instead of \smvinline{memory[rs1]} will be written into register \smvinline{rd}.
 
 \paragraph{Writes}
-From the cache's perspective, writes to regions which are not uncacheable function equally, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
+From the cache's perspective, writes to regions which are not set uncacheable work the same way, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
 For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs1]}, \smvinline{address} with \smvinline{rd} and \smvinline{valid} will become \smvinline{TRUE}.
 However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
@@ -668,8 +676,7 @@ We define two partitionings $ \Sigma/_{\equiv_C} $ and $ \Sigma/_{\equiv_I} $ on
 \end{align*}
 
 We coin the names $ \P = [\PU]_{\equiv_C} $, $ \C = [\CU]_{\equiv_C} $, $ \U = [\PU]_{\equiv_I} $ and $ \T = [\PT]_{\equiv_I} $ and lift $ \sqcup $ to be defined on equivalence-classes in the usual fashion, i.e. $ [x] \sqcup [y] = [x \sqcup y] $.
-Note, that $ \P \preceq \C $ and $ \T \preceq \U $ with $ \preceq $ again being the partial order inferred from $ \sqcup $.
-Note, that it is possible to define $ \sqcup $ by solely working with these equivalence classes:
+Note, that $ \P \preceq \C $ and $ \T \preceq \U $ with $ \preceq $ again being the partial order inferred from $ \sqcup $ and that it is possible to define $ \sqcup $ by solely working with these equivalence classes:
 \begin{equation*}
     \{ x \sqcup y \} = \big(([x]_{\equiv_C} \sqcup [y]_{\equiv_C}) \cap ([x]_{\equiv_I} \sqcup [y]_{\equiv_I}) \big)
 \end{equation*}
@@ -686,6 +693,7 @@ Note, that it is possible to define $ \sqcup $ by solely working with these equi
 This means that we can track the labels of the lattice of security labels $ \Sigma $ by tracking the confidentiality and integrity labels individually.
 We also find this dealing with labels much more intuitive:
 \begin{itemize}
+    % TODO: rewrite this
     \item Two sources of information combined are considered to be confidential if \textit{any} of the sources is confidential itself.
     This is sensible as with some result of an operation at least partial information about its confidential source can be inferred if the other public source and the operation are known.
     \item Two sources of information combined are considered to be trustworthy if \textit{both} of the sources are trustworthy themselves.
@@ -697,17 +705,17 @@ We also find this dealing with labels much more intuitive:
 
 The intuition behind $ \sqcup $ as described above perfectly matches $ \binSigma $ as well.
 Recall, that \C{} is represented by a 1 and \P{} by a 0 in the binary representation.
-That means that two labels $ a = a_1a_0 \in \binSigma $ and $ b = b_1b_0 \in \binSigma $ are in \C{}, i.e. confidential, if $ a $ or $ b $ is confidential, i.e. if one of the bits representing the confidentiality of the labels is high, i.e. if $ a_1 \lor b_1 $.
-In turn, these two labels are in $ \T $, i.e. trusted, if $ a $ and $ b $ are trusted, i.e. if both of the bits representing the integrity of the labels are high, i.e. if $ a_0 \land b_0 $.
+That means that two labels $ a = a_Ca_I \in \binSigma $ and $ b = b_Cb_I \in \binSigma $ are in \C{}, i.e. confidential, if $ a $ or $ b $ is confidential, i.e. if \textit{one} of the bits representing the confidentiality of the labels is high, i.e. if $ a_C \lor b_C $.
+In turn, these two labels are in $ \T $, i.e. trusted, if $ a $ and $ b $ are trusted, i.e. if \textit{both} of the bits representing the integrity of the labels are high, i.e. if $ a_I \land b_I $.
 This allows us to define $ \sqcup $ on $ \binSigma $ again - this time not just semantically:
 \begin{equation*}
-    a_1a_0 \sqcup b_1b_0 = (a_1 \lor b_1) \cdot (a_0 \land b_0)
+    a_C a_I \sqcup b_C b_I = (a_C \lor b_C) \cdot (a_I \land b_I)
 \end{equation*}
 
 In summary, these paragraphs showed to things:
 \begin{enumerate}
     \item We are able to store the security labels of information independently of each other and do not need to work with the full lattice itself.
-    It is sufficient to deal with equivalence classes or individual bits respectively.
+    It is sufficient to deal with equivalence classes which can be inferred from individual bits.
     \item The $ \sqcup $ operation on the binary representation of the security labels $ \binSigma $ can be implemented by deriving the the confidentiality label by or-ing and the integrity label by and-ing the old labels.
 \end{enumerate}
 
@@ -733,6 +741,8 @@ For each variable in the model we add an confidentiality or integrity tracking c
 
 These variables transition under the same circumstances as their base variable does, e.g. \smvinline{regs_conf} does a transition if and only if \smvinline{regs} transitions and \smvinline{regs_conf} will deduct its content from sources parallel the those of \smvinline{regs}.
 The values themselves change based on the current instruction and its information flow tracking semantics as described in \ref{sec:ifc-model}.
+% TODO: explain why this is the case
+The only exception to this is the information flow tracking of the variable \smvinline{csrs} the labels of which do not change at all.
 
 In other words, the \smvinline{*_conf} and \smvinline{*_integrity} variables perfectly mirror the architecture implementation as described in \ref{sec:model-implementation}.
 Rather than simply simulating the MINRV8 architecture in nuXmv we also track the confidentiality-world and integrity-world of this architecture in parallel to simulating the pure computational-world.
