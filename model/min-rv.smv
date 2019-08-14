@@ -139,9 +139,11 @@ MODULE main
         pmacfg := mstatus[7:4];
         pmpcfg := csrs[1];
 
-    -- Initialize mstatus to have interrupts enable and nothing else
-    INIT mstatus = 0b_00000110;
-    --            0b_reg1_reg0
+    -- Initialize mstatus to have interrupts enable and nothing else; do not
+    -- constrain pmacfg
+    INIT mstatus = (mstatus & 0b_1111_0110);
+    INIT mstatus = (mstatus | 0b_0000_0110);
+    --                        0b_reg1_reg0
 
     DEFINE
         __mstatus_high_guard := 0b_00001000;
