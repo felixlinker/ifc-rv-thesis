@@ -349,8 +349,13 @@ MODULE main
     #define try_store(i, r_source, mem_source, write_back_source) \
         (case \
             store_targeted(i): r_source[rs1]; \
-            cache.addr = i & next(cache.addr) != i & cache.valid \
-            & (i < REGION0_SIZE ? pmacfg0.write_back : pmacfg1.write_back): \
+            cache.addr = i & cache.valid & (( \
+                next(cache.addr) != i \
+                & (i < REGION0_SIZE ? pmacfg0.write_back : pmacfg1.write_back) \
+            ) | (i < REGION0_SIZE \
+                ? (pmacfg0.write_back & !next(pmacfg0.write_back)) \
+                : (pmacfg1.write_back & !next(pmacfg1.write_back)) \
+            )): \
                 write_back_source; \
             TRUE: mem_source[i]; \
         esac)
