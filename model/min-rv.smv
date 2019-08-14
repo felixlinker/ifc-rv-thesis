@@ -421,123 +421,41 @@ MODULE main
         & regs_conf[2] = 0h_00
         & regs_conf[3] = 0h_00
     ));
-    -- ... if machine mode clears its registers before returning
-    LTLSPEC NAME NO_LEAK_SANITIZED :=
-        G (
-            priv & op = MRET
-            -> regs_conf[0] = 0h_00
-                & regs_conf[1] = 0h_00
-                & regs_conf[2] = 0h_00
-                & regs_conf[3] = 0h_00
-        )
-        -> G (priv | (
-            regs_conf[0] = 0h_00
-            & regs_conf[1] = 0h_00
-            & regs_conf[2] = 0h_00
-            & regs_conf[3] = 0h_00
-        ));
-    -- ... and if machine mode does not declassify memory regions that have
-    -- confidential data in them
-    LTLSPEC NAME NO_LEAK_SANITIZED_NO_MEM_DECLASSIFICATION :=
-            G (
-                priv & op in { CSRRS, CSRRC } & 0 < rs1
-                ->
-                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1]
-                        & (cache.valid & cache.addr < REGION0_SIZE
-                            -> 0h_00 = cache.conf
-                        ))
-                        | X !pmpcfg0.read)
-                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3]
-                        & (cache.valid & REGION0_SIZE <= cache.addr
-                            -> 0h_00 = cache.conf
-                        ))
-                        | X !pmpcfg1.read)
-                )
-            & G (priv & op = STORE -> rd < REGION0_SIZE)
-            & G (
-                priv & op = MRET
-                -> regs_conf[0] = 0h_00
-                    & regs_conf[1] = 0h_00
-                    & regs_conf[2] = 0h_00
-                    & regs_conf[3] = 0h_00
-            )
-        -> G (priv | (
-                regs_conf[0] = 0h_00
-                & regs_conf[1] = 0h_00
-                & regs_conf[2] = 0h_00
-                & regs_conf[3] = 0h_00
-            ));
-    -- ... and if machine mode does not write into memory that is publicly readable
-    LTLSPEC NAME NO_LEAK_SANITIZED_NO_USE_DECLASSIFIED_MEM :=
-            G (
-                priv & op in { CSRRS, CSRRC } & 0 < rs1
-                ->
-                    ((0h_00 = memory_conf[0] & 0h_00 = memory_conf[1]
-                        & (cache.valid & cache.addr < REGION0_SIZE
-                            -> 0h_00 = cache.conf
-                        ))
-                        | X !pmpcfg0.read)
-                    & ((0h_00 = memory_conf[2] & 0h_00 = memory_conf[3]
-                        & (cache.valid & REGION0_SIZE <= cache.addr
-                            -> 0h_00 = cache.conf
-                        ))
-                        | X !pmpcfg1.read)
-            )
-            & G (
-                priv & op = STORE & 0h_00 < regs_conf[rs1]
-                -> (rd < REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read)
-            )
-            & G (
-                priv & op = MRET
-                -> regs_conf[0] = 0h_00
-                    & regs_conf[1] = 0h_00
-                    & regs_conf[2] = 0h_00
-                    & regs_conf[3] = 0h_00
-            )
-        -> G (priv | (
-            regs_conf[0] = 0h_00
-            & regs_conf[1] = 0h_00
-            & regs_conf[2] = 0h_00
-            & regs_conf[3] = 0h_00
-        ));
 
     -- Control and status registers are only written with machine-mode
     -- controlled values
-    LTLSPEC NAME NO_INFLUENCE :=
+    LTLSPEC NAME CSR_INTEGRITY :=
         G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
-    -- ... and if machine mode only loads from regions user-mode can't write to
-    LTLSPEC NAME NO_INFLUENCE_NO_PUBLIC_READS :=
-        G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
-        -> G (
+
+    LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
+        G (
             priv & op in { CSRRS, CSRRC }
-            -> regs_integrity[rs2] = 0h_FF
+            -> regs_conf[rs2] > 0h_0F
         );
-    -- ... if machine-mode sanitizes user-mode input
-    LTLSPEC NAME NO_INFLUENCE_NO_PUBLIC_READS_SANITIZED :=
-        G (!priv & X priv -> X (op = SAN))
-        & G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
-        -> G (
-            priv & op in { CSRRS, CSRRC }
-            -> regs_integrity[rs2] = 0h_FF
+
+    LTLSPEC NAME STORE_INTEGRITY :=
+        G (
+            priv & op = STORE
+            -> regs_integrity[rs2] > 0h_03
         );
-    -- ... and if machine-mode does not allocate memory unsanitized
-    LTLSPEC NAME NO_INFLUENCE_NO_PUBLIC_READS_SANITIZED_NO_DECLASSIFICATION :=
-        G (!priv & X priv -> X (op = SAN))
-        & G (priv & op = LOAD -> (rs1 < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write))
-        & G (
-                priv & op in { CSRRC, CSRRS }
-            -> (
-                pmpcfg0.write & X !pmpcfg0.write
-                -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF
-            ) & (
-                pmpcfg1.write & X !pmpcfg1.write
-                -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF
-            )
-        )
-        -> G (
-            priv & op in { CSRRS, CSRRC }
-            -> regs_integrity[rs2] = 0h_FF
+
+    LTLSPEC NAME STORE_CONFIDENTIALITY :=
+        G (
+            priv & op = STORE & memory_conf[read_addr(rs2)] > 0h_00
+            -> regs_conf[rs2] > 0h_03
+        );
+
+    LTLSPEC NAME LOAD_INTEGRITY :=
+        G (
+            priv & op = LOAD
+            -> regs_integrity[rs1] > 0h_03
+        );
+
+    LTLSPEC NAME LOAD_CONFIDENTIALITY :=
+        G (
+            priv & op = LOAD & memory_conf[read_addr(rs1)] > 0h_00
+            -> regs_conf[rs1] > 0h_03
         );
