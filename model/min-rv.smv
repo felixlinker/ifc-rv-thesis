@@ -46,6 +46,7 @@ MODULE cache_line(main_module)
         __rd := main_module.rd;
         __rs1 := main_module.rs1;
         __rs2 := main_module.rs2;
+        regs := main_module.regs;
 
         __can_cache_read := (read_addr(__rs1) < REGION0_SIZE
             ? !main_module.pmacfg0.uncached
