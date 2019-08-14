@@ -13,8 +13,57 @@ To outline this, we will answer two questions:
 How do we phrase properties to verify?
 How do we refine the model and/or properties on a verification failure?
 
-\subsection{Checking \& Refinement Methodology}
+\subsection{Verification Process}
 
-\subsection{Checked Properties}
+\subsubsection{Properties}
+
+In the summary of section \ref{sec:ifc-model} we mentioned that there are some arguments to the information flow semantic functions in $ \I $ that are not used to determine the information flow label of some architectural word.
+These induce the first properties we will verify the MINRV8 architecture against.
+
+Firstly, recall the definition of the LOAD and STORE semantics.
+The new tracking labels resulting from executing such an instruction solely depend on the labels of the word loaded or stored.
+What hasn't been used in the definition of information flow is the label of the target address of the memory operation.
+It is intuitive that the address does not influence the label of the information itself.
+% TODO: is security a good word?
+However, this suggests that the labels of the address of the memory operation might be relevant for the security of architecture as a whole in another.
+This leads to the following two properties:
+\begin{enumerate}[label=\Roman*.,series=]
+    \item \label{itm:prop-mem-i}
+    Whenever a memory operation is performed in privileged mode, the target address must be integrous.
+    \item \label{itm:prop-mem-c}
+    Whenever a confidential word is read from or written to memory in privileged mode, the target address must be confidential.
+\end{enumerate}
+
+% TODO: give intuition for both properties
+
+Secondly, recall the definition of the semantics for CSRRS or CSRRC, respectively.
+These only propagate information flow tracking labels by assigning the constant labels of the \gls{csr} read to the respectively targeted register.
+We decided to model the labels of \glspl{csr} as constants because they control the state of the architecture and as such might be target of an attack.
+We labelled all \glspl{csr} as integrous and \gls{mstatus} as confidential.
+We decided to not label \gls{pmacfg} or \gls{pmpcfg} as confidential since it can be assumed that user mode must be able to know where memory regions are to operate correctly.
+Our architecture does not support virtual addresses, address translation or other similar concepts which might hide details of the memory settings from user mode leaving it without the need to know the details of memory settings.
+
+Coming back to the information flow semantics of CSRRS and CSRRC, notice that in the respective definition of the semantical functions the value the \glspl{csr} are written with is not used.
+This must necessarily be the case since the labels of the \glspl{csr} are constant and as such can not change based on the labels of the value to write them with.
+However, this leads us to phrase a property about the \gls{csr} labels that ensures their integrity or confidentiality respectively:
+\begin{enumerate}[label=\Roman*.,resume]
+    \item \label{itm:prop-csr-i}
+    Whenever a \gls{csr} is written, the value it is written with must be integrous.
+    \item \label{itm:prop-mstatus-c}
+    Whenever \gls{mstatus} is written, the value it is written with must be confidential.
+\end{enumerate}
+
+From all the variables our implementation of the MINRV8 architecture comprises we now considered \smvinline{regs} and \smvinline{memory} as well as \smvinline{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
+We also considered the variable \smvinline{csrs} by assigning constant information flow labels to it and using it as an information flow target, i.e. we phrased properties ensuring that certain flows of information \textit{to} \smvinline{csrs} do not occur.
+However, up to this point we only implicitly handled the \smvinline{priv} variable which holds the current privilege mode.
+It was used as a source of labels since it determines the labels of machine words loaded as immediates by LOADI.
+
+It is reasonable to assume, though, that \smvinline{priv} also can serve as an information flow target; similar to \smvinline{csrs}.
+We already did this partially in properties \ref{itm:prop-mem-i}and \ref{itm:prop-mem-c} where we assumed the architecture to be in privileged mode.
+These properties, however, only dealt with the integrity labels of information.
+The domain of confidentiality has yet been left out so we will introduce one final property for verification that covers the interplay between privilege mode and confidentiality labels:
+\begin{enumerate}[label=\Roman*.,resume]
+    \item Whenever the architecture is in user mode, there is no confidential data in any register.
+\end{enumerate}
 
 \subsection{Trustworthiness of the Verification Process}
