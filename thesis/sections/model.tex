@@ -21,7 +21,7 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
     \begin{tabular}{|l p{10cm}|}
         \hline
         LOAD $ rd $, $ rs1 $ & Load the word stored in memory at the address stored in registers $ rs1 $ modulo 4 into register $ rd $ \\
-        STORE $ rs1 $, $ rs2 $ & Store the word located in register $ rs1 $ into memory at address stored in register $ rs2 $ modulo 4 \\
+        STORE $ rs1 $, $ rs2 $ & Store the word located in register $ rs2 $ into memory at address stored in register $ rs1 $ modulo 4 \\
         LOADI $ rd $, $ imm $ & Load the 8-bit immediate value $ imm $ into register $ rd $ \\
         ADD $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the sum of the values in registers $ rs1 $ and $ rs2 $ \\
         SUB $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the value of register $ rs1 $ minus the value of register $ rs2 $ \\
@@ -398,7 +398,7 @@ However, as memory addressing is dynamic via indices stored in registers, we int
 This lets us define the semantics of LOAD and STORE as follows:
 \begin{align*}
     \I(\text{LOAD}) &= a \mapsto \text{memoryLabel}\big(v(a) \big) \\
-    \I(\text{STORE}) &= (d, a) \mapsto l(d)
+    \I(\text{STORE}) &= (a, d) \mapsto l(d)
 \end{align*}
 
 A similar magic function is needed for the semantics of CSRRS and CSRRC.
@@ -445,7 +445,7 @@ More on this in section \ref{sec:checking}.
         \I(\text{SLT}) &= (w, w') \mapsto \bot\bot\bot\bot\bot\bot\bot \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big) \\
         \I(\text{MOV}) &= w \mapsto l(w) \\
         \I(\text{LOAD}) &= a \mapsto \text{memoryLabel}\big(v(a) \big) \\
-        \I(\text{STORE}) &= (d, a) \mapsto l(d) \\
+        \I(\text{STORE}) &= (a, d) \mapsto l(d) \\
         \I(\text{CSRRS}) = \I(\text{CSRRC}) &= (r, w) \mapsto \text{csrLabel}\big(v(r) \big) \\
         \I(\text{LOADI}) &= c \mapsto \begin{cases}
             8 \times \CT & \; \text{if current mode is machine-mode} \\
@@ -610,13 +610,13 @@ If on a LOAD, however, the cache already held the targeted word an was valid and
 
 \paragraph{Writes}
 From the cache's perspective, writes to regions which are not set uncacheable work the same way, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
-For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs1]}, \smvinline{address} with \smvinline{regs[rs2] mod 4} and \smvinline{valid} will become \smvinline{TRUE}.
+For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs2]}, \smvinline{address} with \smvinline{regs[rs1] mod 4} and \smvinline{valid} will become \smvinline{TRUE}.
 However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
 For example, consider the following program where we assume that \assmblrinline{regs[1] != regs[2]}:
 \begin{assmblr}
-STORE 0, 1  # store regs[0] at memory[regs[1] mod 4]
+STORE 1, 0  # store regs[0] at memory[regs[1] mod 4]
 LOAD 0, 2   # read memory[regs[2] mod 4] to regs[0]
 \end{assmblr}
 
