@@ -602,15 +602,15 @@ If a memory region is set as uncacheable, the cache will ignore reads and writes
 
 \paragraph{Reads}
 If a memory region is not set as uncacheable, reads will trigger a cache-fill.
-On a LOAD if the cache is invalid or currently holds the contents of a different memory address than targeted, \smvinline{addr} gets written with \smvinline{rs1}, \smvinline{valid} becomes \smvinline{TRUE} and \smvinline{line} is written with \smvinline{regs[rs1]}.
+On a LOAD if the cache is invalid or currently holds the contents of a different memory address than targeted, \smvinline{addr} gets written with \smvinline{regs[rs1] mod 4}, \smvinline{valid} becomes \smvinline{TRUE} and \smvinline{line} is written with \smvinline{memory[addr]}.
 This process is independent of the current privilege level, e.g. user-mode can cause a cache-fill with memory content in regions that are unreadable to it.
 Though, user-mode still won't be able to read the respective word as reads are privileged controlled.
 
-If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smvinline{line} instead of \smvinline{memory[rs1]} will be written into register \smvinline{rd}.
+If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smvinline{line} instead of \smvinline{memory[regs[rs1] mod 4]} will be written into register \smvinline{rd}.
 
 \paragraph{Writes}
 From the cache's perspective, writes to regions which are not set uncacheable work the same way, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
-For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs1]}, \smvinline{address} with \smvinline{rd} and \smvinline{valid} will become \smvinline{TRUE}.
+For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs1]}, \smvinline{address} with \smvinline{regs[rs2] mod 4} and \smvinline{valid} will become \smvinline{TRUE}.
 However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
