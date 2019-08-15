@@ -106,4 +106,27 @@ INVARSPEC NAME NO_LEAK := priv | (
 
 \subsubsection{Mitigations \& Refinement}
 
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[node distance = 1.5cm, auto]
+        \node[block] (proofs) {run proofs};
+        \node[decision] (failure) [below=of proofs] {is there a failure?};
+        \node[block] (distinguish) [below=of failure] {inspect counter example};
+        \node[decision] (cause) [below=of distinguish] {what is the cause?};
+        \node[block] (architecture) [below left=of cause] {refine the architecture};
+        \node[block] (rule) [below right=of cause] {refine assumptions};
+
+        \path[line] (proofs) -- (failure);
+        \path[line] (failure) -- node[near start] {yes} (distinguish);
+        \path[line,dashed] (failure.east) -- node[near start] {no} ++(right:1.5cm);
+        \path[line] (distinguish) -- (cause);
+        \path[line] (cause) -| node[near start] {weakness} (architecture);
+        \path[line] (cause) -| node[near start] {programmer} (rule);
+        \path[line] (architecture.north) ++(left:0.5cm) |- (proofs);
+        \path[line] (rule.north) ++(right:0.5cm) |- (proofs);
+    \end{tikzpicture}
+    \caption{Verification Process Flowchart}
+    \label{fig:ver-process}
+\end{figure}
+
 \subsection{Trustworthiness of the Verification Process}
