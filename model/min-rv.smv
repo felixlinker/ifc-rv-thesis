@@ -440,26 +440,14 @@ MODULE main
             -> regs_conf[rs2] > 0h_0F
         );
 
-    LTLSPEC NAME STORE_INTEGRITY :=
+    LTLSPEC NAME MEMORY_OP_INTEGRITY :=
         G (
-            priv & op = STORE
+            priv & op in { LOAD, STORE }
             -> regs_integrity[rs1] > 0h_03
         );
 
-    LTLSPEC NAME STORE_CONFIDENTIALITY :=
+    LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
         G (
-            priv & op = STORE & memory_conf[read_addr(rs1)] > 0h_00
-            -> regs_conf[rs1] > 0h_03
-        );
-
-    LTLSPEC NAME LOAD_INTEGRITY :=
-        G (
-            priv & op = LOAD
-            -> regs_integrity[rs1] > 0h_03
-        );
-
-    LTLSPEC NAME LOAD_CONFIDENTIALITY :=
-        G (
-            priv & op = LOAD & memory_conf[read_addr(rs1)] > 0h_00
+            priv & op in { LOAD, STORE } & memory_conf[read_addr(rs1)] > 0h_00
             -> regs_conf[rs1] > 0h_03
         );

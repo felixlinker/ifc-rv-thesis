@@ -7,10 +7,8 @@ param(
         "NO_LEAK",
         "CSR_INTEGRITY",
         "MSTATUS_CONFIDENTIALITY",
-        "STORE_INTEGRITY",
-        "STORE_CONFIDENTIALITY",
-        "LOAD_INTEGRITY",
-        "LOAD_CONFIDENTIALITY"
+        "MEMORY_OP_INTEGRITY",
+        "MEMORY_OP_CONFIDENTIALITY"
     )
 )
 
