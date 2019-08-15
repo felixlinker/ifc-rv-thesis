@@ -1,5 +1,5 @@
 set input_file [INPUT]
 go_bmc
-check_ltlspec_bmc -P [PROPNAME] -k [MAXLEN]
+check_invar_bmc -P [PROPNAME] -a een-sorensson -k [MAXLEN]
 show_traces -o [OUTPUT] -p 4
 quit
