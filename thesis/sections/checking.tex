@@ -111,19 +111,24 @@ INVARSPEC NAME NO_LEAK := priv | (
     \begin{tikzpicture}[node distance = 1.5cm, auto]
         \node[block] (proofs) {run proofs};
         \node[decision] (failure) [below=of proofs] {is there a failure?};
-        \node[block] (distinguish) [below=of failure] {inspect counter example};
-        \node[decision] (cause) [below=of distinguish] {what is the cause?};
-        \node[block] (architecture) [below left=of cause] {refine the architecture};
-        \node[block] (rule) [below right=of cause] {refine assumptions};
+        \node[block] (inspect) [below=of failure] {inspect counter example};
+        \node[decision] (model) [right=of inspect] {is the model correct?};
+        \node[block] (fix) [above=of model] {fix the model};
+        \node[decision] (cause) [below=of model] {is mitigation possible?};
+        \node[block] (architecture) [left=of cause] {refine the architecture};
+        \node[block] (rule) [below=of cause] {refine assumptions};
 
         \path[line] (proofs) -- (failure);
-        \path[line] (failure) -- node[near start] {yes} (distinguish);
-        \path[line,dashed] (failure.east) -- node[near start] {no} ++(right:1.5cm);
-        \path[line] (distinguish) -- (cause);
-        \path[line] (cause) -| node[near start] {weakness} (architecture);
-        \path[line] (cause) -| node[near start] {programmer} (rule);
-        \path[line] (architecture.north) ++(left:0.5cm) |- (proofs);
-        \path[line] (rule.north) ++(right:0.5cm) |- (proofs);
+        \path[line] (failure) -- node[near start] {yes} (inspect);
+        \path[line,dashed] (failure.west) -- node[near start] {no} ++(left:1.5cm);
+        \path[line] (inspect) -- (model);
+        \path[line] (model) -- node[near start] {no} (fix);
+        \path[line] (fix) |- (proofs);
+        \path[line] (model) -- node[near start] {yes} (cause);
+        \path[line] (cause) -- node[near start] {yes} (architecture);
+        \path[line] (cause) -- node[near start] {no} (rule);
+        \path[line] (architecture.west) -| ++(left:1cm) |- (proofs);
+        \path[line] (rule.west) -| ($ (architecture.west) + (left:1cm) $);
     \end{tikzpicture}
     \caption{Verification Process Flowchart}
     \label{fig:ver-process}
