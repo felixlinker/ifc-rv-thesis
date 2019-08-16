@@ -413,7 +413,86 @@ MODULE main
         cache.integrity
     );
 
-    #define assumptions (TRUE)
+    #ifdef CLEAR_ON_RET
+        #undef CLEAR_ON_RET
+        #define CLEAR_ON_RET G (priv & X !priv -> Y op = CLR) &
+    #else
+        #define CLEAR_ON_RET
+    #endif
+
+    #ifdef SANITIZE_ON_CALL
+        #undef SANITIZE_ON_CALL
+        #define SANITIZE_ON_CALL G (!priv & X priv -> X op = SAN) &
+    #else
+        #define SANITIZE_ON_CALL
+    #endif
+
+    #ifdef NO_PUBLIC_READS
+        #undef NO_PUBLIC_READS
+        #define NO_PUBLIC_READS G (priv & op = LOAD \
+            -> (read_addr(rs1) < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write)) &
+    #else
+        #define NO_PUBLIC_READS
+    #endif
+
+    #ifdef NO_PUBLIC_WRITES
+        #undef NO_PUBLIC_WRITES
+        #define NO_PUBLIC_WRITES G (priv & op = STORE \
+            -> (read_addr(rs1) < REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read)) &
+    #else
+        #define NO_PUBLIC_WRITES
+    #endif
+
+    #ifdef CLEAR_ON_DECLASSIFICATION
+        #undef CLEAR_ON_DECLASSIFICATION
+        #define CLEAR_ON_DECLASSIFICATION \
+            G (!pmpcfg0.read & X pmpcfg0.read \
+                -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00) \
+            & G (!pmpcfg1.read & X pmpcfg1.read \
+                -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00) &
+    #else
+        #define CLEAR_ON_DECLASSIFICATION
+    #endif
+
+    #ifdef CLEAR_CACHE_ON_DECLASSIFICATION
+        #undef CLEAR_CACHE_ON_DECLASSIFICATION
+        #define CLEAR_CACHE_ON_DECLASSIFICATION \
+            G (!pmpcfg0.read & X pmpcfg0.read \
+                    & cache.valid & cache.addr < REGION0_SIZE \
+                -> cache.conf = 0h_00) & \
+            G (!pmpcfg1.read & X pmpcfg1.read \
+                    & cache.valid & REGION0_SIZE <= cache.addr \
+                -> cache.conf = 0h_00) &
+    #else
+        #define CLEAR_CACHE_ON_DECLASSIFICATION
+    #endif
+
+    #ifdef SANITIZE_ON_CLASSIFICATION
+        #undef SANITIZE_ON_CLASSIFICATION
+        #define SANITIZE_ON_CLASSIFICATION ( \
+            G (pmpcfg0.write & X !pmpcfg0.write \
+                -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF) \
+            & G (pmpcfg1.write & X !pmpcfg1.write \
+                -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF) \
+        ) &
+    #else
+        #define SANITIZE_ON_CLASSIFICATION
+    #endif
+
+    #ifdef SANITIZE_CACHE_ON_CLASSIFICATION
+        #undef SANITIZE_CACHE_ON_CLASSIFICATION
+        #define SANITIZE_CACHE_ON_CLASSIFICATION \
+            G (pmpcfg0.write & X !pmpcfg0.write \
+                    & cache.valid & cache.addr < REGION0_SIZE \
+                -> cache.integrity = 0h_FF) & \
+            G (pmpcfg1.write & X !pmpcfg1.write \
+                    & cache.valid & REGION0_SIZE <= cache.addr \
+                -> cache.integrity = 0h_FF) &
+    #else
+        #define SANITIZE_CACHE_ON_CLASSIFICATION
+    #endif
+
+    #define assumptions (CLEAR_ON_RET SANITIZE_ON_CALL NO_PUBLIC_READS NO_PUBLIC_WRITES CLEAR_ON_DECLASSIFICATION CLEAR_CACHE_ON_DECLASSIFICATION SANITIZE_ON_CLASSIFICATION SANITIZE_CACHE_ON_CLASSIFICATION TRUE)
 
     -- This property is here to be targeted by the user to check whether the
     -- model is syntactically correct without starting expensive proofs.

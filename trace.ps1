@@ -4,7 +4,16 @@ param(
     [string]$cmd = ".\trace-bmc.template",
     [int]$tracelen = 10,
     [switch]$dry = $false,
-    [string[]]$assumptions = @(),
+    [string[]]$assumptions = @(
+        "CLEAR_ON_RET",
+        "SANITIZE_ON_CALL",
+        "NO_PUBLIC_READS",
+        "NO_PUBLIC_WRITES",
+        "CLEAR_ON_DECLASSIFICATION",
+        "CLEAR_CACHE_ON_DECLASSIFICATION",
+        "SANITIZE_ON_CLASSIFICATION",
+        "SANITIZE_CACHE_ON_CLASSIFICATION"
+    ),
     [string[]]$props = @(
         "NO_LEAK",
         "CSR_INTEGRITY",
