@@ -44,24 +44,24 @@ MODULE cache_line(main_module)
     DEFINE
         __op := main_module.op;
         __rd := main_module.rd;
-        __rs1 := main_module.rs1;
+        __mem_addr := main_module.mem_addr;
         __rs2 := main_module.rs2;
         regs := main_module.regs;
 
-        __can_cache_read := (read_addr(__rs1) < REGION0_SIZE
+        __can_cache_read := (__mem_addr < REGION0_SIZE
             ? !main_module.pmacfg0.uncached
             : !main_module.pmacfg1.uncached);
-        __can_cache_write := (read_addr(__rs1) < REGION0_SIZE
+        __can_cache_write := (__mem_addr < REGION0_SIZE
             ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
             : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
-        __hit := read_addr(__rs1) = addr;
-        __read := (__hit & valid ? line : main_module.memory[read_addr(__rs1)]);
+        __hit := __mem_addr = addr;
+        __read := (__hit & valid ? line : main_module.memory[__mem_addr]);
         __read_conf := (__hit & valid
             ? conf
-            : main_module.memory_conf[read_addr(__rs1)]);
+            : main_module.memory_conf[__mem_addr]);
         __read_integrity := (__hit & valid
             ? integrity
-            : main_module.memory_integrity[read_addr(__rs1)]);
+            : main_module.memory_integrity[__mem_addr]);
 
     INIT valid = FALSE;
 
@@ -74,15 +74,15 @@ MODULE cache_line(main_module)
 
     TRANS next(addr) = case
         main_module.do_trap: addr;
-        __op = LOAD & __can_cache_read & main_module.can_load: read_addr(__rs1);
-        __op = STORE & __can_cache_write & __hit & main_module.can_write: read_addr(__rs1);
+        __op = LOAD & __can_cache_read & main_module.can_load: __mem_addr;
+        __op = STORE & __can_cache_write & __hit & main_module.can_write: __mem_addr;
         TRUE: addr;
     esac;
 
     #define trans(read_source, write_source, default) \
         (case \
             main_module.do_trap: default; \
-            __op = LOAD & __can_cache_read & main_module.can_load: read_source[read_addr(__rs1)]; \
+            __op = LOAD & __can_cache_read & main_module.can_load: read_source[__mem_addr]; \
             __op = STORE & __can_cache_write & __hit & main_module.can_write: \
                 write_source[__rs2]; \
             TRUE: default; \
@@ -187,23 +187,24 @@ MODULE main
         csr_rs := rs1 mod 2;
 
     DEFINE
+        mem_addr := read_addr(rs1);
         -- TODO: Throw on a load without privileges?
         can_load := (priv
-            ? (read_addr(rs1) < REGION0_SIZE
+            ? (mem_addr < REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.read)
                 : (!pmpcfg1.locked | pmpcfg1.read)
             )
-            : (read_addr(rs1) < REGION0_SIZE
+            : (mem_addr < REGION0_SIZE
                 ? pmpcfg0.read
                 : pmpcfg1.read
             ));
         -- TODO: Throw on a write without privileges?
         can_write := (priv
-            ? (read_addr(rs1) < REGION0_SIZE
+            ? (mem_addr < REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.write)
                 : (!pmpcfg1.locked | pmpcfg1.write)
             )
-            : (read_addr(rs1) < REGION0_SIZE
+            : (mem_addr < REGION0_SIZE
                 ? pmpcfg0.write
                 : pmpcfg1.write
             ));
@@ -343,7 +344,7 @@ MODULE main
     TRANS next(regs_integrity)[3] = next_reg_integrity(3);
 
     -- memory transitions
-    #define store_targeted(i) (read_addr(rs1) = i & !do_trap & op = STORE & can_write \
+    #define store_targeted(i) (mem_addr = i & !do_trap & op = STORE & can_write \
         & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back))
     #define try_store(i, r_source, mem_source, write_back_source) \
         (case \
@@ -430,7 +431,7 @@ MODULE main
     #ifdef NO_PUBLIC_READS
         #undef NO_PUBLIC_READS
         #define NO_PUBLIC_READS G (priv & op = LOAD \
-            -> (read_addr(rs1) < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write)) &
+            -> (mem_addr < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write)) &
     #else
         #define NO_PUBLIC_READS
     #endif
@@ -438,7 +439,7 @@ MODULE main
     #ifdef NO_PUBLIC_WRITES
         #undef NO_PUBLIC_WRITES
         #define NO_PUBLIC_WRITES G (priv & op = STORE \
-            -> (read_addr(rs1) < REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read)) &
+            -> (mem_addr < REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read)) &
     #else
         #define NO_PUBLIC_WRITES
     #endif
@@ -529,6 +530,6 @@ MODULE main
 
     LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
         assumptions -> G (
-            priv & op in { LOAD, STORE } & memory_conf[read_addr(rs1)] > 0h_00
+            priv & op in { LOAD, STORE } & memory_conf[mem_addr] > 0h_00
             -> (regs_conf[rs1] & 0h_03) = 0h_03
         );
