@@ -50,7 +50,7 @@ $replaced_cmd = New-TemporaryFile
 
 # Track property time and success
 $took_millis = @{}
-$succ = @{}
+$outs = @{}
 foreach ($prop in $props) {
     # Replace template-like variables in the command file
     $cmds = get-content $cmd
@@ -68,10 +68,9 @@ foreach ($prop in $props) {
     }).Milliseconds
 
     # Map the trace to an html table
-    $succ[$prop] = $true
     if ($Null -ne (Get-Content $trace)) {
-        $succ[$prop] = $false
         $out = Join-Path $outDir ($prop + ".html")
+        $outs[$prop] = $out
         # Execute https://github.com/felixlinker/smvtrcviz by script
         smvtrcviz.bat $trace.FullName $out
     }
@@ -81,9 +80,10 @@ $took_sum = 0
 foreach ($prop in $props) {
     $ms = $took_millis[$prop]
     $took_sum += $ms
-    $proven = $succ[$prop]
+    $proven = ![Bool]$outs[$prop]
     Write-Host "$prop was proven to be $proven in $ms ms"
 }
+$outs.Values | ForEach-Object { Start-Process $PSItem }
 Write-Host "All proofs took $took_sum ms"
 
 # Clean up temporary files
