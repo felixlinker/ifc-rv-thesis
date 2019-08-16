@@ -3,6 +3,7 @@ param(
     [string]$outDir = ".\dist",
     [string]$cmd = ".\trace-bmc.template",
     [int]$tracelen = 10,
+    [switch]$dry = $false,
     [string[]]$props = @(
         "NO_LEAK",
         "CSR_INTEGRITY",
@@ -18,8 +19,6 @@ if (!(Test-Path $preprocessedPath)) {
     New-Item $preprocessedPath
 }
 $preprocessed = Get-Item $preprocessedPath
-$trace = New-TemporaryFile
-$replaced_cmd = New-TemporaryFile
 
 if (
     ($Null -eq (Get-Content $preprocessed)) -or
@@ -31,6 +30,13 @@ if (
     # Preprocess the model
     cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed
 }
+
+if ($dry) {
+    exit
+}
+
+$trace = New-TemporaryFile
+$replaced_cmd = New-TemporaryFile
 
 # Track property time and success
 $took_millis = @{}
