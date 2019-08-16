@@ -74,7 +74,7 @@ Confer code snippets \ref{snpt:prop-mem-i}-\ref{snpt:prop-no-leak} for details.
 LTLSPEC NAME MEMORY_OP_INTEGRITY :=
     assumptions -> G (
         priv & op in { LOAD, STORE }
-        -> regs_integrity[rs1] > 0h_03
+        -> (regs_integrity[rs1] & 0h_03) = 0h_03
     );
 \end{smv}
 
@@ -83,7 +83,7 @@ LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
     assumptions -> G (
         priv & op in { LOAD, STORE }
             & memory_conf[read_addr(rs1)] > 0h_00
-        -> regs_conf[rs1] > 0h_03
+        -> (regs_conf[rs1] & 0h_03) = 0h_03
     );
 \end{smv}
 
@@ -99,7 +99,7 @@ LTLSPEC NAME CSR_INTEGRITY :=
 LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
     assumptions -> G (
         priv & op in { CSRRS, CSRRC }
-        -> regs_conf[rs2] > 0h_0F
+        -> (regs_conf[rs2] & 0h_0F) = 0h_0F
     );
 \end{smv}
 
