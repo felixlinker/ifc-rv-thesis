@@ -534,8 +534,8 @@ MODULE main
 
     The only solution to this is covering all other cases and explicitly stating what should happen then as for example can be done by using an inline-if expression:
     \begin{smv}
-    TRANS next(r1) = (ri = 1 ? sum : r1);
-    TRANS next(r2) = (ri = 2 ? sum : r2);
+TRANS next(r1) = (ri = 1 ? sum : r1);
+TRANS next(r2) = (ri = 2 ? sum : r2);
     \end{smv}
 
     Now, whenever \smvinline{ri} is not equal to the respective index, \smvinline{r1} (or \smvinline{r2}) will be stable.
