@@ -189,21 +189,21 @@ MODULE main
     DEFINE
         -- TODO: Throw on a load without privileges?
         can_load := (priv
-            ? (rs1 < REGION0_SIZE
+            ? (read_addr(rs1) < REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.read)
                 : (!pmpcfg1.locked | pmpcfg1.read)
             )
-            : (rs1 < REGION0_SIZE
+            : (read_addr(rs1) < REGION0_SIZE
                 ? pmpcfg0.read
                 : pmpcfg1.read
             ));
         -- TODO: Throw on a write without privileges?
         can_write := (priv
-            ? (rd < REGION0_SIZE
+            ? (read_addr(rd) < REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.write)
                 : (!pmpcfg1.locked | pmpcfg1.write)
             )
-            : (rd < REGION0_SIZE
+            : (read_addr(rd) < REGION0_SIZE
                 ? pmpcfg0.write
                 : pmpcfg1.write
             ));
