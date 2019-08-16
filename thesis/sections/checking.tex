@@ -71,37 +71,46 @@ The implementation of these five properties is straight-forward.
 Confer code snippets \ref{snpt:prop-mem-i}-\ref{snpt:prop-no-leak} for details.
 
 \begin{smv}[caption={Implementation of property \ref{itm:prop-mem-i}},label={snpt:prop-mem-i}]
-INVARSPEC NAME MEMORY_OP_INTEGRITY :=
-    (assumptions & priv & op in { LOAD, STORE })
-    -> regs_integrity[rs1] > 0h_03;
+LTLSPEC NAME MEMORY_OP_INTEGRITY :=
+    assumptions -> G (
+        priv & op in { LOAD, STORE }
+        -> regs_integrity[rs1] > 0h_03
+    );
 \end{smv}
 
 \begin{smv}[caption={Implementation of property \ref{itm:prop-mem-c}}]
-INVARSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
-    (assumptions & priv & op in { LOAD, STORE }
-        & memory_conf[read_addr(rs1)] > 0h_00)
-    -> regs_conf[rs1] > 0h_03;
+LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
+    assumptions -> G (
+        priv & op in { LOAD, STORE }
+            & memory_conf[read_addr(rs1)] > 0h_00
+        -> regs_conf[rs1] > 0h_03
+    );
 \end{smv}
 
 \begin{smv}[caption={Implementation of property \ref{itm:prop-csr-i}}]
-INVARSPEC NAME CSR_INTEGRITY :=
-    (assumptions & priv & op in { CSRRS, CSRRC })
-    -> regs_integrity[rs2] = 0h_FF;
+LTLSPEC NAME CSR_INTEGRITY :=
+    assumptions -> G (
+        priv & op in { CSRRS, CSRRC }
+        -> regs_integrity[rs2] = 0h_FF
+    );
 \end{smv}
 
 \begin{smv}[caption={Implementation of property \ref{itm:prop-mstatus-c}}]
-INVARSPEC NAME MSTATUS_CONFIDENTIALITY :=
-    (assumptions & priv & op in { CSRRS, CSRRC })
-    -> regs_conf[rs2] > 0h_0F;
+LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
+    assumptions -> G (
+        priv & op in { CSRRS, CSRRC }
+        -> regs_conf[rs2] > 0h_0F
+    );
 \end{smv}
 
 \begin{smv}[caption={Implementation of property \ref{itm:prop-no-leak}},label={snpt:prop-no-leak}]
-INVARSPEC NAME NO_LEAK := !assumptions | priv | (
-    regs_conf[0] = 0h_00
-    & regs_conf[1] = 0h_00
-    & regs_conf[2] = 0h_00
-    & regs_conf[3] = 0h_00
-);
+LTLSPEC NAME NO_LEAK :=
+    assumptions -> G (priv | (
+        regs_conf[0] = 0h_00
+        & regs_conf[1] = 0h_00
+        & regs_conf[2] = 0h_00
+        & regs_conf[3] = 0h_00
+    ));
 \end{smv}
 
 \subsubsection{Mitigations \& Refinement}

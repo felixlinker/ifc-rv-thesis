@@ -521,8 +521,8 @@ MODULE main
     TRANS ri = 1 -> next(r1) = sum;
     TRANS ri = 2 -> next(r2) = sum;
 
-    INVARSPEC ri = 1 -> r2 = next(r2);
-    INVARSPEC ri = 2 -> r1 = next(r1);
+    LTLSPEC G (ri = 1 -> r2 = next(r2));
+    LTLSPEC G (ri = 2 -> r1 = next(r1));
     \end{smv}
 
     Intuitively, this seems right as we imperatively declare that when the selector input variable \smvinline{ri} equals 1, \smvinline{r1} should be updated and when it equals 2, \smvinline{r2} should be updated.
@@ -539,7 +539,7 @@ TRANS next(r2) = (ri = 2 ? sum : r2);
     \end{smv}
 
     Now, whenever \smvinline{ri} is not equal to the respective index, \smvinline{r1} (or \smvinline{r2}) will be stable.
-    With this implementation, nuXmv fails to find a counter-example for the two invariants.
+    With this implementation, nuXmv fails to find a counter-example for the two LTL properties.
 \end{example}
 
 In our implementation for nuXmv of the MINRV8 architecture, we used \smvinline{case}-expressions that always close with a default statement to ensure that transitions of variables are always fully constrained.
