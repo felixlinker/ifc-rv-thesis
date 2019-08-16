@@ -4,6 +4,7 @@ param(
     [string]$cmd = ".\trace-bmc.template",
     [int]$tracelen = 10,
     [switch]$dry = $false,
+    [string[]]$assumptions = @(),
     [string[]]$props = @(
         "NO_LEAK",
         "CSR_INTEGRITY",
@@ -19,6 +20,13 @@ if (!(Test-Path $preprocessedPath)) {
     New-Item $preprocessedPath
 }
 $preprocessed = Get-Item $preprocessedPath
+$header = New-TemporaryFile
+
+foreach ($assumption in $assumptions) {
+    Out-File $header -Encoding ascii `
+        -InputObject "#define $assumption" `
+        -Append
+}
 
 if (
     ($Null -eq (Get-Content $preprocessed)) -or
@@ -28,8 +36,10 @@ if (
     #  https://stackoverflow.com/a/2124759/7194995
     VsDevCmd.ps1
     # Preprocess the model
-    cl.exe /EP /C $in | Out-File -Encoding ascii $preprocessed
+    cl.exe /EP /C /FI $header $in | Out-File -Encoding ascii $preprocessed
 }
+
+Remove-Item $header
 
 if ($dry) {
     exit

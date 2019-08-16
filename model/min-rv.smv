@@ -413,13 +413,15 @@ MODULE main
         cache.integrity
     );
 
+    #define assumptions (TRUE)
+
     -- This property is here to be targeted by the user to check whether the
     -- model is syntactically correct without starting expensive proofs.
     INVARSPEC NAME SYNTAX_CANARY := TRUE;
 
     -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
-    INVARSPEC NAME NO_LEAK := priv | (
+    INVARSPEC NAME NO_LEAK := !assumptions | priv | (
         regs_conf[0] = 0h_00
         & regs_conf[1] = 0h_00
         & regs_conf[2] = 0h_00
@@ -429,14 +431,18 @@ MODULE main
     -- Control and status registers are only written with machine-mode
     -- controlled values
     INVARSPEC NAME CSR_INTEGRITY :=
-        (priv & op in { CSRRS, CSRRC }) -> regs_integrity[rs2] = 0h_FF;
+        (assumptions & priv & op in { CSRRS, CSRRC })
+        -> regs_integrity[rs2] = 0h_FF;
 
     INVARSPEC NAME MSTATUS_CONFIDENTIALITY :=
-        (priv & op in { CSRRS, CSRRC }) -> regs_conf[rs2] > 0h_0F;
+        (assumptions & priv & op in { CSRRS, CSRRC })
+        -> regs_conf[rs2] > 0h_0F;
 
     INVARSPEC NAME MEMORY_OP_INTEGRITY :=
-        (priv & op in { LOAD, STORE }) -> regs_integrity[rs1] > 0h_03;
+        (assumptions & priv & op in { LOAD, STORE })
+        -> regs_integrity[rs1] > 0h_03;
 
     INVARSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
-        priv & op in { LOAD, STORE } & memory_conf[read_addr(rs1)] > 0h_00
+        (assumptions & priv & op in { LOAD, STORE }
+            & memory_conf[read_addr(rs1)] > 0h_00)
         -> regs_conf[rs1] > 0h_03;
