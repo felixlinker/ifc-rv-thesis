@@ -199,11 +199,11 @@ MODULE main
             ));
         -- TODO: Throw on a write without privileges?
         can_write := (priv
-            ? (read_addr(rd) < REGION0_SIZE
+            ? (read_addr(rs1) < REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.write)
                 : (!pmpcfg1.locked | pmpcfg1.write)
             )
-            : (read_addr(rd) < REGION0_SIZE
+            : (read_addr(rs1) < REGION0_SIZE
                 ? pmpcfg0.write
                 : pmpcfg1.write
             ));
