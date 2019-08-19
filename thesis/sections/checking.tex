@@ -32,8 +32,27 @@ This leads to the following two properties:
 \begin{enumerate}[label=\Roman*.,series=]
     \item \label{itm:prop-mem-i}
     Whenever a memory operation is performed in privileged mode, the target address must be integrous.
+
+    \begin{smv}[caption={Implementation of property \ref{itm:prop-mem-i}},label={snpt:prop-mem-i}]
+LTLSPEC NAME MEMORY_OP_INTEGRITY :=
+    assumptions -> G (
+        priv & op in { LOAD, STORE }
+        -> (regs_integrity[rs1] & 0h_03) = 0h_03
+    );
+    \end{smv}
+
     \item \label{itm:prop-mem-c}
     Whenever a confidential word is read from or written to memory in privileged mode, the target address must be confidential.
+
+    \begin{smv}[caption={Implementation of property \ref{itm:prop-mem-c}}]
+LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
+    assumptions -> G (
+        priv & op in { LOAD, STORE }
+            & memory_conf[read_addr(rs1)] > 0h_00
+        -> (regs_conf[rs1] & 0h_03) = 0h_03
+    );
+    \end{smv}
+
 \end{enumerate}
 
 % TODO: give intuition for both properties
@@ -51,8 +70,24 @@ However, this leads us to phrase a property about the \gls{csr} labels that ensu
 \begin{enumerate}[label=\Roman*.,resume]
     \item \label{itm:prop-csr-i}
     Whenever a \gls{csr} is written, the value it is written with must be integrous.
+
+    \begin{smv}[caption={Implementation of property \ref{itm:prop-csr-i}}]
+LTLSPEC NAME CSR_INTEGRITY :=
+    assumptions -> G (
+        priv & op in { CSRRS, CSRRC }
+        -> regs_integrity[rs2] = 0h_FF
+    );
+    \end{smv}
+
     \item \label{itm:prop-mstatus-c}
     Whenever \gls{mstatus} is written, the value it is written with must be confidential.
+    \begin{smv}[caption={Implementation of property \ref{itm:prop-mstatus-c}}]
+LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
+    assumptions -> G (
+        priv & op in { CSRRS, CSRRC }
+        -> (regs_conf[rs2] & 0h_0F) = 0h_0F
+    );
+    \end{smv}
 \end{enumerate}
 
 From all the variables our implementation of the MINRV8 architecture comprises we now considered \smvinline{regs} and \smvinline{memory} as well as \smvinline{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
@@ -67,45 +102,8 @@ The domain of confidentiality has yet been left out so we will introduce one fin
 \begin{enumerate}[label=\Roman*.,resume]
     \item \label{itm:prop-no-leak}
     Whenever the architecture is in user mode, there is no confidential data in any register.
-\end{enumerate}
 
-The implementation of these five properties is straight-forward.
-Confer code snippets \ref{snpt:prop-mem-i}-\ref{snpt:prop-no-leak} for details.
-
-\begin{smv}[caption={Implementation of property \ref{itm:prop-mem-i}},label={snpt:prop-mem-i}]
-LTLSPEC NAME MEMORY_OP_INTEGRITY :=
-    assumptions -> G (
-        priv & op in { LOAD, STORE }
-        -> (regs_integrity[rs1] & 0h_03) = 0h_03
-    );
-\end{smv}
-
-\begin{smv}[caption={Implementation of property \ref{itm:prop-mem-c}}]
-LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
-    assumptions -> G (
-        priv & op in { LOAD, STORE }
-            & memory_conf[read_addr(rs1)] > 0h_00
-        -> (regs_conf[rs1] & 0h_03) = 0h_03
-    );
-\end{smv}
-
-\begin{smv}[caption={Implementation of property \ref{itm:prop-csr-i}}]
-LTLSPEC NAME CSR_INTEGRITY :=
-    assumptions -> G (
-        priv & op in { CSRRS, CSRRC }
-        -> regs_integrity[rs2] = 0h_FF
-    );
-\end{smv}
-
-\begin{smv}[caption={Implementation of property \ref{itm:prop-mstatus-c}}]
-LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
-    assumptions -> G (
-        priv & op in { CSRRS, CSRRC }
-        -> (regs_conf[rs2] & 0h_0F) = 0h_0F
-    );
-\end{smv}
-
-\begin{smv}[caption={Implementation of property \ref{itm:prop-no-leak}},label={snpt:prop-no-leak}]
+    \begin{smv}[caption={Implementation of property \ref{itm:prop-no-leak}},label={snpt:prop-no-leak}]
 LTLSPEC NAME NO_LEAK :=
     assumptions -> G (priv | (
         regs_conf[0] = 0h_00
@@ -113,7 +111,8 @@ LTLSPEC NAME NO_LEAK :=
         & regs_conf[2] = 0h_00
         & regs_conf[3] = 0h_00
     ));
-\end{smv}
+    \end{smv}
+\end{enumerate}
 
 \subsubsection{Mitigations \& Refinement}
 
