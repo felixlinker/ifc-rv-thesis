@@ -34,7 +34,7 @@ They apply the method of information flow control (IFC) to the hardware descript
 Their approach mainly consists of two concepts: A lattice of security labels and type-system rules that define how information flows through the HDL code.
 Intuitively, it is allowed for information to flow "up" the lattice but not "down".
 
-The goal of this project is to apply this approach of using security labellings to model information flow to the process of model checking an architectural model of a microprocessor with multiple privilege levels.
+The goal of this project is to apply this approach of using security labelings to model information flow to the process of model checking an architectural model of a microprocessor with multiple privilege levels.
 The model checker will quantify over programs running on the microprocessor and check properties like: "It is not possible for secure information stored at point Y to leak".
 Such "points" at which information might be stored include registers and memory of the micro-controller.
 In a 32-bit architecture, this gives us $ (R \cdot 32 + M \cdot 8)^2 $ implicit properties to check where $ R $ is the number of registers and $ M $ is the number of bytes in memory - for each bit in registers and memory, we can check whether information can leak to any other bit in registers or memory.
@@ -54,7 +54,7 @@ RISC-V is specified by two documents: the RISC-V User Level ISA \cite{RiscVISA} 
 The User Level ISA describes the basic functionality of the processor which is divided into several modules, e.g. integer arithmetic, floating point arithmetic, debugging, that can freely be combined with each other.
 The only necessity for each RISC-V CPU is to implement the integer arithmetic module.
 
-The modularity of the RISC-V architecture allows implementors to easily build very simple and small processors, that still are fully compliant with the specification.
+The modularity of the RISC-V architecture allows implementers to easily build very simple and small processors, that still are fully compliant with the specification.
 
 In this thesis, we will model check the RISC-V architecture.
 We will use the base integer instruction set, the standard extension for user-level interrupts and the privileged architecture to model a micro-controller that has all basic instructions needed to perform computational tasks, support for interrupts and exceptions and two or more privilege modes - thus all function necessary to have sufficient complexity in computing but not too many features to make our undertaking infeasible.
@@ -70,7 +70,7 @@ The input language to nuXmv knows modules as the highest tier language objects.
 An entry point to a nuXmv file is given by the module called \texttt{main}.
 In the example, the module has two states the active of which is kept in a dedicated variable and a result variable called \texttt{res}.
 There also is an input variable \texttt{d} that is assigned with a random real number on each step of the system\footnote{%
-    Random in this case means non-deterministicly in regards to the modules state.
+    Random in this case means non-deterministically in regards to the modules state.
     nuXmv will choose values with some determinism when trying to disprove specifications of the system.
 }
 The \texttt{ASSIGN}, \texttt{INIT} and \texttt{TRANS} expression describe the system by logical formulas.
