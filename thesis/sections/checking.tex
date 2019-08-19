@@ -116,6 +116,33 @@ LTLSPEC NAME NO_LEAK :=
 
 \subsubsection{Mitigations \& Refinement}
 
+% TODO: Make sure this is mentioned in the introduction
+% TODO: Reflect goal of the thesis once it has been set up properly in the introduction
+With these properties at hand we can introduce our approach to the verification-refinement loop that has been mentioned initially in section \ref{sec:introduction} as well as the introduction of this section and which is depicted in figure \ref{fig:ver-process}.
+Formal verification does not end when a verification procedure returns some result.
+If such a result happens to be a negative one, a formal verification researcher must be able to answer to questions:
+\begin{enumerate}
+    \item \label{itm:counter-ex-validity}
+    Is the negative result legitimate?
+    \item \label{itm:counter-ex-mitigation}
+    If so, how can the uncovered vulnerability to the system be mitigated?
+\end{enumerate}
+
+In this thesis, the result of a failed attempt to verify the MINRV8 architecture against some property will be a counter-example trace including an initial state and a sequence of instructions finally leading to the violation of the given property.
+% TODO: Argue for why it is not sensible to verify our implementation of the specification
+To answer question \ref{itm:counter-ex-validity}, we simply must inspect the trace at hand and verify whether all state transitions and variable changes are indeed valid in regard to the specification of MINRV8.
+If the answer to this question is no, the implementation has to be fixed accordingly and the proofs must be re-run.
+
+If, however, it is found that the counter-example produced by nuXmv is genuine, it must be decided how the newly found vulnerability is handled.
+As already mentioned in the introduction, there are two ways to handle a vulnerability.
+Either it is a proper architectural vulnerability that must be mitigated accordingly by architectural measures or it simply sheds light on a vulnerable \textit{usage} of the architecture that cannot be mitigated appropriately without removing critical features from the architecture itself.
+For example, an obvious counter-example for property \ref{itm:prop-no-leak}, that no information can leak to user mode, would be that machine-mode simply hands confidential data to user mode.
+No sensible architectural mechanisms could prevent machine mode from doing this as long as machine mode is in fact able to hand data to user mode - which it should be.
+
+In the first case, where we discover a counter-example to comprise a proper architectural vulnerability, we will try to find mechanisms that mitigate the respective vulnerability and also attempt to verify the effectiveness of such mitigations by re-running the proofs.
+If however, we do not find the counter-example to use a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules for programmers that prohibit such bad code patterns and add these rules to the global assumptions for the properties.
+We also will then verify the effectiveness of these rules by re-running the proofs again.
+
 \begin{figure}
     \centering
     \begin{tikzpicture}[node distance = 1.5cm, auto]
