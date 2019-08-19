@@ -18,9 +18,7 @@ param(
     [string[]]$props = @(
         "NO_LEAK",
         "CSR_INTEGRITY",
-        "MSTATUS_CONFIDENTIALITY",
-        "MEMORY_OP_INTEGRITY",
-        "MEMORY_OP_CONFIDENTIALITY"
+        "MEMORY_OP_INTEGRITY"
     )
 )
 

@@ -40,19 +40,6 @@ LTLSPEC NAME MEMORY_OP_INTEGRITY :=
         -> (regs_integrity[rs1] & 0h_03) = 0h_03
     );
     \end{smv}
-
-    \item \label{itm:prop-mem-c}
-    Whenever a confidential word is read from or written to memory in privileged mode, the target address must be confidential.
-
-    \begin{smv}[caption={Implementation of property \ref{itm:prop-mem-c}}]
-LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
-    assumptions -> G (
-        priv & op in { LOAD, STORE }
-            & memory_conf[read_addr(rs1)] > 0h_00
-        -> (regs_conf[rs1] & 0h_03) = 0h_03
-    );
-    \end{smv}
-
 \end{enumerate}
 
 % TODO: give intuition for both properties
@@ -66,7 +53,7 @@ Our architecture does not support virtual addresses, address translation or othe
 
 Coming back to the information flow semantics of CSRRS and CSRRC, notice that in the respective definition of the semantical functions the value the \glspl{csr} are written with is not used.
 This must necessarily be the case since the labels of the \glspl{csr} are constant and as such can not change based on the labels of the value to write them with.
-However, this leads us to phrase a property about the \gls{csr} labels that ensures their integrity or confidentiality respectively:
+However, this leads us to phrase a property about the \gls{csr} labels that ensures their integrity:
 \begin{enumerate}[label=\Roman*.,resume]
     \item \label{itm:prop-csr-i}
     Whenever a \gls{csr} is written, the value it is written with must be integrous.
@@ -78,16 +65,6 @@ LTLSPEC NAME CSR_INTEGRITY :=
         -> regs_integrity[rs2] = 0h_FF
     );
     \end{smv}
-
-    \item \label{itm:prop-mstatus-c}
-    Whenever \gls{mstatus} is written, the value it is written with must be confidential.
-    \begin{smv}[caption={Implementation of property \ref{itm:prop-mstatus-c}}]
-LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
-    assumptions -> G (
-        priv & op in { CSRRS, CSRRC }
-        -> (regs_conf[rs2] & 0h_0F) = 0h_0F
-    );
-    \end{smv}
 \end{enumerate}
 
 From all the variables our implementation of the MINRV8 architecture comprises we now considered \smvinline{regs} and \smvinline{memory} as well as \smvinline{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
@@ -96,7 +73,7 @@ However, up to this point we only implicitly handled the \smvinline{priv} variab
 It was used as a source of labels since it determines the labels of machine words loaded as immediates by LOADI.
 
 It is reasonable to assume, though, that \smvinline{priv} also can serve as an information flow target; similar to \smvinline{csrs}.
-We already did this partially in properties \ref{itm:prop-mem-i}and \ref{itm:prop-mem-c} where we assumed the architecture to be in privileged mode.
+We already did this partially for property \ref{itm:prop-mem-i} where we assumed the architecture to be in privileged mode.
 These properties, however, only dealt with the integrity labels of information.
 The domain of confidentiality has yet been left out so we will introduce one final property for verification that covers the interplay between privilege mode and confidentiality labels:
 \begin{enumerate}[label=\Roman*.,resume]
@@ -113,6 +90,8 @@ LTLSPEC NAME NO_LEAK :=
     ));
     \end{smv}
 \end{enumerate}
+
+% TODO: reflect removed properties MSTATUS_CONFIDENTIAL and MEMORY_OP_CONFIDENTIAL; why is it not sensible to control public input?
 
 \subsubsection{Mitigations \& Refinement}
 

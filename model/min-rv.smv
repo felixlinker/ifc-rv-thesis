@@ -516,20 +516,8 @@ MODULE main
             -> regs_integrity[rs2] = 0h_FF
         );
 
-    LTLSPEC NAME MSTATUS_CONFIDENTIALITY :=
-        assumptions -> G (
-            priv & op in { CSRRS, CSRRC }
-            -> (regs_conf[rs2] & 0h_0F) = 0h_0F
-        );
-
     LTLSPEC NAME MEMORY_OP_INTEGRITY :=
         assumptions -> G (
             priv & op in { LOAD, STORE }
             -> (regs_integrity[rs1] & 0h_03) = 0h_03
-        );
-
-    LTLSPEC NAME MEMORY_OP_CONFIDENTIALITY :=
-        assumptions -> G (
-            priv & op in { LOAD, STORE } & memory_conf[mem_addr] > 0h_00
-            -> (regs_conf[rs1] & 0h_03) = 0h_03
         );
