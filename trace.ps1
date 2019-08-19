@@ -4,6 +4,7 @@ param(
     [string]$cmd = ".\trace-bmc.template",
     [int]$tracelen = 10,
     [switch]$dry = $false,
+    [switch]$clean = $false,
     [string[]]$assumptions = @(
         "CLEAR_ON_RET",
         "SANITIZE_ON_CALL",
@@ -38,6 +39,7 @@ foreach ($assumption in $assumptions) {
 }
 
 if (
+    $clean -or
     ($Null -eq (Get-Content $preprocessed)) -or
     (($preprocessed.LastWriteTime) -lt (Get-Item $in).LastWriteTime)
 ) {
