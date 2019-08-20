@@ -20,7 +20,7 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
 
 \begin{table}
     \centering
-    \begin{tabular}{|l p{10cm}|}
+    \begin{tabular}{|l p{8cm}|}
         \hline
         LOAD $ rd $, $ rs1 $ & Load the word stored in memory at the address stored in registers $ rs1 $ modulo 4 into register $ rd $ \\
         STORE $ rs1 $, $ rs2 $ & Store the word located in register $ rs2 $ into memory at address stored in register $ rs1 $ modulo 4 \\
@@ -360,9 +360,10 @@ With extendSup we can define the semantics of the ADD and SUB instructions.
 \begin{example}
     Consider the addition of two bit vectors which generally are considered to be public and untrusted with one bit being confidential and trusted.
     \begin{align*}
-        \I(\text{ADD})(\PU \cdot \CT \cdot \PU, \PU \cdot \PU \cdot \PU) &= \text{extendSup}((\PU \cdot \CT \cdot \PU) \sqcup (\PU \cdot \PU \cdot \PU)) \\
-        &= \text{extendSup}(\PU \cdot \CU \cdot \PU) \\
-        &= \CU \cdot \CU \cdot \PU
+        & \I(\text{ADD})(\PU \cdot \CT \cdot \PU, \PU \cdot \PU \cdot \PU) \\
+        =& \text{extendSup}((\PU \cdot \CT \cdot \PU) \sqcup (\PU \cdot \PU \cdot \PU)) \\
+        =& \text{extendSup}(\PU \cdot \CU \cdot \PU) \\
+        =& \CU \cdot \CU \cdot \PU
     \end{align*}
 \end{example}
 

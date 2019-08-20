@@ -81,6 +81,9 @@
     aboveskip=10pt,
     autogobble,
     escapeinside={(*}{*)},
+    breaklines=true,
+    breakatwhitespace=true,
+    postbreak=\mbox{{$\hookrightarrow$}}
 }
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}

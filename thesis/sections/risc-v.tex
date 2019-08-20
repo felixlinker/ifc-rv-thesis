@@ -281,52 +281,54 @@ Interrupt handling can be understood as a generalized form of exception handling
 
 \begin{figure}
     \centering
-    \begin{tikzpicture}[node distance = 1.5cm, auto]
-        \node[block] (pending) {
-            An interrupt $ i $ is pending in mode $ y $; let $ x := \text{machine-mode} $
-        };
+    \begin{adjustbox}{max width=\textwidth}
+        \begin{tikzpicture}[node distance = 1cm, auto]
+            \node[block] (pending) {
+                An interrupt $ i $ is pending in mode $ y $; let $ x := \text{machine-mode} $
+            };
 
-        \node[decision] (takePre) [below=of pending] {$ x\text{ideleg}[i] $ and $ x > y $?};
-        \path[line] (pending) -- node[midway] (p2tp) {} (takePre);
+            \node[decision] (takePre) [below=of pending] {$ x\text{ideleg}[i] $ and $ x > y $?};
+            \path[line] (pending) -- node[midway] (p2tp) {} (takePre);
 
-        \node[block,text width=8em] (deleg) [left=of takePre] {$ x := x - 1 $};
+            \node[block,text width=8em] (deleg) [left=of takePre] {$ x := x - 1 $};
 
-        \path[line] (takePre) -- node[near start] {yes} (deleg);
-        \path[line] (deleg) |- (p2tp);
+            \path[line] (takePre) -- node[near start] {yes} (deleg);
+            \path[line] (deleg) |- (p2tp);
 
-        \node[decision] (takePre2) [right=of takePre] {$ x > y $ or $ x = y $, $ x\text{status}.x\text{IE} $, $ x\text{ie}[i] $?};
-        \path[line] (takePre) -- node[near start] {no} (takePre2);
+            \node[decision] (takePre2) [right=of takePre] {$ x > y $ or $ x = y $, $ x\text{status}.x\text{IE} $, $ x\text{ie}[i] $?};
+            \path[line] (takePre) -- node[near start] {no} (takePre2);
 
-        \node[block,text width=16em] (take) [below=of takePre2] {
-            Write $ x\text{tval} $ accordingly and let $ t := x\text{tvec} $, furthermore set:\\
-            $ \begin{aligned}
-                & x \text{status}.x\text{PP} := y \\
-                & x \text{status}.x\text{PIE} := x\text{status}.x\text{IE} \\
-                & x\text{status}.x\text{IE} := 0 \\
-                & x\text{epc} := \text{current address} \\
-                & x\text{cause}[31] := 1 \\
-                & x\text{cause}[30..0] := i \\
-            \end{aligned} $
-        };
-        \path[line] (takePre2) -- node[near start] {yes} (take);
-        \path[line,dashed] (takePre2.east) -- node[near start] {no} ++(right:1.5cm);
+            \node[block,text width=16em] (take) [below=of takePre2] {
+                Write $ x\text{tval} $ accordingly and let $ t := x\text{tvec} $, furthermore set:\\
+                $ \begin{aligned}
+                    & x \text{status}.x\text{PP} := y \\
+                    & x \text{status}.x\text{PIE} := x\text{status}.x\text{IE} \\
+                    & x\text{status}.x\text{IE} := 0 \\
+                    & x\text{epc} := \text{current address} \\
+                    & x\text{cause}[31] := 1 \\
+                    & x\text{cause}[30..0] := i \\
+                \end{aligned} $
+            };
+            \path[line] (takePre2) -- node[near start] {yes} (take);
+            \path[line,dashed] (takePre2.east) -- node[near start] {no} ++(right:1cm);
 
-        \node[decision,text width=6.5em] (jumpPre) [left=of take] {$ x\text{tvec.MODE} $?};
+            \node[decision,text width=6.5em] (jumpPre) [left=of take] {$ x\text{tvec.MODE} $?};
 
-        \path[line] (take) -- (jumpPre);
+            \path[line] (take) -- (jumpPre);
 
-        \node[block,text width=8em] (vectored) [left=of jumpPre] {$t := t + 4 \times i $};
-        \path[line] (jumpPre) -- node[near start] {yes} (vectored);
+            \node[block,text width=8em] (vectored) [left=of jumpPre] {$t := t + 4 \times i $};
+            \path[line] (jumpPre) -- node[near start] {yes} (vectored);
 
-        \node[block] (handling) [below=of jumpPre] {Jump to $ t $ and execute instructions};
-        \path[line] (jumpPre) -- node[near start] {no} node[midway] (jp2h) {} (handling);
-        \path[line] (vectored) |- (jp2h);
+            \node[block] (handling) [below=of jumpPre] {Jump to $ t $ and execute instructions};
+            \path[line] (jumpPre) -- node[near start] {no} node[midway] (jp2h) {} (handling);
+            \path[line] (vectored) |- (jp2h);
 
-        \node[block] (return) [below=of handling] {
-            Set privilege mode to $ x\text{status}.x\text{PP} $ and $ x\text{status}.x\text{IE} $ to $ x\text{status}.x\text{PIE} $, then jump to $ x\text{epc} $
-        };
-        \path[line] (handling) -- node[near start] {on $ x\text{RET} $} (return);
-    \end{tikzpicture}
+            \node[block] (return) [below=of handling] {
+                Set privilege mode to $ x\text{status}.x\text{PP} $ and $ x\text{status}.x\text{IE} $ to $ x\text{status}.x\text{PIE} $, then jump to $ x\text{epc} $
+            };
+            \path[line] (handling) -- node[near start] {on $ x\text{RET} $} (return);
+        \end{tikzpicture}
+    \end{adjustbox}
     \caption{Interrupt handling flow-chart}
     \label{fig:interrupt-handling}
 \end{figure}
