@@ -33,12 +33,16 @@ This leads to the following two properties:
     \item \label{itm:prop-mem-i}
     Whenever a memory operation is performed in privileged mode, the target address must be integrous.
 
-    \begin{lstlisting}[language=smv,caption={Implementation of property \ref{itm:prop-mem-i}},label={snpt:prop-mem-i}]
-LTLSPEC NAME MEMORY_OP_INTEGRITY :=
-    assumptions -> G (
-        priv & op in { LOAD, STORE }
-        -> (regs_integrity[rs1] & 0h_03) = 0h_03
-    );
+    \begin{lstlisting}[
+        language=smv,
+        caption={Implementation of property \ref{itm:prop-mem-i}},
+        label={snpt:prop-mem-i}
+    ]
+        LTLSPEC NAME MEMORY_OP_INTEGRITY :=
+            assumptions -> G (
+                priv & op in { LOAD, STORE }
+                -> (regs_integrity[rs1] & 0h_03) = 0h_03
+            );
     \end{lstlisting}
 \end{enumerate}
 
@@ -58,12 +62,15 @@ However, this leads us to phrase a property about the \gls{csr} labels that ensu
     \item \label{itm:prop-csr-i}
     Whenever a \gls{csr} is written, the value it is written with must be integrous.
 
-    \begin{lstlisting}[language=smv,caption={Implementation of property \ref{itm:prop-csr-i}}]
-LTLSPEC NAME CSR_INTEGRITY :=
-    assumptions -> G (
-        priv & op in { CSRRS, CSRRC }
-        -> regs_integrity[rs2] = 0h_FF
-    );
+    \begin{lstlisting}[
+        language=smv,
+        caption={Implementation of property \ref{itm:prop-csr-i}}
+    ]
+        LTLSPEC NAME CSR_INTEGRITY :=
+            assumptions -> G (
+                priv & op in { CSRRS, CSRRC }
+                -> regs_integrity[rs2] = 0h_FF
+            );
     \end{lstlisting}
 \end{enumerate}
 
@@ -80,14 +87,18 @@ The domain of confidentiality has yet been left out so we will introduce one fin
     \item \label{itm:prop-no-leak}
     Whenever the architecture is in user mode, there is no confidential data in any register.
 
-    \begin{lstlisting}[language=smv,caption={Implementation of property \ref{itm:prop-no-leak}},label={snpt:prop-no-leak}]
-LTLSPEC NAME NO_LEAK :=
-    assumptions -> G (priv | (
-        regs_conf[0] = 0h_00
-        & regs_conf[1] = 0h_00
-        & regs_conf[2] = 0h_00
-        & regs_conf[3] = 0h_00
-    ));
+    \begin{lstlisting}[
+        language=smv,
+        caption={Implementation of property \ref{itm:prop-no-leak}},
+        label={snpt:prop-no-leak}
+    ]
+        LTLSPEC NAME NO_LEAK :=
+            assumptions -> G (priv | (
+                regs_conf[0] = 0h_00
+                & regs_conf[1] = 0h_00
+                & regs_conf[2] = 0h_00
+                & regs_conf[3] = 0h_00
+            ));
     \end{lstlisting}
 \end{enumerate}
 

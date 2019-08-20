@@ -76,31 +76,35 @@ There also is an input variable \texttt{d} that is assigned with a random real n
 The \texttt{ASSIGN}, \texttt{INIT} and \texttt{TRANS} expression describe the system by logical formulas.
 nuXmv will try to prove that each specified formula (in this case an invariant) holds for all automata induced by the description given on all execution paths.
 
-\begin{lstlisting}[language=smv,caption={An example for the nuXmv input language \cite{Cavada14}},label={snpt:nuxmv}]
-MODULE main
-IVAR
-    d : real;
-VAR
-    state : {s0, s1};
-    res : real;
-ASSIGN
-    init(state) := s0;
-    next(state) := case
-        state = s0 & res >= 0.10 : s1;
-        state = s1 & res >= 0.20 : s0;
-        TRUE                     : state;
-    esac;
-    next(t) := case
-        state = s0 & res < 0.10 : res + d;
-        state = s1 & res < 0.20 : res + d;
-        TRUE                    : 0.0;
-    esac;
-INIT
-    res >= 0.0;
-TRANS
-    (state = s0 -> (d >= 0 & d < 0.01)) &
-    (state = s1 -> (d >= 0 & d <= 0.02));
-INVARSPEC res <= 0.3;
+\begin{lstlisting}[
+    language=smv,
+    caption={An example for the nuXmv input language \cite{Cavada14}},
+    label={snpt:nuxmv}
+]
+    MODULE main
+    IVAR
+        d : real;
+    VAR
+        state : {s0, s1};
+        res : real;
+    ASSIGN
+        init(state) := s0;
+        next(state) := case
+            state = s0 & res >= 0.10 : s1;
+            state = s1 & res >= 0.20 : s0;
+            TRUE                     : state;
+        esac;
+        next(t) := case
+            state = s0 & res < 0.10 : res + d;
+            state = s1 & res < 0.20 : res + d;
+            TRUE                    : 0.0;
+        esac;
+    INIT
+        res >= 0.0;
+    TRANS
+        (state = s0 -> (d >= 0 & d < 0.01)) &
+        (state = s1 -> (d >= 0 & d <= 0.02));
+    INVARSPEC res <= 0.3;
 \end{lstlisting}
 
 We will use nuXmv to describe the model we want to check the information flow for.

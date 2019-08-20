@@ -6,6 +6,7 @@
 \RequirePackage{amsthm}
 \RequirePackage{amssymb}
 \RequirePackage{listings}
+\RequirePackage{lstautogobble}
 
 \newtheorem{theorem}{Theorem}
 \theoremstyle{definition}
@@ -78,6 +79,7 @@
     xleftmargin=2em,
     framexleftmargin=2em,
     aboveskip=10pt,
+    autogobble,
 }
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}

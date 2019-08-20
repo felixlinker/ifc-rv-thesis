@@ -106,8 +106,8 @@ The intuition behind the ordering is that information is always allowed to flow 
         The syntax of this snippet is \textit{not} SecVerilogBL.%
     }:
     \begin{lstlisting}
-int a : PT = 0;
-int b : PU = a;
+        int a : PT = 0;
+        int b : PU = a;
     \end{lstlisting}
 
     In this example, first a variable called \asl{a} is initialized and labelled with \PT{}.
@@ -509,22 +509,22 @@ Therefore - if full control over the transition relation is desired - it often i
 \begin{example}
     Consider this nuXmv model that implements an adder that can store its result in two registers:
     \begin{lstlisting}[language=smv]
-MODULE main
-    VAR
-        r1 : integer;
-        r2 :integer;
-    IVAR
-        ri : 1..2;
-        summand1 : integer;
-        summand2 : integer;
+        MODULE main
+            VAR
+                r1 : integer;
+                r2 :integer;
+            IVAR
+                ri : 1..2;
+                summand1 : integer;
+                summand2 : integer;
 
-    DEFINE sum := summand1 + summand2;
+            DEFINE sum := summand1 + summand2;
 
-    TRANS ri = 1 -> next(r1) = sum;
-    TRANS ri = 2 -> next(r2) = sum;
+            TRANS ri = 1 -> next(r1) = sum;
+            TRANS ri = 2 -> next(r2) = sum;
 
-    LTLSPEC G (ri = 1 -> r2 = next(r2));
-    LTLSPEC G (ri = 2 -> r1 = next(r1));
+            LTLSPEC G (ri = 1 -> r2 = next(r2));
+            LTLSPEC G (ri = 2 -> r1 = next(r1));
     \end{lstlisting}
 
     Intuitively, this seems right as we imperatively declare that when the selector input variable \smv{ri} equals 1, \smv{r1} should be updated and when it equals 2, \smv{r2} should be updated.
@@ -536,8 +536,8 @@ MODULE main
 
     The only solution to this is covering all other cases and explicitly stating what should happen then as for example can be done by using an inline-if expression:
     \begin{lstlisting}[language=smv]
-TRANS next(r1) = (ri = 1 ? sum : r1);
-TRANS next(r2) = (ri = 2 ? sum : r2);
+        TRANS next(r1) = (ri = 1 ? sum : r1);
+        TRANS next(r2) = (ri = 2 ? sum : r2);
     \end{lstlisting}
 
     Now, whenever \smv{ri} is not equal to the respective index, \smv{r1} (or \smv{r2}) will be stable.
@@ -562,8 +562,8 @@ An exception to all rules mentioned above is the field MEIP which can be set hig
 The \glspl{csr} can also be written by the CSRRC or CSRRS instructions.
 In order to control read- and write-access to the \glspl{csr}, the model knows to constant arrays:
 \begin{lstlisting}[language=smv]
-__csrs_read_privs := [ 0h_0F, 0h_00 ];
-__csrs_write_privs := [ 0h_FF, 0h_FF ];
+    __csrs_read_privs := [ 0h_0F, 0h_00 ];
+    __csrs_write_privs := [ 0h_FF, 0h_FF ];
 \end{lstlisting}
 
 These arrays store bitmasks that indicate the least privilege level necessary to read or write the \gls{csr} of the corresponding index at the corresponding bit-position.
@@ -618,8 +618,8 @@ However, if the region is set to be write-through-cacheable the write will also 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
 For example, consider the following program where we assume that \minrv{regs[1] != regs[2]}:
 \begin{lstlisting}[language=minrv8]
-Store 1, 0  # store regs[0] at memory[regs[1] mod 4]
-Load 0, 2   # read memory[regs[2] mod 4] to regs[0]
+    Store 1, 0  # store regs[0] at memory[regs[1] mod 4]
+    Load 0, 2   # read memory[regs[2] mod 4] to regs[0]
 \end{lstlisting}
 
 If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen on cache level only.

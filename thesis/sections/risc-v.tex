@@ -102,11 +102,15 @@ However, as a side-effect, this means that there is no built-in support for over
 There also is no special instruction to handle this.
 The authors of the manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
 
-\begin{lstlisting}[language=rv,caption={General overflow checking \cite{RiscVISA}},label={snpt:rv-overflow}]
-Add  t0, t1, t2          # Set R[t0] to R[t1] + R[t2]
-Slti t3, t2, 0           # Set R[t3] to R[t2] < 0
-Slt  t4, t0, t1          # Set R[t4] to R[t0] < R[t1]
-Bne  t3, t4, overflow    # If R[t3] != R[t4] branch to overflow
+\begin{lstlisting}[
+    language=rv,
+    caption={General overflow checking \cite{RiscVISA}},
+    label={snpt:rv-overflow}
+]
+    Add  t0, t1, t2          # Set R[t0] to R[t1] + R[t2]
+    Slti t3, t2, 0           # Set R[t3] to R[t2] < 0
+    Slt  t4, t0, t1          # Set R[t4] to R[t0] < R[t1]
+    Bne  t3, t4, overflow    # If R[t3] != R[t4] branch to overflow
 \end{lstlisting}
 
 The gist of snippet \ref{snpt:rv-overflow} boils down to: we can check if there was overflow when calculating $ a + b $ by checking whether $ b < 0 \leftrightarrow a + b < a $ is false, i.e. \textcquote{RiscVISA}{the sum should be less than one of the operands if and only if the other operand is negative}.
