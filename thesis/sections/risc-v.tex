@@ -78,7 +78,7 @@ All but the RV32E base instruction sets support 32 general purpose registers whe
 
 The first of these general purpose registers is hardwired to zero and might be used as a target register when the result of an instruction is not needed.
 This might seem overly restrictive at first glance but having such a dedicated \enquote{sink}-register serves a purpose as hardware can take benefit of this extra knowledge to perform optimizations.
-For example, \gls{riscv} defines the pseudo-instruction \gls{nop} as \assmblrinline{ADDI x0, x0, 0} the semantics of which is: Add the constant value 0 to x0 and store the result in x0.
+For example, \gls{riscv} defines the pseudo-instruction \gls{nop} as \rv{Addi x0, x0, 0} the semantics of which is: Add the constant value 0 to x0 and store the result in x0.
 The intention of which is to \textcquote{RiscVISA}{define a canonical NOP encoding to allow microarchitectural optimizations} which is only possible because the hardware can know that no register will \textit{truly} be read or written so a \gls{nop} might terminate directly without waiting for the \gls{alu} to calculate some values which will never be used.
 
 In \gls{riscv}, there is no dedicated \gls{lr} or \gls{sp}.
@@ -102,12 +102,12 @@ However, as a side-effect, this means that there is no built-in support for over
 There also is no special instruction to handle this.
 The authors of the manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
 
-\begin{assmblr}[caption={General overflow checking \cite{RiscVISA}},label={snpt:rv-overflow}]
-add  t0, t1, t2          # Set R[t0] to R[t1] + R[t2]
-slti t3, t2, 0           # Set R[t3] to R[t2] < 0
-slt  t4, t0, t1          # Set R[t4] to R[t0] < R[t1]
-bne  t3, t4, overflow    # If R[t3] != R[t4] branch to overflow
-\end{assmblr}
+\begin{lstlisting}[language=rv,caption={General overflow checking \cite{RiscVISA}},label={snpt:rv-overflow}]
+Add  t0, t1, t2          # Set R[t0] to R[t1] + R[t2]
+Slti t3, t2, 0           # Set R[t3] to R[t2] < 0
+Slt  t4, t0, t1          # Set R[t4] to R[t0] < R[t1]
+Bne  t3, t4, overflow    # If R[t3] != R[t4] branch to overflow
+\end{lstlisting}
 
 The gist of snippet \ref{snpt:rv-overflow} boils down to: we can check if there was overflow when calculating $ a + b $ by checking whether $ b < 0 \leftrightarrow a + b < a $ is false, i.e. \textcquote{RiscVISA}{the sum should be less than one of the operands if and only if the other operand is negative}.
 

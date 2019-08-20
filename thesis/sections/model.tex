@@ -105,13 +105,13 @@ The intuition behind the ordering is that information is always allowed to flow 
     For information to flow up in this context is best illustrated with the following code snippet\footnote{%
         The syntax of this snippet is \textit{not} SecVerilogBL.%
     }:
-    \begin{asl}
+    \begin{lstlisting}
 int a : PT = 0;
 int b : PU = a;
-    \end{asl}
+    \end{lstlisting}
 
-    In this example, first a variable called \aslinline{a} is initialized and labelled with \PT{}.
-    Then, the value of \aslinline{a} is assigned to another newly initialized variable labelled with \PU{}.
+    In this example, first a variable called \asl{a} is initialized and labelled with \PT{}.
+    Then, the value of \asl{a} is assigned to another newly initialized variable labelled with \PU{}.
     This flow of information would be permitted by the lattice of $ \Sigma $ as information that is labelled with \PT{} flows to a destination that is labelled with \PU{} which is $ \preceq $-greater than \PT{}.
 
     However, if this flow of information was to occur the other way round, it would have been prohibited.
@@ -469,30 +469,30 @@ More on this in section \ref{sec:checking}.
 In nuXmv, models of a piece of software, hardware or in this case a specification are described using variables with a transition relation.
 We implement the core of our model with four variables:
 \begin{itemize}
-    \item \smvinline{priv : boolean}
-    \item \smvinline{csrs : array 0..1 of unsigned word[8]}
-    \item \smvinline{regs : array 0..3 of signed word[8]}
-    \item \smvinline{memory : array 0..3 of signed word[8]}
+    \item \smv{priv : boolean}
+    \item \smv{csrs : array 0..1 of unsigned word[8]}
+    \item \smv{regs : array 0..3 of signed word[8]}
+    \item \smv{memory : array 0..3 of signed word[8]}
 \end{itemize}
 
-As the names suggest: \smvinline{priv} indicates the current privilege mode where \smvinline{TRUE} signals that the \gls{hart} is in machine-mode and \smvinline{FALSE} signals that the \gls{hart} is in user-mode and \smvinline{csrs} hold the three \glspl{csr} of the MINRV8 architecture.
+As the names suggest: \smv{priv} indicates the current privilege mode where \smv{TRUE} signals that the \gls{hart} is in machine-mode and \smv{FALSE} signals that the \gls{hart} is in user-mode and \smv{csrs} hold the three \glspl{csr} of the MINRV8 architecture.
 Technically, only 16 bits are needed to implement all \glspl{csr} of the MINRV8 architecture which is why we decided to only model two physical \glspl{csr}.
 This allows implement a homogeneous interface for memory/register reads and writes and does not introduce unused bits to the implementation, i.e. dead state space that still requires traversal from nuXmv.
-\gls{mstatus} is located in the lower half (bits 0 to 3) of \smvinline{csrs[0]}, \gls{pmacfg} in the upper half (bits 4 to 7) of \smvinline{csrs[0]} and \gls{pmpcfg} in \smvinline{csrs[1]}.
-The variables \smvinline{regs} and \smvinline{memory} implement the registers and memory in a straight-forward fashion.
+\gls{mstatus} is located in the lower half (bits 0 to 3) of \smv{csrs[0]}, \gls{pmacfg} in the upper half (bits 4 to 7) of \smv{csrs[0]} and \gls{pmpcfg} in \smv{csrs[1]}.
+The variables \smv{regs} and \smv{memory} implement the registers and memory in a straight-forward fashion.
 
 Furthermore, the model knows five input variables:
 \begin{itemize}
-    \item \smvinline{op}
-    \item \smvinline{rd : 0..3}
-    \item \smvinline{rs1 : 0..3}
-    \item \smvinline{rs2 : 0..3}
-    \item \smvinline{m_external_interrupt : unsigned word[1]}
+    \item \smv{op}
+    \item \smv{rd : 0..3}
+    \item \smv{rs1 : 0..3}
+    \item \smv{rs2 : 0..3}
+    \item \smv{m_external_interrupt : unsigned word[1]}
 \end{itemize}
 
-\smvinline{op}, \smvinline{rd}, \smvinline{rs1} and \smvinline{rs2} represent a fully decoded instruction where \smvinline{op} is the opcode as a symbolic constant and the other arguments point to registers with per-instruction determined semantics.
+\smv{op}, \smv{rd}, \smv{rs1} and \smv{rs2} represent a fully decoded instruction where \smv{op} is the opcode as a symbolic constant and the other arguments point to registers with per-instruction determined semantics.
 When an instruction does not support some or all of the arguments to the instruction, the values of these input variables are simply ignored.
-The variable \smvinline{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
+The variable \smv{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
 There is no input variable for an immediate value which might be needed by the LOADI instruction because we didn't want to waste extra state.
 % TODO: is this understandable?
@@ -508,7 +508,7 @@ Therefore - if full control over the transition relation is desired - it often i
 
 \begin{example}
     Consider this nuXmv model that implements an adder that can store its result in two registers:
-    \begin{smv}
+    \begin{lstlisting}[language=smv]
 MODULE main
     VAR
         r1 : integer;
@@ -525,77 +525,77 @@ MODULE main
 
     LTLSPEC G (ri = 1 -> r2 = next(r2));
     LTLSPEC G (ri = 2 -> r1 = next(r1));
-    \end{smv}
+    \end{lstlisting}
 
-    Intuitively, this seems right as we imperatively declare that when the selector input variable \smvinline{ri} equals 1, \smvinline{r1} should be updated and when it equals 2, \smvinline{r2} should be updated.
+    Intuitively, this seems right as we imperatively declare that when the selector input variable \smv{ri} equals 1, \smv{r1} should be updated and when it equals 2, \smv{r2} should be updated.
     However, if we attempt to prove one of the two properties in the model which states that a register doesn't change if it isn't selected, nuXmv quickly gives us a counter-example where this is the case.
     This is because the implications do not fully cover all possible transitions of the system.
-    On a transition where \smvinline{ri} does not equal 1 (or 2), the next value of \smvinline{r1} (or \smvinline{r2}) is not constrained, i.e. can change to any value.
-    Swapping out the implication \smvinline{->} with a iff \smvinline{<->} does not solve this as now only that whenever the next value chosen randomly for \smvinline{r1} or \smvinline{r2} happens to coincide with the sum of the input variables, \smvinline{ri} must be equal to the appropriate index.
+    On a transition where \smv{ri} does not equal 1 (or 2), the next value of \smv{r1} (or \smv{r2}) is not constrained, i.e. can change to any value.
+    Swapping out the implication \smv{->} with a iff \smv{<->} does not solve this as now only that whenever the next value chosen randomly for \smv{r1} or \smv{r2} happens to coincide with the sum of the input variables, \smv{ri} must be equal to the appropriate index.
     In all other cases, nuXmv still can choose whatever next value it wants.
 
     The only solution to this is covering all other cases and explicitly stating what should happen then as for example can be done by using an inline-if expression:
-    \begin{smv}
+    \begin{lstlisting}[language=smv]
 TRANS next(r1) = (ri = 1 ? sum : r1);
 TRANS next(r2) = (ri = 2 ? sum : r2);
-    \end{smv}
+    \end{lstlisting}
 
-    Now, whenever \smvinline{ri} is not equal to the respective index, \smvinline{r1} (or \smvinline{r2}) will be stable.
+    Now, whenever \smv{ri} is not equal to the respective index, \smv{r1} (or \smv{r2}) will be stable.
     With this implementation, nuXmv fails to find a counter-example for the two LTL properties.
 \end{example}
 
-In our implementation for nuXmv of the MINRV8 architecture, we used \smvinline{case}-expressions that always close with a default statement to ensure that transitions of variables are always fully constrained.
+In our implementation for nuXmv of the MINRV8 architecture, we used \smv{case}-expressions that always close with a default statement to ensure that transitions of variables are always fully constrained.
 
 In the following, we will introduce the \enquote{formal idea} of the variable transitions of our model and assume that variables are stable unless otherwise mentioned, i.e. we won't list all default statements of our model explicitly.
 
-The transitions of the \smvinline{priv} variable are simple.
-There are two conditions by which \smvinline{priv} can change.
-Firstly, whenever there is an exception - be it an exception triggered by a pending external interrupt or a environment call to machine-mode exception - the \gls{hart} switches to machine-mode and does not execute the current instruction, i.e. the value of \smvinline{op}, \smvinline{rd}, \smvinline{rs1} and \smvinline{rs2} are ignored.
-Secondly, when the MRET instruction is executed, the \gls{hart} sets \smvinline{priv} to the value stored in \gls{mstatus}.MPP (cf. section \ref{sec:rv-exn}).
+The transitions of the \smv{priv} variable are simple.
+There are two conditions by which \smv{priv} can change.
+Firstly, whenever there is an exception - be it an exception triggered by a pending external interrupt or a environment call to machine-mode exception - the \gls{hart} switches to machine-mode and does not execute the current instruction, i.e. the value of \smv{op}, \smv{rd}, \smv{rs1} and \smv{rs2} are ignored.
+Secondly, when the MRET instruction is executed, the \gls{hart} sets \smv{priv} to the value stored in \gls{mstatus}.MPP (cf. section \ref{sec:rv-exn}).
 
-\gls{mstatus} changes under the same conditions which brings us to the transitions of \smvinline{csrs}.
+\gls{mstatus} changes under the same conditions which brings us to the transitions of \smv{csrs}.
 On a trap, MPP and MPIE are written accordingly while MEIP and MIE are set to zero.
 MEIP can be set to zero although the trap might have been triggered by an ECALL instruction because interrupts have higher priority in \gls{riscv} than synchronous exceptions - either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
 On return from machine-mode, i.e. execution of MRET, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
-An exception to all rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smvinline{m_externel_interrupt}.
+An exception to all rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smv{m_externel_interrupt}.
 
 The \glspl{csr} can also be written by the CSRRC or CSRRS instructions.
 In order to control read- and write-access to the \glspl{csr}, the model knows to constant arrays:
-\begin{smv}
+\begin{lstlisting}[language=smv]
 __csrs_read_privs := [ 0h_0F, 0h_00 ];
 __csrs_write_privs := [ 0h_FF, 0h_FF ];
-\end{smv}
+\end{lstlisting}
 
 These arrays store bitmasks that indicate the least privilege level necessary to read or write the \gls{csr} of the corresponding index at the corresponding bit-position.
 For example, all \glspl{csr} besides \gls{mstatus} can be read but but no \gls{csr} can be written by user-mode.
-These constants are transformed to the bitmasks \smvinline{csr_read_mask} or \smvinline{csr_write_mask} respectively by the per-bit $ b $ implication of $ b \rightarrow \texttt{priv} $ based on the index of the currently targeted \gls{csr}.
-Bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smvinline{csr_write_mask} is high at the corresponding index with two exceptions:
+These constants are transformed to the bitmasks \smv{csr_read_mask} or \smv{csr_write_mask} respectively by the per-bit $ b $ implication of $ b \rightarrow \texttt{priv} $ based on the index of the currently targeted \gls{csr}.
+Bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smv{csr_write_mask} is high at the corresponding index with two exceptions:
 \begin{itemize}
     \item \gls{mstatus}.MEIP cannot be written by software
     \item Once a \gls{pmpcfg} register has been locked, it cannot be changed anymore
 \end{itemize}
 
 The transition relation of the registers and memory is easier to understand.
-\smvinline{regs} changes at index \smvinline{i} if it is targeted by some instruction and no trap is taken.
-Then, \smvinline{regs[i]} is written with a value determined by the instruction semantics\footnote{%
+\smv{regs} changes at index \smv{i} if it is targeted by some instruction and no trap is taken.
+Then, \smv{regs[i]} is written with a value determined by the instruction semantics\footnote{%
     This only applies to instructions that \textit{have} semantics targeting registers, i.e. ECALL will not change values of any register.
 }.
-These per-instruction semantics include considering the \smvinline{csr_read_mask} bitmask on CSRRS and CSRRC.
+These per-instruction semantics include considering the \smv{csr_read_mask} bitmask on CSRRS and CSRRC.
 
-\smvinline{memory} is written at index \smvinline{i} if it is targeted by the STORE instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} allow the current privilege mode to write the register.
-Otherwise \smvinline{memory} does not change.
+\smv{memory} is written at index \smv{i} if it is targeted by the STORE instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} allow the current privilege mode to write the register.
+Otherwise \smv{memory} does not change.
 It does not mark an error, should the current privilege level not suffice to write the targeted memory address.
 No exception will be generated - the memory simply will not be written.
-The same is true for read privileges and \smvinline{regs} on a LOAD.
+The same is true for read privileges and \smv{regs} on a LOAD.
 
 \subsubsection{Caching}
 
 % TODO: mention that the cache is its own module accessible via \texttt{cache}
 The cache spices up transitions of memory and registers and comprises three variables:
 \begin{itemize}
-    \item \smvinline{addr : 0..3}
-    \item \smvinline{valid : boolean}
-    \item \smvinline{line : signed word[8]}
+    \item \smv{addr : 0..3}
+    \item \smv{valid : boolean}
+    \item \smv{line : signed word[8]}
 \end{itemize}
 
 These variables transition dependent on the cache-configuration of the respective memory region in \gls{pmacfg}.
@@ -604,23 +604,23 @@ If a memory region is set as uncacheable, the cache will ignore reads and writes
 
 \paragraph{Reads}
 If a memory region is not set as uncacheable, reads will trigger a cache-fill.
-On a LOAD if the cache is invalid or currently holds the contents of a different memory address than targeted, \smvinline{addr} gets written with \smvinline{regs[rs1] mod 4}, \smvinline{valid} becomes \smvinline{TRUE} and \smvinline{line} is written with \smvinline{memory[addr]}.
+On a LOAD if the cache is invalid or currently holds the contents of a different memory address than targeted, \smv{addr} gets written with \smv{regs[rs1] mod 4}, \smv{valid} becomes \smv{TRUE} and \smv{line} is written with \smv{memory[addr]}.
 This process is independent of the current privilege level, e.g. user-mode can cause a cache-fill with memory content in regions that are unreadable to it.
 Though, user-mode still won't be able to read the respective word as reads are privileged controlled.
 
-If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smvinline{line} instead of \smvinline{memory[regs[rs1] mod 4]} will be written into register \smvinline{rd}.
+If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smv{line} instead of \smv{memory[regs[rs1] mod 4]} will be written into register \smv{rd}.
 
 \paragraph{Writes}
 From the cache's perspective, writes to regions which are not set uncacheable work the same way, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
-For such a region, on a STORE \smvinline{line} will be written with \smvinline{regs[rs2]}, \smvinline{address} with \smvinline{regs[rs1] mod 4} and \smvinline{valid} will become \smvinline{TRUE}.
+For such a region, on a STORE \smv{line} will be written with \smv{regs[rs2]}, \smv{address} with \smv{regs[rs1] mod 4} and \smv{valid} will become \smv{TRUE}.
 However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
-For example, consider the following program where we assume that \assmblrinline{regs[1] != regs[2]}:
-\begin{assmblr}
-STORE 1, 0  # store regs[0] at memory[regs[1] mod 4]
-LOAD 0, 2   # read memory[regs[2] mod 4] to regs[0]
-\end{assmblr}
+For example, consider the following program where we assume that \minrv{regs[1] != regs[2]}:
+\begin{lstlisting}[language=minrv8]
+Store 1, 0  # store regs[0] at memory[regs[1] mod 4]
+Load 0, 2   # read memory[regs[2] mod 4] to regs[0]
+\end{lstlisting}
 
 If memory region 0 (spanning addresses 0-1) was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen on cache level only.
 If furthermore memory region 1 (spanning addresses 2-3) was not set to be uncacheable, the read in the second line would overwrite changes of the first instruction which is why the cache content must first be written to memory.
@@ -731,22 +731,22 @@ For each variable in the model we add an confidentiality or integrity tracking c
         \hline
         \textbf{Variable} & \textbf{Confidentiality Tracking} & \textbf{Integrity Tracking} \\
         \hline
-        {\smvinline{regs}} & {\smvinline{regs_conf}} & {\smvinline{regs_integrity}} \\
-        {\smvinline{memory}} & {\smvinline{memory_conf}} & {\smvinline{memory_integrity}} \\
-        {\smvinline{csrs}} & {\smvinline{\_\_csrs_conf}} & {\smvinline{\_\_csrs_integrity}} \\
-        {\smvinline{cache.line}} & {\smvinline{cache.conf}} & {\smvinline{cache.integrity}} \\
+        {\smv{regs}} & {\smv{regs_conf}} & {\smv{regs_integrity}} \\
+        {\smv{memory}} & {\smv{memory_conf}} & {\smv{memory_integrity}} \\
+        {\smv{csrs}} & {\smv{\_\_csrs_conf}} & {\smv{\_\_csrs_integrity}} \\
+        {\smv{cache.line}} & {\smv{cache.conf}} & {\smv{cache.integrity}} \\
         \hline
     \end{tabular}
     \caption{Information Flow Control Variables}
     \label{tbl:ifc-vars}
 \end{table}
 
-These variables transition under the same circumstances as their base variable does, e.g. \smvinline{regs_conf} does a transition if and only if \smvinline{regs} transitions and \smvinline{regs_conf} will deduct its content from sources parallel the those of \smvinline{regs}.
+These variables transition under the same circumstances as their base variable does, e.g. \smv{regs_conf} does a transition if and only if \smv{regs} transitions and \smv{regs_conf} will deduct its content from sources parallel the those of \smv{regs}.
 The values themselves change based on the current instruction and its information flow tracking semantics as described in \ref{sec:ifc-model}.
 % TODO: explain why this is the case
-The only exception to this is the information flow tracking of the variable \smvinline{csrs} the labels of which do not change at all.
+The only exception to this is the information flow tracking of the variable \smv{csrs} the labels of which do not change at all.
 
-In other words, the \smvinline{*_conf} and \smvinline{*_integrity} variables perfectly mirror the architecture implementation as described in \ref{sec:model-implementation}.
+In other words, the \smv{*_conf} and \smv{*_integrity} variables perfectly mirror the architecture implementation as described in \ref{sec:model-implementation}.
 Rather than simply simulating the MINRV8 architecture in nuXmv we also track the confidentiality-world and integrity-world of this architecture in parallel to simulating the pure computational-world.
 
 \subsection{Scope of the Model}
@@ -780,16 +780,16 @@ The design of the model had to answer the question: How can a stream of instruct
 nuXmv allows to think of the following options:
 \begin{enumerate}
     \item \label{itm:exmem-frozen}
-    Use \smvinline{FROZENVAR}s to model executable memory - a \smvinline{FROZENVAR} is something like a constant in other programming languages but without a fixed value.
+    Use \smv{FROZENVAR}s to model executable memory - a \smv{FROZENVAR} is something like a constant in other programming languages but without a fixed value.
     nuXmv chooses the value on the first simulation step but does not change it afterwards.
-    This is more efficient than using plain \smvinline{VAR}s with no transitions.
+    This is more efficient than using plain \smv{VAR}s with no transitions.
     \item \label{itm:exmem-var}
-    Use \smvinline{VAR}s to model executable memory.
+    Use \smv{VAR}s to model executable memory.
     In practice, this would mean that the memory of the implementation as described in section \ref{sec:model-implementation} would be much larger than the current 4 bytes.
     \item \label{itm:exmem-ivar}
-    Finally, use \smvinline{IVAR}s to model the stream of instruction.
+    Finally, use \smv{IVAR}s to model the stream of instruction.
     This is the option we decided to go for as described in section \ref{sec:model-implementation}.
-    Using \smvinline{IVAR}s means that there is no model of executable memory.
+    Using \smv{IVAR}s means that there is no model of executable memory.
     % TODO: is the part about the ALU actually true?
     Instead, the input variables provided to the implementation model the result of an instruction decoder that hands the \gls{alu} the ready-to-use decoded instructions on each transition of the simulated model.
     As such, the architecture does not need to worry \textit{where} these instructions come from.

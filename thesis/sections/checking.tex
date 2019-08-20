@@ -33,13 +33,13 @@ This leads to the following two properties:
     \item \label{itm:prop-mem-i}
     Whenever a memory operation is performed in privileged mode, the target address must be integrous.
 
-    \begin{smv}[caption={Implementation of property \ref{itm:prop-mem-i}},label={snpt:prop-mem-i}]
+    \begin{lstlisting}[language=smv,caption={Implementation of property \ref{itm:prop-mem-i}},label={snpt:prop-mem-i}]
 LTLSPEC NAME MEMORY_OP_INTEGRITY :=
     assumptions -> G (
         priv & op in { LOAD, STORE }
         -> (regs_integrity[rs1] & 0h_03) = 0h_03
     );
-    \end{smv}
+    \end{lstlisting}
 \end{enumerate}
 
 % TODO: give intuition for both properties
@@ -58,21 +58,21 @@ However, this leads us to phrase a property about the \gls{csr} labels that ensu
     \item \label{itm:prop-csr-i}
     Whenever a \gls{csr} is written, the value it is written with must be integrous.
 
-    \begin{smv}[caption={Implementation of property \ref{itm:prop-csr-i}}]
+    \begin{lstlisting}[language=smv,caption={Implementation of property \ref{itm:prop-csr-i}}]
 LTLSPEC NAME CSR_INTEGRITY :=
     assumptions -> G (
         priv & op in { CSRRS, CSRRC }
         -> regs_integrity[rs2] = 0h_FF
     );
-    \end{smv}
+    \end{lstlisting}
 \end{enumerate}
 
-From all the variables our implementation of the MINRV8 architecture comprises we now considered \smvinline{regs} and \smvinline{memory} as well as \smvinline{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
-We also considered the variable \smvinline{csrs} by assigning constant information flow labels to it and using it as an information flow target, i.e. we phrased properties ensuring that certain flows of information \textit{to} \smvinline{csrs} do not occur.
-However, up to this point we only implicitly handled the \smvinline{priv} variable which holds the current privilege mode.
+From all the variables our implementation of the MINRV8 architecture comprises we now considered \smv{regs} and \smv{memory} as well as \smv{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
+We also considered the variable \smv{csrs} by assigning constant information flow labels to it and using it as an information flow target, i.e. we phrased properties ensuring that certain flows of information \textit{to} \smv{csrs} do not occur.
+However, up to this point we only implicitly handled the \smv{priv} variable which holds the current privilege mode.
 It was used as a source of labels since it determines the labels of machine words loaded as immediates by LOADI.
 
-It is reasonable to assume, though, that \smvinline{priv} also can serve as an information flow target; similar to \smvinline{csrs}.
+It is reasonable to assume, though, that \smv{priv} also can serve as an information flow target; similar to \smv{csrs}.
 We already did this partially for property \ref{itm:prop-mem-i} where we assumed the architecture to be in privileged mode.
 These properties, however, only dealt with the integrity labels of information.
 The domain of confidentiality has yet been left out so we will introduce one final property for verification that covers the interplay between privilege mode and confidentiality labels:
@@ -80,7 +80,7 @@ The domain of confidentiality has yet been left out so we will introduce one fin
     \item \label{itm:prop-no-leak}
     Whenever the architecture is in user mode, there is no confidential data in any register.
 
-    \begin{smv}[caption={Implementation of property \ref{itm:prop-no-leak}},label={snpt:prop-no-leak}]
+    \begin{lstlisting}[language=smv,caption={Implementation of property \ref{itm:prop-no-leak}},label={snpt:prop-no-leak}]
 LTLSPEC NAME NO_LEAK :=
     assumptions -> G (priv | (
         regs_conf[0] = 0h_00
@@ -88,7 +88,7 @@ LTLSPEC NAME NO_LEAK :=
         & regs_conf[2] = 0h_00
         & regs_conf[3] = 0h_00
     ));
-    \end{smv}
+    \end{lstlisting}
 \end{enumerate}
 
 % TODO: reflect removed properties MSTATUS_CONFIDENTIAL and MEMORY_OP_CONFIDENTIAL; why is it not sensible to control public input?

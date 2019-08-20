@@ -76,7 +76,7 @@ There also is an input variable \texttt{d} that is assigned with a random real n
 The \texttt{ASSIGN}, \texttt{INIT} and \texttt{TRANS} expression describe the system by logical formulas.
 nuXmv will try to prove that each specified formula (in this case an invariant) holds for all automata induced by the description given on all execution paths.
 
-\begin{smv}[caption={An example for the nuXmv input language \cite{Cavada14}},label={snpt:nuxmv}]
+\begin{lstlisting}[language=smv,caption={An example for the nuXmv input language \cite{Cavada14}},label={snpt:nuxmv}]
 MODULE main
 IVAR
     d : real;
@@ -101,7 +101,7 @@ TRANS
     (state = s0 -> (d >= 0 & d < 0.01)) &
     (state = s1 -> (d >= 0 & d <= 0.02));
 INVARSPEC res <= 0.3;
-\end{smv}
+\end{lstlisting}
 
 We will use nuXmv to describe the model we want to check the information flow for.
 We will build a custom model of the RISC-V architecture in the nuXmv input language and phrase properties about information flow for this model in either LTL, CTL or as invariants.

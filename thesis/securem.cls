@@ -22,9 +22,9 @@
     morestring=[b]",
 }
 \lstdefinelanguage{ASL}{
-    morekeywords=[1]{if,then,elsif,else,case,of,when,otherwise,for,to,downto,while,do,repeat,until,return,assert,Consistent,enumeration,constant,is,array,bit,try,catch,throw,is,typeof},
-    morekeywords=[2]{UNDEFINED,UNKNOWN,UNPREDICTABLE,CONSTRAINED_UNPREDICTABLE,SEE,IMPLEMENTATION_DEFINED,SUBARCHITECTURE_DEFINED,RAISE},
-    morekeywords=[3]{QUOT,REM,DIV,MOD,AND,NOT,OR,EOR,IN},
+    morekeywords=[2]{if,then,elsif,else,case,of,when,otherwise,for,to,downto,while,do,repeat,until,return,assert,Consistent,enumeration,constant,is,array,bit,try,catch,throw,is,typeof},
+    morekeywords=[3]{UNDEFINED,UNKNOWN,UNPREDICTABLE,CONSTRAINED_UNPREDICTABLE,SEE,IMPLEMENTATION_DEFINED,SUBARCHITECTURE_DEFINED,RAISE},
+    morekeywords=[5]{QUOT,REM,DIV,MOD,AND,NOT,OR,EOR,IN},
     sensitive=true,
     morecomment=[l]{//},
     morecomment=[s]{/*}{*/},
@@ -32,100 +32,41 @@
 }
 \lstdefinelanguage{SMT2}{
     keywordsprefix={:},
-    morekeywords=[1]{!,_,as,DECIMAL,exists,forall,let,NUMERAL,par,STRING},
-    morekeywords=[2]{assert,check-sat,declare-sort, declare-fun,define-sort,define-fun,exit,get-assertions, get-assignment,get-info,get-option,get-proof,get-unsat-core,get-value,pop,push,set-logic,set-info,set-option,rule,query,declare-rel,declare-var},
+    morekeywords=[3]{!,_,as,DECIMAL,exists,forall,let,NUMERAL,par,STRING},
+    morekeywords=[4]{assert,check-sat,declare-sort, declare-fun,define-sort,define-fun,exit,get-assertions, get-assignment,get-info,get-option,get-proof,get-unsat-core,get-value,pop,push,set-logic,set-info,set-option,rule,query,declare-rel,declare-var},
     sensitive=false,
     morecomment=[l]{--},
     alsoletter={:},
     alsodigit={-},
 }
-\lstdefinelanguage{assembler}{
+\lstdefinelanguage{rv}{
     morekeywords=[1]{ADDI,SLTI,SLTIU,ANDI,ORI,XORI,SLLI,SRLI,SRAI,LUI,AUIPC,ADD,SLT,SLTU,AND,OR,XOR,SLL,SRL,SUB,SRA,JAL,JALR,BEQ,BNE,BLT,BLTU,BGE,BGEU,LW,LH,LHU,LB,LBU,SW,SH,SB,CSRRW,CSRRS,CSRRC,CSRRWI,CSRRSI,CSRCI,ECALL,EBREAK,MRET,URET},
     sensitive=false,
     morecomment=[l]{\#},
 }
+\lstdefinelanguage{minrv8}{
+    morekeywords=[1]{LOAD,STORE,LOADI,ADD,SUB,AND,OR,MOV,SLL,SRA,SLT,ECALL,MRET,CSRRS,CSRRC},
+    sensitive=false,
+    morecomment=[l]{\#},
+}
 \lstdefinelanguage{SMV}{
-    morekeywords=[1]{VAR,IVAR,ASSIGN,TRANS,INIT,FROZENVAR,DEFINE,CONSTANTS,FUN,INVAR,FAIRNESS,JUSTICE,COMPASSION,MODULE,PRED,MIRROR,CTLSPEC,SPEC,INVARSPEC,LTLSPEC,PSLSPEC},
-    morekeywords=[2]{boolean,word,unsigned word,signed word,real,integer,array},
-    morekeywords=[3]{AX,AG,AF,EX,EG,EF,E,A,X,G,F,U,V,Y,Z,H,O,S,T,EBF,ABF,EBG,ABG,MIN,MAX,abort,forall,inf,X!,W,always,never,next,next!,eventually!,until!,until,until!_,until_,before!,before,before!_,before_,next_a,next_a!,next_e,next_e!,next_event!,next_event,next_event_a!,next_event_a,next_event_e!,next_event_e,within!,within,within!_,within_,whilenot!,whilenote,whilenot!_,whilenot_},
-    morekeywords=[4]{abs,max,min,xor,xnor,mod,word1,bool,toint,count,swconst,uwconst,signed,unsigned,sizeof,floor,extend,resize,union,in,next,init},
+    morekeywords=[2]{
+        boolean,word,unsigned word,signed word,real,integer,array,
+        abs,max,min,xor,xnor,mod,word1,bool,toint,count,swconst,uwconst,signed,unsigned,sizeof,floor,extend,resize,union,in,next,init
+    },
+    morekeywords=[4]{
+        VAR,IVAR,ASSIGN,TRANS,INIT,FROZENVAR,DEFINE,CONSTANTS,FUN,INVAR,FAIRNESS,JUSTICE,COMPASSION,MODULE,PRED,MIRROR,CTLSPEC,SPEC,INVARSPEC,LTLSPEC,PSLSPEC,
+        AX,AG,AF,EX,EG,EF,E,A,X,G,F,U,V,Y,Z,H,O,S,T,EBF,ABF,EBG,ABG,MIN,MAX,abort,forall,inf,X!,W,always,never,next,next!,eventually!,until!,until,until!_,until_,before!,before,before!_,before_,next_a,next_a!,next_e,next_e!,next_event!,next_event,next_event_a!,next_event_a,next_event_e!,next_event_e,within!,within,within!_,within_,whilenot!,whilenote,whilenot!_,whilenot_
+    },
     sensitive=true,
     morecomment=[l]{--},
     alsoletter={!,_},
 }
-\lstdefinestyle{PSLstyle}{
-    language=PSL,
+\lstset{
     basicstyle=\ttfamily,
     keywordstyle={[1]\scshape},
     keywordstyle={[2]\itshape},
-    frame=shadowbox,
-    framesep=5pt,
-    rulesep=2.5pt,
-    rulesepcolor=\color{gray},
-    captionpos=b,
-    abovecaptionskip=10pt,
-    numbers=left,
-    xleftmargin=2em,
-    framexleftmargin=1.5em,
-    escapechar=\#,
-    aboveskip=10pt,
-}
-\lstdefinestyle{ASLstyle}{
-    language=ASL,
-    basicstyle=\ttfamily,
-    keywordstyle={[1]\em},
-    keywordstyle={[2]\itshape},
-    frame=shadowbox,
-    framesep=5pt,
-    rulesep=2.5pt,
-    rulesepcolor=\color{gray},
-    captionpos=b,
-    abovecaptionskip=10pt,
-    numbers=left,
-    xleftmargin=2em,
-    framexleftmargin=1.5em,
-    escapechar=\#,
-    aboveskip=10pt,
-}
-\lstdefinestyle{SMT2style}{
-    language=SMT2,
-    basicstyle=\ttfamily,
-    keywordstyle={[1]\em},
-    keywordstyle={[2]\bfseries},
-    frame=shadowbox,
-    framesep=5pt,
-    rulesep=2.5pt,
-    rulesepcolor=\color{gray},
-    captionpos=b,
-    abovecaptionskip=10pt,
-    numbers=left,
-    xleftmargin=2em,
-    framexleftmargin=1.5em,
-    escapechar=\#,
-    aboveskip=10pt,
-}
-\lstdefinestyle{assemblerstyle}{
-    language=assembler,
-    basicstyle=\ttfamily,
-    keywordstyle={[1]\bfseries\scshape},
-    frame=shadowbox,
-    framesep=5pt,
-    rulesep=2.5pt,
-    rulesepcolor=\color{gray},
-    captionpos=b,
-    abovecaptionskip=10pt,
-    numbers=left,
-    xleftmargin=2em,
-    framexleftmargin=1.5em,
-    escapechar=~,
-    aboveskip=10pt,
-}
-\lstdefinestyle{SMVstyle}{
-    language=SMV,
-    basicstyle=\ttfamily,
-    keywordstyle={[1]\bfseries},
-    keywordstyle={[2]\bfseries},
-    keywordstyle={[3]\bfseries},
+    keywordstyle={[3]\em},
     keywordstyle={[4]\bfseries},
     frame=shadowbox,
     framesep=5pt,
@@ -135,29 +76,13 @@
     abovecaptionskip=10pt,
     numbers=left,
     xleftmargin=2em,
-    framexleftmargin=1.5em,
-    escapechar=\#,
+    framexleftmargin=2em,
     aboveskip=10pt,
 }
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
-\lstnewenvironment{psl}[1][]
-    {\lstset{style=PSLstyle,#1}}
-    {}
-\lstnewenvironment{asl}[1][]
-    {\lstset{style=ASLstyle,#1}}
-    {}
-\lstnewenvironment{smt2}[1][]
-    {\lstset{style=SMT2style,#1}}
-    {}
-\lstnewenvironment{assmblr}[1][]
-    {\lstset{style=assemblerstyle,#1}}
-    {}
-\lstnewenvironment{smv}[1][]
-    {\lstset{style=SMVstyle,#1}}
-    {}
-\newcommand{\pslinline}[1]{\lstinline[style=PSLstyle]{#1}}
-\newcommand{\aslinline}[1]{\lstinline[style=ASLstyle]{#1}}
-\newcommand{\smt}[1]{\lstinline[style=SMT2style]{#1}}
-\newcommand{\assmblrinline}[1]{\lstinline[style=assemblerstyle]{#1}}
-\newcommand{\smvinline}[1]{\lstinline[style=SMVstyle]{#1}}
+\newcommand{\asl}[1]{\lstinline[language=ASL]{#1}}
+\newcommand{\smt}[1]{\lstinline[language=SMT2]{#1}}
+\newcommand{\rv}[1]{\lstinline[language=rv]{#1}}
+\newcommand{\minrv}[1]{\lstinline[language=minrv8]{#1}}
+\newcommand{\smv}[1]{\lstinline[language=SMV]{#1}}
