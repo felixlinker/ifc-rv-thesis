@@ -14,7 +14,7 @@ A secure embedded system that implements the RV32E, i.e. base integer instructio
 
 MINRV8 supports 4 general purpose registers and has two privilege modes: machine- and user-mode.
 Besides this, it has 4-bytes of read- and write-memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies all remaining addresses, i.e. 2 to 3.
-MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with AND and OR, a MOV instruction to move a word from one register to another, a conditional instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
+MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with \minrv{And} and \minrv{Or}, a \minrv{Mov} instruction to move a word from one register to another, a conditional instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
 Machine words are generally interpreted as signed-words thus there won't be unsigned counterparts to integer arithmetic or comparison instruction.
 
@@ -22,21 +22,21 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
     \centering
     \begin{tabular}{|l p{8cm}|}
         \hline
-        LOAD $ rd $, $ rs1 $ & Load the word stored in memory at the address stored in registers $ rs1 $ modulo 4 into register $ rd $ \\
-        STORE $ rs1 $, $ rs2 $ & Store the word located in register $ rs2 $ into memory at address stored in register $ rs1 $ modulo 4 \\
-        LOADI $ rd $, $ imm $ & Load the 8-bit immediate value $ imm $ into register $ rd $ \\
-        ADD $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the sum of the values in registers $ rs1 $ and $ rs2 $ \\
-        SUB $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the value of register $ rs1 $ minus the value of register $ rs2 $ \\
-        AND $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the result of a bitwise-AND of the values of registers $ rs1 $ and $ rs2 $ \\
-        OR $ rd $, $ rs1 $, $ rs2 $ & Same as AND but with the bitwise-OR operation \\
-        MOV $ rd $, $ rs1 $ & Set register $ rd $ to the content of register $ rs1 $ \\
-        SLL $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to content of register $ rs1 $ shifted left logically (i.e. without sign-extension) by the value in register $ rs2 $ \\
-        SRA $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to the content of register $ rs1 $ shifted right arithmetically (i.e. with sign-extension) by the value in register $ rs2 $ \\
-        SLT $ rd $, $ rs1 $, $ rs2 $ & Set register $ rd $ to 0x01 if the value in register $ rs1 $ is smaller than the value in register $ rs2 $ \\
-        ECALL & Environment call to machine-mode \\
-        MRET & Machine-mode return from trap handler \\
-        CSRRS $ rd $, $ rs1 $, $ rs2 $ & Read the value of the \gls{csr} with index $ rs1 $ modulo the number of all CSRs and store it in register $ rd $; additionally, set all bits of the \gls{csr} high that are high in register $ rs2 $ \\
-        CSRRC $ rd $, $ rs1 $, $ rs2 $ & Same as CSRRS but set all bits low that are low in register $ rs2 $ \\
+        \minrv{Load rd, rs1} & Load the word stored in memory at the address stored in registers \minrv{rs1} modulo 4 into register \minrv{rd} \\
+        \minrv{Store rs1, rs2} & Store the word located in register \minrv{rs2} into memory at address stored in register \minrv{rs1} modulo 4 \\
+        \minrv{Loadi rd, imm} & Load the 8-bit immediate value \minrv{imm} into register \minrv{rd} \\
+        \minrv{Add rd, rs1, rs2} & Set register \minrv{rd} to the sum of the values in registers \minrv{rs1} and \minrv{rs2} \\
+        \minrv{Sub rd, rs1, rs2} & Set register \minrv{rd} to the value of register \minrv{rs1} minus the value of register \minrv{rs2} \\
+        \minrv{And rd, rs1, rs2} & Set register \minrv{rd} to the result of a bitwise-and of the values of registers \minrv{rs1} and \minrv{rs2} \\
+        \minrv{Or rd, rs1, rs2} & Same as \minrv{And} but with the bitwise-or operation \\
+        \minrv{Mov rd, rs1} & Set register \minrv{rd} to the content of register \minrv{rs1} \\
+        \minrv{Sll rd, rs1, rs2} & Set register \minrv{rd} to content of register \minrv{rs1} shifted left logically (i.e. without sign-extension) by the value in register \minrv{rs2} \\
+        \minrv{Sra rd, rs1, rs2} & Set register \minrv{rd} to the content of register \minrv{rs1} shifted right arithmetically (i.e. with sign-extension) by the value in register \minrv{rs2} \\
+        \minrv{Slt rd, rs1, rs2} & Set register \minrv{rd} to 0x01 if the value in register \minrv{rs1} is smaller than the value in register \minrv{rs2} \\
+        \minrv{Ecall} & Environment call to machine-mode \\
+        \minrv{Mret} & Machine-mode return from trap handler \\
+        \minrv{Csrrs rd, rs1, rs2} & Read the value of the \gls{csr} with index \minrv{rs1} modulo the number of all \glspl{csr} and store it in register \minrv{rd}; additionally, set all bits of the \gls{csr} high that are high in register \minrv{rs2} \\
+        \minrv{Csrrc rd, rs1, rs2} & Same as \minrv{Csrrs} but set all bits low that are low in register \minrv{rs2} \\
         \hline
     \end{tabular}
     \caption{Instructions of the MINRV8 architecture}
@@ -248,11 +248,11 @@ We denote the integer value of some input $ x $ by $ v(x) \in \mathbb{Z} $ and i
 We track the security labelings in the architecture bitwise as words of length 8 over the alphabet $ \Sigma = \{ \PT, \PU, \CT, \CU \} $, i.e. $ l(x) \in \Sigma^* $.
 
 \begin{example}
-    The SLL instruction receives two arguments: the word to shift and the word indicating the amount to shift the former by.
+    The \minrv{Sll} instruction receives two arguments: the word to shift and the word indicating the amount to shift the former by.
     It assigns the result of this operation to some register.
-    The security labeling assigned to the result of SLL is denoted by:
+    The security labeling assigned to the result of \minrv{Sll} is denoted by:
     \begin{equation*}
-        \I(\text{SLL})(\texttt{rs1}, \texttt{rs2})
+        \I(\textsc{Sll})(\texttt{rs1}, \texttt{rs2})
     \end{equation*}
 
     Note, that $ \I $ does not hold semantics for \textit{where} information will flow; $ \I $ solely determines \textit{how} information flows.
@@ -315,12 +315,12 @@ With these tools at hand we can start to translate type system rules to semantic
 We start with the logical operations and the type system rule T-Logical.
 This rule infers the type $ \tau $ of the expressions $ e_1 \land e_2 $ and $ e_1 \lor e_2 $ when $ e_1 $ and $ e_2 $ are of type $ \tau_1 $ and $ \tau_2 $ respectively by mapping each bit of the produced word to the supremum of the labels of the argument words.
 This is intuitive as for $ \land $ and $ \lor $ each bit can only be influenced by the two bits of the same index in the argument words.
-This leads us to the following semantical function of AND and OR:
+This leads us to the following semantical function of \minrv{And} and \minrv{Or}:
 \begin{equation*}
-    \I(\text{AND}) = \I(\text{OR}) = (w, w') \mapsto l(w) \sqcup l(w')
+    \I(\textsc{And}) = \I(\textsc{Or}) = (w, w') \mapsto l(w) \sqcup l(w')
 \end{equation*}
 
-The translation of the T-Arith rule which will apply to the interpretation of the instructions ADD and SUB is analogously straight-forward.
+The translation of the T-Arith rule which will apply to the interpretation of the instructions \minrv{Add} and \minrv{Sub} is analogously straight-forward.
 In this case, the inferred type $ \tau $ of $ e_1 + e_2 $ and $ e_1 - e_2 $ is defined as:
 \begin{equation*}
     \tau = i \mapsto \bigsqcup_{j \in [1, i]} (\tau_1(j) \sqcup \tau_2(j))
@@ -352,15 +352,15 @@ extendSup implements the idea of $ \tau $ and subsequently \textit{extends} the 
     \end{equation*}
 \end{example}
 
-With extendSup we can define the semantics of the ADD and SUB instructions.
+With extendSup we can define the semantics of the \minrv{Add} and \minrv{Sub} instructions.
 \begin{equation*}
-    \I(\text{ADD}) = \I(\text{SUB}) = (w, w') \mapsto \text{extendSup}\big(l(w) \sqcup l(w') \big)
+    \I(\textsc{Add}) = \I(\textsc{Sub}) = (w, w') \mapsto \text{extendSup}\big(l(w) \sqcup l(w') \big)
 \end{equation*}
 
 \begin{example}
     Consider the addition of two bit vectors which generally are considered to be public and untrusted with one bit being confidential and trusted.
     \begin{align*}
-        & \I(\text{ADD})(\PU \cdot \CT \cdot \PU, \PU \cdot \PU \cdot \PU) \\
+        & \I(\textsc{Add})(\PU \cdot \CT \cdot \PU, \PU \cdot \PU \cdot \PU) \\
         =& \text{extendSup}((\PU \cdot \CT \cdot \PU) \sqcup (\PU \cdot \PU \cdot \PU)) \\
         =& \text{extendSup}(\PU \cdot \CU \cdot \PU) \\
         =& \CU \cdot \CU \cdot \PU
@@ -375,46 +375,46 @@ However, in \cite{Ferraiuolo17} the authors also only know one source of labels,
     Recall that constants in SecVerilogBL are of type $ \bot $, i.e. do not need to be considered further as $ x \sqcup \bot = x $.
 }.
 In the context of this thesis, the amount a word will be shifted by can be taken from a register, i.e. is dynamic and has its own security labels.
-We therefore extend the interpretation of the SLL and SRA instructions by taking the maximum label of the amount the word will be shifted by and applying this label to all labels of the shifted word.
+We therefore extend the interpretation of the \minrv{Sll} and \minrv{Sra} instructions by taking the maximum label of the amount the word will be shifted by and applying this label to all labels of the shifted word.
 The reasoning behind this is that each bit of shifted word is influenced by the amount it will be shifted by.
 \begin{align*}
-    \I(\text{SLL}) &= (w, s) \mapsto \big(l(w) \ll v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big) \\
-    \I(\text{SRA}) &= (w, s) \mapsto \big(l(w) \gg v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big)
+    \I(\textsc{Sll}) &= (w, s) \mapsto \big(l(w) \ll v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big) \\
+    \I(\textsc{Sra}) &= (w, s) \mapsto \big(l(w) \gg v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big)
 \end{align*}
 
-This leaves us with the need to give semantics for all the instruction that do not have an analogous type system rule, i.e. LOAD, STORE, LOADI, MOV, SLT, CSRRS and CSRRC.
-SLT sets only one bit of the targeted register thus its semantics also should set only one literal of the resulting security labeling.
+This leaves us with the need to give semantics for all the instruction that do not have an analogous type system rule, i.e. \minrv{Load}, \minrv{Store}, \minrv{Loadi}, \minrv{Mov}, \minrv{Slt}, \minrv{Csrrs} and \minrv{Csrrc}.
+\minrv{Slt} sets only one bit of the targeted register thus its semantics also should set only one literal of the resulting security labeling.
 As on a bit comparison of bit vectors all bits are taken into account to produce the comparison result, we set the resulting comparison bit to the maximum of all bits of both arguments.
 \begin{equation*}
-    \I(\text{SLT}) = (w, w') \mapsto \bot\bot\bot\bot\bot\bot\bot \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big)
+    \I(\textsc{Slt}) = (w, w') \mapsto \bot\bot\bot\bot\bot\bot\bot \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big)
 \end{equation*}
 
-The semantics of MOV are rather simple.
-Since MOV only \textit{moves} information, the labels of a moved word must not change:
+The semantics of \minrv{Mov} are rather simple.
+Since \minrv{Mov} only \textit{moves} information, the labels of a moved word must not change:
 \begin{equation*}
-    \I(\text{MOV}) = w \mapsto l(w)
+    \I(\textsc{Mov}) = w \mapsto l(w)
 \end{equation*}
 
-Similar is true for LOAD and STORE.
+Similar is true for \minrv{Load} and \minrv{Store}.
 These instructions also simply move values through the architecture and therefore also simply cascade security labels.
 However, as memory addressing is dynamic via indices stored in registers, we introduce the magic function memoryLabel that maps memory addresses to the corresponding labelings.
-This lets us define the semantics of LOAD and STORE as follows:
+This lets us define the semantics of \minrv{Load} and \minrv{Store} as follows:
 \begin{align*}
-    \I(\text{LOAD}) &= a \mapsto \text{memoryLabel}\big(v(a) \big) \\
-    \I(\text{STORE}) &= (a, d) \mapsto l(d)
+    \I(\textsc{Load}) &= a \mapsto \text{memoryLabel}\big(v(a) \big) \\
+    \I(\textsc{Store}) &= (a, d) \mapsto l(d)
 \end{align*}
 
-A similar magic function is needed for the semantics of CSRRS and CSRRC.
+A similar magic function is needed for the semantics of \minrv{Csrrs} and \minrv{Csrrc}.
 As \gls{csr} reads happen via index as well, we introduce the magic function csrLabel that maps \gls{csr}-indices to the corresponding security labelings.
 \begin{align*}
-    \I(\text{CSRRS}) = \I(\text{CSRRC}) &= (r, w) \mapsto \text{csrLabel}\big(v(r) \big)
+    \I(\textsc{Csrrs}) = \I(\textsc{Csrrc}) &= (r, w) \mapsto \text{csrLabel}\big(v(r) \big)
 \end{align*}
 
-Finally, we couple the semantics of LOADI to the current execution context.
+Finally, we couple the semantics of \minrv{Loadi} to the current execution context.
 % TODO: Did we explain the threat model?
 We think that under our given threat-scenario it is sensible to assume that constants loaded by machine-mode are always labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
 \begin{equation*}
-    \I(\text{LOADI}) = c \mapsto \begin{cases}
+    \I(\textsc{Loadi}) = c \mapsto \begin{cases}
         8 \times \CT & \; \text{if current mode is machine-mode} \\
         8 \times \PU & \; \text{if current mode is user-mode}
     \end{cases}
@@ -425,12 +425,12 @@ We think that under our given threat-scenario it is sensible to assume that cons
 \paragraph{Summary}
 You can find a final overview of all information flow semantics for instructions that have been introduced in this section in figure \ref{fig:ifc-semantics}.
 Note that not all labels of all inputs are used when generating new labelings; these include\footnote{%
-    The label of $ c $ for LOADI is also not being used but in this case, the constant $ c $ does not have a label assigned as it is not a proper value of the architecture.
+    The label of $ c $ for \minrv{Loadi} is also not being used but in this case, the constant $ c $ does not have a label assigned as it is not a proper value of the architecture.
     This is not made explicit by our formalisms as they don't differentiate between such \textit{proper values} and hard-coded constants but is inline with the type system rules in \cite{Ferraiuolo17}.
 }:
 \begin{itemize}
-    \item The label of the address register $ a $ for the LOAD and STORE instructions
-    \item The label of the \gls{csr}-write register $ w $ for the CSRRS and CSRRC instructions
+    \item The label of the address register $ a $ for the \minrv{Load} and \minrv{Store} instructions
+    \item The label of the \gls{csr}-write register $ w $ for the \minrv{Csrrs} and \minrv{Csrrc} instructions
 \end{itemize}
 
 The labels of these values have been left untouched purposefully.
@@ -441,16 +441,16 @@ More on this in section \ref{sec:checking}.
 \begin{figure}
     \begin{align*}
         \text{extendSup} &= x \mapsto \prod_{i \in (|x|, 0]} \Big( \bigsqcup_{j \in [0, i]} x[j] \Big) \\
-        \I(\text{AND}) &= \I(\text{OR}) = (w, w') \mapsto l(w) \sqcup l(w') \\
-        \I(\text{ADD}) = \I(\text{SUB}) &= (w, w') \mapsto \text{extendSup}\big(l(w) \sqcup l(w') \big) \\
-        \I(\text{SLL}) &= (w, s) \mapsto \big(l(w) \ll v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big) \\
-        \I(\text{SRA}) &= (w, s) \mapsto \big(l(w) \gg v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big) \\
-        \I(\text{SLT}) &= (w, w') \mapsto \bot\bot\bot\bot\bot\bot\bot \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big) \\
-        \I(\text{MOV}) &= w \mapsto l(w) \\
-        \I(\text{LOAD}) &= a \mapsto \text{memoryLabel}\big(v(a) \big) \\
-        \I(\text{STORE}) &= (a, d) \mapsto l(d) \\
-        \I(\text{CSRRS}) = \I(\text{CSRRC}) &= (r, w) \mapsto \text{csrLabel}\big(v(r) \big) \\
-        \I(\text{LOADI}) &= c \mapsto \begin{cases}
+        \I(\textsc{And}) &= \I(\textsc{Or}) = (w, w') \mapsto l(w) \sqcup l(w') \\
+        \I(\textsc{Add}) = \I(\textsc{Sub}) &= (w, w') \mapsto \text{extendSup}\big(l(w) \sqcup l(w') \big) \\
+        \I(\textsc{Sll}) &= (w, s) \mapsto \big(l(w) \ll v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big) \\
+        \I(\textsc{Sra}) &= (w, s) \mapsto \big(l(w) \gg v(s) \big) \sqcup \Big(|l(s)| \times \bigsqcup l(s) \Big) \\
+        \I(\textsc{Slt}) &= (w, w') \mapsto \bot\bot\bot\bot\bot\bot\bot \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big) \\
+        \I(\textsc{Mov}) &= w \mapsto l(w) \\
+        \I(\textsc{Load}) &= a \mapsto \text{memoryLabel}\big(v(a) \big) \\
+        \I(\textsc{Store}) &= (a, d) \mapsto l(d) \\
+        \I(\textsc{Csrrs}) = \I(\textsc{Csrrc}) &= (r, w) \mapsto \text{csrLabel}\big(v(r) \big) \\
+        \I(\textsc{Loadi}) &= c \mapsto \begin{cases}
             8 \times \CT & \; \text{if current mode is machine-mode} \\
             8 \times \PU & \; \text{if current mode is user-mode}
         \end{cases}
@@ -495,10 +495,10 @@ Furthermore, the model knows five input variables:
 When an instruction does not support some or all of the arguments to the instruction, the values of these input variables are simply ignored.
 The variable \smv{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
-There is no input variable for an immediate value which might be needed by the LOADI instruction because we didn't want to waste extra state.
+There is no input variable for an immediate value which might be needed by the \minrv{Loadi} instruction because we didn't want to waste extra state.
 % TODO: is this understandable?
-Instead, we decided to not constrain the content of the destination register in the case of a LOADI instruction being executed.
-By doing so, we implicitly encoded the value written to the destination register by the LOADI instruction in the transition relation rather than in the state space.
+Instead, we decided to not constrain the content of the destination register in the case of a \minrv{Loadi} instruction being executed.
+By doing so, we implicitly encoded the value written to the destination register by the \minrv{Loadi} instruction in the transition relation rather than in the state space.
 
 \paragraph{Transitions}
 nuXmv allows to constrain the transition of variables by arbitrary formulas expressed in propositional logic.
@@ -552,15 +552,15 @@ In the following, we will introduce the \enquote{formal idea} of the variable tr
 The transitions of the \smv{priv} variable are simple.
 There are two conditions by which \smv{priv} can change.
 Firstly, whenever there is an exception - be it an exception triggered by a pending external interrupt or a environment call to machine-mode exception - the \gls{hart} switches to machine-mode and does not execute the current instruction, i.e. the value of \smv{op}, \smv{rd}, \smv{rs1} and \smv{rs2} are ignored.
-Secondly, when the MRET instruction is executed, the \gls{hart} sets \smv{priv} to the value stored in \gls{mstatus}.MPP (cf. section \ref{sec:rv-exn}).
+Secondly, when the \minrv{Mret} instruction is executed, the \gls{hart} sets \smv{priv} to the value stored in \gls{mstatus}.MPP (cf. section \ref{sec:rv-exn}).
 
 \gls{mstatus} changes under the same conditions which brings us to the transitions of \smv{csrs}.
 On a trap, MPP and MPIE are written accordingly while MEIP and MIE are set to zero.
-MEIP can be set to zero although the trap might have been triggered by an ECALL instruction because interrupts have higher priority in \gls{riscv} than synchronous exceptions - either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
-On return from machine-mode, i.e. execution of MRET, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
+MEIP can be set to zero although the trap might have been triggered by an \minrv{Ecall} instruction because interrupts have higher priority in \gls{riscv} than synchronous exceptions - either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
+On return from machine-mode, i.e. execution of \minrv{Mret}, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
 An exception to all rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smv{m_externel_interrupt}.
 
-The \glspl{csr} can also be written by the CSRRC or CSRRS instructions.
+The \glspl{csr} can also be written by the \minrv{Csrrc} or \minrv{Csrrs} instructions.
 In order to control read- and write-access to the \glspl{csr}, the model knows to constant arrays:
 \begin{lstlisting}[language=smv]
     __csrs_read_privs := [ 0h_0F, 0h_00 ];
@@ -570,7 +570,7 @@ In order to control read- and write-access to the \glspl{csr}, the model knows t
 These arrays store bitmasks that indicate the least privilege level necessary to read or write the \gls{csr} of the corresponding index at the corresponding bit-position.
 For example, all \glspl{csr} besides \gls{mstatus} can be read but but no \gls{csr} can be written by user-mode.
 These constants are transformed to the bitmasks \smv{csr_read_mask} or \smv{csr_write_mask} respectively by the per-bit $ b $ implication of $ b \rightarrow \texttt{priv} $ based on the index of the currently targeted \gls{csr}.
-Bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smv{csr_write_mask} is high at the corresponding index with two exceptions:
+Bits of \glspl{csr} are changed by the \minrv{Csrrs} or \minrv{Csrrc} instruction only if \smv{csr_write_mask} is high at the corresponding index with two exceptions:
 \begin{itemize}
     \item \gls{mstatus}.MEIP cannot be written by software
     \item Once a \gls{pmpcfg} register has been locked, it cannot be changed anymore
@@ -579,15 +579,15 @@ Bits of \glspl{csr} are changed by the CSRRS or CSRRC instruction only if \smv{c
 The transition relation of the registers and memory is easier to understand.
 \smv{regs} changes at index \smv{i} if it is targeted by some instruction and no trap is taken.
 Then, \smv{regs[i]} is written with a value determined by the instruction semantics\footnote{%
-    This only applies to instructions that \textit{have} semantics targeting registers, i.e. ECALL will not change values of any register.
+    This only applies to instructions that \textit{have} semantics targeting registers, i.e. \minrv{Ecall} will not change values of any register.
 }.
-These per-instruction semantics include considering the \smv{csr_read_mask} bitmask on CSRRS and CSRRC.
+These per-instruction semantics include considering the \smv{csr_read_mask} bitmask on \minrv{Csrrs} and \minrv{Csrrc}.
 
-\smv{memory} is written at index \smv{i} if it is targeted by the STORE instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} allow the current privilege mode to write the register.
+\smv{memory} is written at index \smv{i} if it is targeted by the \minrv{Store} instruction, no trap occurs and the write privilege settings in \gls{pmpcfg} allow the current privilege mode to write the register.
 Otherwise \smv{memory} does not change.
 It does not mark an error, should the current privilege level not suffice to write the targeted memory address.
 No exception will be generated - the memory simply will not be written.
-The same is true for read privileges and \smv{regs} on a LOAD.
+The same is true for read privileges and \smv{regs} on a \minrv{Load}.
 
 \subsubsection{Caching}
 
@@ -605,15 +605,15 @@ If a memory region is set as uncacheable, the cache will ignore reads and writes
 
 \paragraph{Reads}
 If a memory region is not set as uncacheable, reads will trigger a cache-fill.
-On a LOAD if the cache is invalid or currently holds the contents of a different memory address than targeted, \smv{addr} gets written with \smv{regs[rs1] mod 4}, \smv{valid} becomes \smv{TRUE} and \smv{line} is written with \smv{memory[addr]}.
+On a \minrv{Load} if the cache is invalid or currently holds the contents of a different memory address than targeted, \smv{addr} gets written with \smv{regs[rs1] mod 4}, \smv{valid} becomes \smv{TRUE} and \smv{line} is written with \smv{memory[addr]}.
 This process is independent of the current privilege level, e.g. user-mode can cause a cache-fill with memory content in regions that are unreadable to it.
 Though, user-mode still won't be able to read the respective word as reads are privileged controlled.
 
-If on a LOAD, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smv{line} instead of \smv{memory[regs[rs1] mod 4]} will be written into register \smv{rd}.
+If on a \minrv{Load}, however, the cache already held the targeted word an was valid and the current mode suffices to read the respective memory address, \smv{line} instead of \smv{memory[regs[rs1] mod 4]} will be written into register \smv{rd}.
 
 \paragraph{Writes}
 From the cache's perspective, writes to regions which are not set uncacheable work the same way, regardless of whether the respective region is set to be write-back-cacheable or write-though-cacheable.
-For such a region, on a STORE \smv{line} will be written with \smv{regs[rs2]}, \smv{address} with \smv{regs[rs1] mod 4} and \smv{valid} will become \smv{TRUE}.
+For such a region, on a \minrv{Store} \smv{line} will be written with \smv{regs[rs2]}, \smv{address} with \smv{regs[rs1] mod 4} and \smv{valid} will become \smv{TRUE}.
 However, if the region is set to be write-through-cacheable the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
@@ -755,9 +755,9 @@ Rather than simply simulating the MINRV8 architecture in nuXmv we also track the
 
 In summary, the MINRV8 architecture knows three groups of instructions (cf. table \ref{tbl:min-arch-instrs}):
 \begin{itemize}
-    \item Computational instructions such as MOV, AND, ADD, etc.
-    \item Memory instructions LOAD and STORE
-    \item System instructions ECALL, MRET, CSRRS, CSRRC
+    \item Computational instructions such as Mov, \minrv{And}, \minrv{Add}, etc.
+    \item Memory instructions \minrv{Load} and \minrv{Store}
+    \item System instructions \minrv{Ecall}, \minrv{Mret}, \minrv{Csrrs}, \minrv{Csrrc}
 \end{itemize}
 
 MINRV8 is meant to be a reasonable abstraction of a real-world \gls{riscv} architecture from a security standpoint.

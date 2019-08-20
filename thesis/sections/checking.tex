@@ -48,14 +48,14 @@ This leads to the following two properties:
 
 % TODO: give intuition for both properties
 
-Secondly, recall the definition of the semantics for CSRRS or CSRRC, respectively.
+Secondly, recall the definition of the semantics for \rv{Csrrs} or \rv{Csrrc}, respectively.
 These only propagate information flow tracking labels by assigning the constant labels of the \gls{csr} read to the respectively targeted register.
 We decided to model the labels of \glspl{csr} as constants because they control the state of the architecture and as such might be target of an attack.
 We labelled all \glspl{csr} as integrous and \gls{mstatus} as confidential.
 We decided to not label \gls{pmacfg} or \gls{pmpcfg} as confidential since it can be assumed that user mode must be able to know where memory regions are to operate correctly.
 Our architecture does not support virtual addresses, address translation or other similar concepts which might hide details of the memory settings from user mode leaving it without the need to know the details of memory settings.
 
-Coming back to the information flow semantics of CSRRS and CSRRC, notice that in the respective definition of the semantical functions the value the \glspl{csr} are written with is not used.
+Coming back to the information flow semantics of \rv{Csrrs} and \rv{Csrrc}, notice that in the respective definition of the semantical functions the value the \glspl{csr} are written with is not used.
 This must necessarily be the case since the labels of the \glspl{csr} are constant and as such can not change based on the labels of the value to write them with.
 However, this leads us to phrase a property about the \gls{csr} labels that ensures their integrity:
 \begin{enumerate}[label=\Roman*.,resume]
