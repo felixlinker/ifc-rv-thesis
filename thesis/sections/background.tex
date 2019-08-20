@@ -22,6 +22,163 @@
 
 \subsubsection{SPIN}
 
+\gls{spin} (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker which has been originally developed by Bell Labs and has been made freely available since the nineties.
+As its name already suggests, it uses \gls{promela} as input language.
+\textit{The Spin Model Checker: Primer and Reference Manual} which has been used as source for this section, describes \gls{spin} initially as follows:
+\begin{displaycquote}[p.1]{SpinManual}
+    \gls{spin} can be used to verify correctness requirements for systems of concurrently executing processes.
+    The tool works by thoroughly checking either hand-built or mechanically generated models that capture the essential elements of a distributed systems design.
+    If a requirement is not satisfied, \gls{spin} can produce a sample execution of the model to demonstrate this.
+\end{displaycquote}
+
+As indicated by the quote, \gls{spin} focusses heavily on the verification of distributed or parallel systems.
+This is reflected not only in its input language but also in the way how properties are expressed about models.
+For an introduction by example to \gls{promela}, cf. snippet \ref{snpt:spin-exm}.
+\gls{promela} relies on describing systems as sets of processes that run in parallel where parallel means that each process can advance its state (generally) independent of other processes\footnote{%
+    We added the restriction \textit{generally} to the claim because processes can be set up such that they deliberately wait for other processes to send them a message or set some shared state accordingly.
+    However, such mechanisms where processes depend on each other always need to be implemented accordingly.
+}.
+
+In snippet \ref{snpt:spin-exm}, two processes of the same type \lstinline{user} are declared in line \ref{ln:proc}.
+The idea of this snippet is to implement and verify an algorithm that grants these two processes mutually exclusive access to the critical region spanning lines \ref{ln:crit-start}-\ref{ln:crit-end}.
+This is ensured by the assertion in line \ref{ln:assert} since variables in \gls{spin} are always initialized to 0 - if two processes had access to the critical region at the same time, \lstinline{cnt} would become 2 at some point.
+
+The details of the protocol implemented in lines \ref{ln:excl-start}-\ref{ln:excl-end} the purpose of which is to grant mutual exclusive access to the critical region are not relevant for this thesis.
+However, this part of code gives you an indication for how models written in \gls{promela} look like.
+Besides \lstinline{if} statements and labels similar to those in C (cf. line \ref{ln:label}), \gls{promela} supports \lstinline{do}-loops to control process execution flow.
+\lstinline{do}-loops run indefinitely until they are exited manually by a \lstinline{break} statement.
+
+As data types, \gls{promela} knows three categories of them: processes, message channels and data objects.
+Data objects comprise atomic data types such as \lstinline{byte}, \lstinline{bool}, \lstinline{int}, etc. as well as complex data type defined by \lstinline{typedef} that define a complex structures that have fields of data objects.
+Both atomic data types and complex data types are very close to the data types of C.
+
+\begin{figure}
+    \begin{lstlisting}[
+        caption={Faulty Mutual Exclusion Algorithm Implemented in \gls{promela} \cite{SpinManual}},
+        label={snpt:spin-exm}
+    ]
+        byte cnt;
+        byte x, y, z;
+
+        active [2] proctype user() (*\label{ln:proc}*)
+        {
+            byte me = _pid + 1;
+        again: (*\label{ln:label}*)
+            x = me; (*\label{ln:excl-start}*)
+            if
+            :: (y == 0 || y == me) -> skip
+            :: else -> goto again
+            fi;
+
+            z = me;
+            if
+            :: (x == me) -> skip
+            :: else -> goto again
+            fi;
+
+            y = me;
+            if (z = me) -> skip
+            :: else -> goto again
+            fi; (*\label{ln:excl-end}*)
+
+            cnt++; (*\label{ln:crit-start}*)
+            assert(cnt == 1); (*\label{ln:assert}*)
+            cnt--; (*\label{ln:crit-end}*)
+            goto again
+        }
+    \end{lstlisting}
+\end{figure}
+
+Snippet \ref{snpt:spin-output} shows the output when verifying snippet \ref{snpt:spin-exm} with \gls{spin} where we assume that latter snippet was written into a file called \lstinline{mutex_flaw.pml}.
+The lines of the output are structured as follows: at the beginning of each line, you see a step index indicating the progress of all processes, then \lstinline{proc X (NAME)} indicates the process that has made progress by its ID and name.
+The rest of the line \lstinline{line X ... [CODE]} shows the code executed by the process along with the corresponding line number in the source file\footnote{%
+    In this case, line numbers don't fully align with snippet \ref{snpt:spin-exm} but this is not relevant here.
+}.
+Notice, how processes 0 and 1 progress completely independent from each other, executing code on a line by line basis where each step of any process counts as a state transition of the whole model.
+
+\begin{figure}
+    \begin{lstlisting}[
+        caption={\gls{spin} Example Output \cite{SpinManual}},
+        label={snpt:spin-output}
+    ]
+        1:  proc    1 (user) line   5 ... [x = me]
+        2:  proc    1 (user) line   8 ... [(((y==0) || (y==me)))]
+        3:  proc    1 (user) line  10 ... [z = me]
+        4:  proc    1 (user) line  13 ... [((x = me))]
+        5:  proc    0 (user) line   5 ... [x = me]
+        6:  proc    0 (user) line   8 ... [(((y==0) || (y==me)))]
+        7:  proc    1 (user) line  15 ... [y = me]
+        8:  proc    1 (user) line  18 ... [((z = me))]
+        9:  proc    1 (user) line  22 ... [cnt = cnt+1]
+        10: proc    0 (user) line  10 ... [z = me]
+        11: proc    0 (user) line  13 ... [((x = me))]
+        12: proc    0 (user) line  15 ... [y = me]
+        13: proc    0 (user) line  18 ... [((z==me))]
+        14: proc    0 (user) line  22 ... [cnt = (cnt+1)]
+        spin: line 223 of "mutex_flaw.pml", Error: assertion violated
+        spin: text of failed assertion: assert((cnt==1))
+        15: proc    0 (user) line  23 ... [assert((cnt==1))]
+        spin: trail ends after 15 steps
+        # processes: 2
+            cnt = 2
+            x = 1
+            y = 1
+            z = 1
+        15: proc    1 (user) line  23 "mutex_flaw.pml" (state 20)
+        15: proc    0 (user) line  24 "mutex_flaw.pml" (state 21)
+        2 processes created
+    \end{lstlisting}
+\end{figure}
+
+Assertions, however, are not the only way to express properties of \gls{promela} models for \gls{spin}.
+Furthermore, there are:
+\begin{itemize}
+    \item Labels
+    \item Never claims
+    \item Trace assertions
+\end{itemize}
+
+Labels have already been introduced informally along with snippet \ref{snpt:spin-exm}.
+To express properties about a model, certain types of labels can be used to give semantics to process state.
+For example, you can label a certain part of process code as and end-state that might look like an idling-state to \gls{spin} by default.
+% TODO: introduce deadlocks
+Idling- and end-states are important to \gls{spin} when it's checking for deadlock-freeness of systems.
+By default, if all processes are in an idling-state and wait for some kind of signal, this state is considered to be a deadlock.
+However, in some situations it might be perfectly fine for some of the processes to idle in a specific state which should not contribute towards deadlocks.
+Labeling parts of code as end-state contributes towards this.
+
+Never claims are processes themselves.
+% TODO: introduce LTL
+They run like any other process but must not terminate otherwise they're regarded as failure.
+This is the most complex way to express properties and in fact falls together with writing LTL properties about a model.
+Therefore \gls{spin} also allows to express such never properties in LTL directly via their command line interface.
+
+The last type of properties, trace assertions, solely deal with message passing and therefore are not relevant to this thesis.
+
+For some, it might be obvious at this point why we decided against using \gls{spin} as the model checker of this thesis.
+Its focus on verifying distributed and parallel systems is obvious and would make implementing an \gls{isa} in it very hard.
+In the \textit{Primer and Reference Manual} for \gls{spin} it is written:
+\begin{displaycquote}[p.33]{SpinManual}
+    \textins{W}e saw that the emphasis in \gls{promela} models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}
+    The specification language we use for systems verification is therefore deliberately designed to encourage the user to abstract from the purely computational aspects of a design, and to focus on the specification of process interaction at the system level.
+\end{displaycquote}
+
+However, the \gls{isa} we will attempt to verify
+\begin{enumerate*}[label=\alph*)]
+    \item will most likely not include components \enquote{interacting at the system level} and
+    \item will be verified on a component level, i.e. computationally as well - even in the case where multiple system level components would be given.
+\end{enumerate*}
+
+Furthermore, it is unreasonable to assume that an implementation of instructions of an \gls{isa} could be implemented in a single statement of \gls{promela}.
+Yet, this should be the goal as otherwise as shown in snippet \ref{snpt:spin-output} what is regarded as state by \gls{spin} would not fall together with what is regarded as state in an \gls{isa}.
+For an \gls{isa}, you typically would consider the \textit{state} of registers and memory to be the state of the \gls{isa} whilst some instruction advances this state.
+However, for \gls{spin} more complex state transitions would result in us not being able to differentiate architectural states of the \gls{isa} natively since the process implementing the \gls{isa} would change state on each line of code executed.
+This could be circumvented by using the \lstinline{atomic} keyword offered by \gls{promela} which lets you wrap a group of \gls{promela} statements such that they're considered as one atomic statement that advances the process state only by one step.
+However, this would lead to a model consisting of one process all of its code being wrapped by one \lstinline{atomic} statement.
+This would massively contradict the key idea of \gls{spin} of simple models being \textit{abstracted} from computationally complex code.
+In this case, we'd have skipped the whole step of abstracting from some computational model that has distributed components running in parallel.
+Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing \gls{spin}.
+
 \subsubsection{Alloy}
 
 \subsubsection{\muZ{} \& SPACER}

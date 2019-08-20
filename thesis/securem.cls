@@ -80,6 +80,7 @@
     framexleftmargin=2em,
     aboveskip=10pt,
     autogobble,
+    escapeinside={(*}{*)},
 }
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
