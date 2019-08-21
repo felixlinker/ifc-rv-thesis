@@ -1,6 +1,7 @@
 
 #define XLEN 8
 #define REGION0_SIZE 2
+#define MEM_SIZE 4
 
 -- Extend the first one we can find
 #define extend_sup_conf(w) \
@@ -31,11 +32,11 @@
         : 0h_FF)
 
 #define clamp(v, l, h) (min(max((v), l), h))
-#define read_addr(source) (toint(unsigned(regs[source])) mod 4)
+#define read_addr(source) (toint(unsigned(regs[source])) mod MEM_SIZE)
 
 MODULE cache_line(main_module)
     VAR
-        addr : 0..3;
+        addr : 0..(MEM_SIZE - 1);
         valid : boolean;
         line : signed word[XLEN];
         conf : unsigned word[XLEN];
@@ -121,9 +122,9 @@ MODULE main
         regs : array 0..3 of signed word[XLEN];
         regs_conf : array 0..3 of unsigned word[XLEN];
         regs_integrity : array 0..3 of unsigned word[XLEN];
-        memory : array 0..3 of signed word[XLEN];
-        memory_conf : array 0..3 of unsigned word[XLEN];
-        memory_integrity : array 0..3 of unsigned word[XLEN];
+        memory : array 0..(MEM_SIZE - 1) of signed word[XLEN];
+        memory_conf : array 0..(MEM_SIZE - 1) of unsigned word[XLEN];
+        memory_integrity : array 0..(MEM_SIZE - 1) of unsigned word[XLEN];
         cache : cache_line(self);
 
     DEFINE
