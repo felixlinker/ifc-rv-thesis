@@ -144,6 +144,10 @@ MODULE main
         memory_conf : array 0..(MEM_SIZE - 1) of unsigned word[XLEN];
         memory_integrity : array 0..(MEM_SIZE - 1) of unsigned word[XLEN];
         cache : cache_line(self);
+        #ifdef SP_ENABLE
+            sp_sel : 0..1;
+            sp : array 0..1 of 0..(MEM_SIZE - 1);
+        #endif
 
     DEFINE
         __csrs_read_privs := [ 0h_0F, 0h_00 ];
@@ -196,9 +200,20 @@ MODULE main
     INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
     INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
+    INIT memory_integrity[0] = 0h_00 & memory_integrity[1]= 0h_00 & memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
+    INIT memory_conf[0] = 0h_00 & memory_conf[1]= 0h_00 & memory_conf[2] = 0h_FF & memory_conf[3] = 0h_FF;
+    #ifdef SP_ENABLE
+        INIT sp_sel = 0 <-> !priv;
+        INIT sp_sel = 1 <-> priv;
+        INIT sp[0] = 0;
+        INIT sp[1] = 2;
+    #endif
 
     IVAR
         op : {
+            #ifdef SP_ENABLE
+                SPSEL, SPSET, PUSH, POP,
+            #endif
             LOAD, STORE, LOADI, ADD, SUB, AND, OR, MOV, SLT, SLL, SRA,
             ECALL, MRET, CSRRS, CSRRC, SAN, CLR
         };
@@ -239,6 +254,33 @@ MODULE main
         TRUE: priv;
     esac;
 
+    #ifdef SP_ENABLE
+        TRANS next(sp_sel) = case
+            do_trap | !priv: sp_sel;
+            op = SPSEL: rs1 mod 2;
+            TRUE: sp_sel;
+        esac;
+
+        -- for PUSH and POP ensure that stack wraps around in region
+        #define next_sp(i) \
+            (case \
+                do_trap | i != sp_sel: sp[i]; \
+                priv & op = SPSET: mem_addr; \
+                op = PUSH: case \
+                    sp[i] < REGION0_SIZE: (sp[i] + 1 = REGION0_SIZE ? 0 : sp[i] + 1); \
+                    TRUE: (sp[i] + 1 = MEM_SIZE ? REGION0_SIZE : sp[i] + 1); \
+                esac; \
+                op = POP: case \
+                    sp[i] < REGION0_SIZE: (sp[i] - 1 < 0 ? REGION0_SIZE - 1 : sp[i] - 1); \
+                    TRUE: (sp[i] - 1 < REGION0_SIZE ? MEM_SIZE - 1 : sp[i] - 1); \
+                esac; \
+                TRUE: sp[i]; \
+            esac)
+
+        TRANS next(sp)[0] = next_sp(0);
+        TRANS next(sp)[1] = next_sp(1);
+    #endif
+
     -- mstatus
     -- Scale m_external_interrupt to a bitmask
     DEFINE
@@ -272,9 +314,15 @@ MODULE main
     DEFINE
         csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
     -- register transitions
+    #ifdef SP_ENABLE
+        #define SP_REG_TRANS(i) op = POP: memory[sp[sp_sel]];
+    #else
+        #define SP_REG_TRANS(i)
+    #endif
     #define next_reg(i) \
         (case \
             rd != i | do_trap: regs[i]; \
+            SP_REG_TRANS(i) \
             op = LOAD & can_load: cache.__read; \
             op = ADD: regs[rs1] + regs[rs2]; \
             op = SUB: regs[rs1] - regs[rs2]; \
@@ -295,11 +343,17 @@ MODULE main
     TRANS loadi_targeted(3) | (next(regs)[3] = next_reg(3));
 
     -- Cast conf reg to signed on right shift for correct sign extension
+    #ifdef SP_ENABLE
+        #define SP_REG_TRANS_CONF(i) op = POP: memory_conf[next(sp)[sp_sel]];
+    #else
+        #define SP_REG_TRANS_CONF(i)
+    #endif
     #define next_reg_conf(i) \
         (case \
             do_trap: regs_conf[i]; \
             op = CLR: 0h_00; \
             rd != i: regs_conf[i]; \
+            SP_REG_TRANS_CONF(i) \
             op = LOAD & can_load: cache.__read_conf; \
             op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
             op = ADD: extend_sup_conf(regs_conf[rs1] | regs_conf[rs2]); \
@@ -329,11 +383,18 @@ MODULE main
         TRUE: toint(resize(unsigned(w), 3)); \
     esac)
 
+    #ifdef SP_ENABLE
+        #define SP_REG_TRANS_INTEGRITY(i) \
+            op = POP: memory_integrity[next(sp)[sp_sel]];
+    #else
+        #define SP_REG_TRANS_INTEGRITY(i)
+    #endif
     #define next_reg_integrity(i) \
         (case \
             do_trap: regs_integrity[i]; \
             op = SAN: 0h_FF; \
             rd != i: regs_integrity[i]; \
+            SP_REG_TRANS_INTEGRITY(i) \
             op = LOAD & can_load: cache.__read_integrity; \
             op = LOADI: (priv ? 0h_FF : 0h_00); \
             op = ADD: extend_sup_integrity( \
@@ -367,10 +428,18 @@ MODULE main
     TRANS next(regs_integrity)[3] = next_reg_integrity(3);
 
     -- memory transitions
-    #define store_targeted(i) (mem_addr = i & !do_trap & op = STORE & can_write \
+    #ifdef SP_ENABLE
+        #define SP_MEM_TRANS(i, r_source) \
+            op = PUSH & sp[sp_sel] = i: r_source[rs1];
+    #else
+        #define SP_MEM_TRANS(i, r_source)
+    #endif
+    #define store_targeted(i) (mem_addr = i & op = STORE & can_write \
         & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back))
     #define try_store(i, r_source, mem_source, write_back_source) \
         (case \
+            do_trap: mem_source[i]; \
+            SP_MEM_TRANS(i, r_source) \
             store_targeted(i): r_source[rs2]; \
             cache.addr = i & cache.valid & (( \
                 next(cache.addr) != i \
@@ -516,7 +585,29 @@ MODULE main
         #define SANITIZE_CACHE_ON_CLASSIFICATION
     #endif
 
-    #define assumptions (CLEAR_ON_RET SANITIZE_ON_CALL NO_PUBLIC_READS NO_PUBLIC_WRITES CLEAR_ON_DECLASSIFICATION CLEAR_CACHE_ON_DECLASSIFICATION SANITIZE_ON_CLASSIFICATION SANITIZE_CACHE_ON_CLASSIFICATION TRUE)
+    #ifdef SP_BANK
+        #ifdef SP_ENABLE
+            #undef SP_BANK
+            #define SP_BANK \
+                G (priv & X !priv -> X (sp_sel = 0)) \
+                & G (!priv & X priv -> X ((op in { SAN, CLR, SPSEL } & priv) U sp_sel = 1)) \
+                & G (priv & sp_sel = 0 -> op in { SAN, CLR, SPSEL, SPSET, MRET }) &
+        #endif
+    #else
+        #define SP_BANK
+    #endif
+
+    #ifdef SP_NO_PUBLIC
+        #ifdef SP_ENABLE
+            #undef SP_NO_PUBLIC
+            #define SP_NO_PUBLIC \
+                G (priv & op = SPSET & sp_sel = 1 -> X REGION0_SIZE <= sp[sp_sel]) &
+        #endif
+    #else
+        #define SP_NO_PUBLIC
+    #endif
+
+    #define assumptions (SP_NO_PUBLIC SP_BANK CLEAR_ON_RET SANITIZE_ON_CALL NO_PUBLIC_READS NO_PUBLIC_WRITES CLEAR_ON_DECLASSIFICATION CLEAR_CACHE_ON_DECLASSIFICATION SANITIZE_ON_CLASSIFICATION SANITIZE_CACHE_ON_CLASSIFICATION TRUE)
 
     -- This property is here to be targeted by the user to check whether the
     -- model is syntactically correct without starting expensive proofs.
