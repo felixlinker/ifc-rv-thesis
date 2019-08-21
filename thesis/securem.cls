@@ -83,7 +83,7 @@
     escapeinside={(*}{*)},
     breaklines=true,
     breakatwhitespace=true,
-    postbreak=\mbox{{$\hookrightarrow$}}
+    postbreak=\mbox{\textcolor{gray}{$\hookrightarrow$}}
 }
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
