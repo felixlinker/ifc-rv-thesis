@@ -5,6 +5,7 @@ param(
     [int]$tracelen = 10,
     [switch]$dry = $false,
     [switch]$clean = $false,
+    [string[]]$options = @(),
     [string[]]$assumptions = @(
         "CLEAR_ON_RET",
         "SANITIZE_ON_CALL",
@@ -30,9 +31,9 @@ if (!(Test-Path $preprocessedPath)) {
 $preprocessed = Get-Item $preprocessedPath
 $header = New-TemporaryFile
 
-foreach ($assumption in $assumptions) {
+foreach ($symbol in ($assumptions + $options)) {
     Out-File $header -Encoding ascii `
-        -InputObject "#define $assumption" `
+        -InputObject "#define $symbol" `
         -Append
 }
 
