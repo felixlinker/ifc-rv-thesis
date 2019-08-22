@@ -81,8 +81,8 @@ MODULE cache_line(main_module)
     TRANS next(addr) = case
         main_module.do_trap: addr;
         #ifdef CACHE_VULN
-            __op = LOAD & __can_cache_read: read_addr(__rs1);
-            __op = STORE & __can_cache_write & __hit: read_addr(__rs1);
+            __op = LOAD & __can_cache_read: __mem_addr;
+            __op = STORE & __can_cache_write & __hit: __mem_addr;
         #else
             __op = LOAD & __can_cache_read & main_module.can_load: __mem_addr;
             __op = STORE & __can_cache_write & __hit & main_module.can_write: __mem_addr;
@@ -92,8 +92,8 @@ MODULE cache_line(main_module)
 
     #ifdef CACHE_VULN
         #define LOAD_STORE_TRANS(read_source) \
-            __op = LOAD & __can_cache_read: read_source[read_addr(__rs1)]; \
-            __op = STORE & __can_cache_write & __hit: \
+            __op = LOAD & __can_cache_read: read_source[__mem_addr]; \
+            __op = STORE & __can_cache_write & __hit:
     #else
         #define LOAD_STORE_TRANS(read_source) \
             __op = LOAD & __can_cache_read & main_module.can_load: read_source[__mem_addr]; \
