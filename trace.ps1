@@ -31,27 +31,17 @@ if (!(Test-Path $preprocessedPath)) {
     New-Item $preprocessedPath
 }
 $preprocessed = Get-Item $preprocessedPath
-$header = New-TemporaryFile
-
-foreach ($symbol in ($assumptions + $options)) {
-    Out-File $header -Encoding ascii `
-        -InputObject "#define $symbol" `
-        -Append
-}
 
 if (
     $clean -or
     ($Null -eq (Get-Content $preprocessed)) -or
     (($preprocessed.LastWriteTime) -lt (Get-Item $in).LastWriteTime)
 ) {
-    # Load command line tools of visual studio as described in
-    #  https://stackoverflow.com/a/2124759/7194995
-    VsDevCmd.ps1
     # Preprocess the model
-    cl.exe /EP /C /FI $header $in | Out-File -Encoding ascii $preprocessed
+    $expr = ($assumptions + $options | ForEach-Object { "$PSItem=True" }) -join ";"
+    expander3.py -s --eval=$expr $header $in `
+        | Out-File -Encoding ascii $preprocessed
 }
-
-Remove-Item $header
 
 if ($dry) {
     exit
@@ -65,12 +55,14 @@ $took_millis = @{}
 $outs = @{}
 foreach ($prop in $props) {
     # Replace template-like variables in the command file
-    $cmds = get-content $cmd
-    $cmds = $cmds.Replace("[INPUT]", $preprocessed.FullName)
-    $cmds = $cmds.Replace("[PROPNAME]", $prop)
-    $cmds = $cmds.Replace("[OUTPUT]", $trace.FullName)
-    $cmds = $cmds.Replace("[MAXLEN]", $tracelen)
-    $cmds | Out-File -encoding ascii $replaced_cmd
+    $expr = @(
+        "INPUT='$($preprocessed.FullName)'",
+        "PROPNAME='$prop'",
+        "OUTPUT='$($trace.FullName)'",
+        "MAXLEN=$tracelen"
+    ) -join ";"
+    $expr = $expr.Replace("\", "/")
+    expander3.py -s --eval=$expr $cmd | Out-File -encoding ascii $replaced_cmd
 
     # Clear the trace of any possible previous proof
     Clear-Content $trace

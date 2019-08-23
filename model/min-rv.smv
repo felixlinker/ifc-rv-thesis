@@ -1,46 +1,79 @@
 
-#define XLEN 8
-#define REGION0_SIZE 2
-#define MEM_SIZE 4
+$# Set up global variables
+$py(
+import math
+
+XLEN=8
+REGION0_SIZE=2
+REG_NUM=4
+MEM_SIZE=4
+MEM_ADDR_LEN=int(math.log(MEM_SIZE, 2))
+)
+
+$# Available extensions
+$default(
+    CACHE_VULN=False,
+    SP_ENABLE=False
+)
+
+$# Available assumptions
+$default(
+    SP_NO_PUBLIC=False,
+    SP_BANK=False,
+    CLEAR_ON_RET=False,
+    SANITIZE_ON_CALL=False,
+    NO_PUBLIC_READS=False,
+    NO_PUBLIC_WRITES=False,
+    CLEAR_ON_DECLASSIFICATION=False,
+    CLEAR_CACHE_ON_DECLASSIFICATION=False,
+    SANITIZE_ON_CLASSIFICATION=False,
+    SANITIZE_CACHE_ON_CLASSIFICATION=False
+)
 
 -- Extend the first one we can find
-#define extend_sup_conf(w) \
-    (0h_00 < ((w) & 0h_FF) \
-        ? (0h_00 < ((w) & 0h_0F) \
-            ? (0h_00 < ((w) & 0h_03) \
-                ? (0h_00 < ((w) & 0h_01) ? 0h_FF : 0h_FE) \
-                : (0h_00 < ((w) & 0h_04) ? 0h_FC : 0h_F8) \
-            ) \
-            : (0h_00 < ((w) & 0h_30) \
-                ? (0h_00 < ((w) & 0h_10) ? 0h_F0 : 0h_E0) \
-                : (0h_00 < ((w) & 0h_40) ? 0h_C0 : 0h_80) \
-            )) \
-        : 0h_00)
+$macro(extend_sup_conf, w)
+    (0h_00 < (($w) & 0h_FF)\
+        ? (0h_00 < (($w) & 0h_0F)\
+            ? (0h_00 < (($w) & 0h_03)\
+                ? (0h_00 < (($w) & 0h_01) ? 0h_FF : 0h_FE)\
+                : (0h_00 < (($w) & 0h_04) ? 0h_FC : 0h_F8)\
+            )\
+            : (0h_00 < (($w) & 0h_30)\
+                ? (0h_00 < (($w) & 0h_10) ? 0h_F0 : 0h_E0)\
+                : (0h_00 < (($w) & 0h_40) ? 0h_C0 : 0h_80)\
+            ))\
+        : 0h_00)\
+$endmacro
 
 -- Extend the first zero we can find
-#define extend_sup_integrity(w) \
-    ((w) < 0h_FF \
-        ? ((w) < ((w) | 0h_0F) \
-            ? ((w) < ((w) | 0h_03) \
-                ? ((w) < ((w) | 0h_01) ? 0h_00 : 0h_01) \
-                : ((w) < ((w) | 0h_04) ? 0h_03 : 0h_07) \
-            ) \
-            : ((w) < ((w) | 0h_30) \
-                ? ((w) < ((w) | 0h_10) ? 0h_0F : 0h_1F) \
-                : ((w) < ((w) | 0h_40) ? 0h_3F : 0h_7F) \
-            )) \
-        : 0h_FF)
+$macro(extend_sup_integrity, w)
+    (($w) < 0h_FF\
+        ? (($w) < (($w) | 0h_0F)\
+            ? (($w) < (($w) | 0h_03)\
+                ? (($w) < (($w) | 0h_01) ? 0h_00 : 0h_01)\
+                : (($w) < (($w) | 0h_04) ? 0h_03 : 0h_07)\
+            )\
+            : (($w) < (($w) | 0h_30)\
+                ? (($w) < (($w) | 0h_10) ? 0h_0F : 0h_1F)\
+                : (($w) < (($w) | 0h_40) ? 0h_3F : 0h_7F)\
+            ))\
+        : 0h_FF)\
+$endmacro
 
-#define clamp(v, l, h) (min(max((v), l), h))
-#define read_addr(source) (toint(unsigned(regs[source])) mod MEM_SIZE)
+$macro(clamp, v, l, h)
+    (min(max(($v), $l), $h))\
+$endmacro
+$macro(read_addr, source)
+    (toint(unsigned(regs[$source])) mod $MEM_SIZE)\
+$endmacro
 
 MODULE cache_line(main_module)
     VAR
-        addr : 0..(MEM_SIZE - 1);
+        addr : 0..$(MEM_SIZE - 1);
         valid : boolean;
-        line : signed word[XLEN];
-        conf : unsigned word[XLEN];
-        integrity : unsigned word[XLEN];
+        line : signed word[$XLEN];
+        conf : unsigned word[$XLEN];
+        integrity : unsigned word[$XLEN];
 
     DEFINE
         __op := main_module.op;
@@ -49,10 +82,10 @@ MODULE cache_line(main_module)
         __rs2 := main_module.rs2;
         regs := main_module.regs;
 
-        __can_cache_read := (__mem_addr < REGION0_SIZE
+        __can_cache_read := (__mem_addr < $REGION0_SIZE
             ? !main_module.pmacfg0.uncached
             : !main_module.pmacfg1.uncached);
-        __can_cache_write := (__mem_addr < REGION0_SIZE
+        __can_cache_write := (__mem_addr < $REGION0_SIZE
             ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
             : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
         __hit := __mem_addr = addr;
@@ -68,56 +101,37 @@ MODULE cache_line(main_module)
 
     TRANS next(valid) = case
         main_module.do_trap: valid;
-        #ifdef CACHE_VULN
-            __op = LOAD: __can_cache_read;
-            __op = STORE: __can_cache_write;
-        #else
-            __op = LOAD & main_module.can_load: __can_cache_read;
-            __op = STORE & __hit & main_module.can_write: __can_cache_write;
-        #endif
+        __op = LOAD $if(not CACHE_VULN) & main_module.can_load $endif:
+            __can_cache_read;
+        __op = STORE & __hit $if(not CACHE_VULN) & main_module.can_write $endif:
+            __can_cache_write;
         TRUE: valid;
     esac;
 
     TRANS next(addr) = case
         main_module.do_trap: addr;
-        #ifdef CACHE_VULN
-            __op = LOAD & __can_cache_read: __mem_addr;
-            __op = STORE & __can_cache_write & __hit: __mem_addr;
-        #else
-            __op = LOAD & __can_cache_read & main_module.can_load: __mem_addr;
-            __op = STORE & __can_cache_write & __hit & main_module.can_write: __mem_addr;
-        #endif
+        __op = LOAD & __can_cache_read
+            $if(not CACHE_VULN) & main_module.can_load $endif: __mem_addr;
+        __op = STORE & __can_cache_write & __hit
+            $if(not CACHE_VULN) & main_module.can_write $endif: __mem_addr;
         TRUE: addr;
     esac;
 
-    #ifdef CACHE_VULN
-        #define LOAD_STORE_TRANS(read_source) \
-            __op = LOAD & __can_cache_read: read_source[__mem_addr]; \
-            __op = STORE & __can_cache_write & __hit:
-    #else
-        #define LOAD_STORE_TRANS(read_source) \
-            __op = LOAD & __can_cache_read & main_module.can_load: read_source[__mem_addr]; \
-            __op = STORE & __can_cache_write & __hit & main_module.can_write:
-    #endif
-    #define trans(read_source, write_source, default) \
-        (case \
-            main_module.do_trap: default; \
-                LOAD_STORE_TRANS(read_source) \
-                write_source[__rs2]; \
-            TRUE: default; \
-        esac)
-
-    TRANS next(line) = trans(main_module.memory, main_module.regs, line);
-    TRANS next(conf) = trans(
-        main_module.memory_conf,
-        main_module.regs_conf,
-        conf
-    );
-    TRANS next(integrity) = trans(
-        main_module.memory_integrity,
-        main_module.regs_integrity,
-        integrity
-    );
+    $for(var in ["line", "conf", "integrity"])
+        $# All variables but line get their information flow labels from
+        $# accordingly named sources
+        $py(suffix=f"_{var}" if var != "line" else "")
+        TRANS next($var) = case
+            main_module.do_trap: $var;
+            __op = LOAD & __can_cache_read
+                $if(not CACHE_VULN) & main_module.can_load $endif:
+                main_module.memory${suffix}[__mem_addr];
+            __op = STORE & __can_cache_write & __hit
+                $if(not CACHE_VULN) & main_module.can_write $endif:
+                main_module.regs${suffix}[__rs2];
+            TRUE: $var;
+        esac;
+    $endfor
 
 MODULE pmpcfg_module(base_reg)
     DEFINE
@@ -136,26 +150,25 @@ MODULE pmacfg_module(base_reg)
 MODULE main
     VAR
         priv : boolean;
-        csrs : array 0..1 of unsigned word[XLEN];
-        regs : array 0..3 of signed word[XLEN];
-        regs_conf : array 0..3 of unsigned word[XLEN];
-        regs_integrity : array 0..3 of unsigned word[XLEN];
-        memory : array 0..(MEM_SIZE - 1) of signed word[XLEN];
-        memory_conf : array 0..(MEM_SIZE - 1) of unsigned word[XLEN];
-        memory_integrity : array 0..(MEM_SIZE - 1) of unsigned word[XLEN];
+        csrs : array 0..1 of unsigned word[$XLEN];
+        regs : array 0..$(REG_NUM - 1) of signed word[$XLEN];
+        regs_conf : array 0..$(REG_NUM - 1) of unsigned word[$XLEN];
+        regs_integrity : array 0..$(REG_NUM - 1) of unsigned word[$XLEN];
+        memory : array 0..$(MEM_SIZE - 1) of signed word[$XLEN];
+        memory_conf : array 0..$(MEM_SIZE - 1) of unsigned word[$XLEN];
+        memory_integrity : array 0..$(MEM_SIZE - 1) of unsigned word[$XLEN];
         cache : cache_line(self);
-        #ifdef SP_ENABLE
+        $if(SP_ENABLE)
             sp_sel : 0..1;
-            sp : array 0..1 of 0..(MEM_SIZE - 1);
-        #endif
+            sp : array 0..1 of 0..$(MEM_SIZE - 1);
+        $endif
 
     DEFINE
         __csrs_read_privs := [ 0h_0F, 0h_00 ];
-        #ifdef CACHE_VULN
-            __csrs_write_privs := [ 0h_0F, 0h_FF ];
-        #else
-            __csrs_write_privs := [ 0h_FF, 0h_FF ];
-        #endif
+        __csrs_write_privs := [
+            $if(CACHE_VULN) 0h_0F $else 0h_FF $endif,
+            0h_FF
+        ];
         __priv_vec := (priv ? 0h_FF : 0h_00);
         __csrs_conf := [ 0h_0F, 0h_00 ];
         __csrs_integrity := [ 0h_FF, 0h_FF ];
@@ -202,47 +215,47 @@ MODULE main
     INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
     INIT memory_integrity[0] = 0h_00 & memory_integrity[1]= 0h_00 & memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
     INIT memory_conf[0] = 0h_00 & memory_conf[1]= 0h_00 & memory_conf[2] = 0h_FF & memory_conf[3] = 0h_FF;
-    #ifdef SP_ENABLE
+    $if(SP_ENABLE)
         INIT sp_sel = 0 <-> !priv;
         INIT sp_sel = 1 <-> priv;
         INIT sp[0] = 0;
         INIT sp[1] = 2;
-    #endif
+    $endif
 
     IVAR
         op : {
-            #ifdef SP_ENABLE
+            $if(SP_ENABLE)
                 SPSEL, SPSET, PUSH, POP,
-            #endif
+            $endif
             LOAD, STORE, LOADI, ADD, SUB, AND, OR, MOV, SLT, SLL, SRA,
             ECALL, MRET, CSRRS, CSRRC, SAN, CLR
         };
-        rd : 0..3;
-        rs1 : 0..3;
-        rs2 : 0..3;
+        rd : 0..$(REG_NUM - 1);
+        rs1 : 0..$(REG_NUM - 1);
+        rs2 : 0..$(REG_NUM - 1);
         m_external_interrupt : unsigned word[1];
     DEFINE
         csr_rs := rs1 mod 2;
 
     DEFINE
-        mem_addr := read_addr(rs1);
+        mem_addr := $read_addr("rs1");
         -- TODO: Throw on a load without privileges?
         can_load := (priv
-            ? (mem_addr < REGION0_SIZE
+            ? (mem_addr < $REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.read)
                 : (!pmpcfg1.locked | pmpcfg1.read)
             )
-            : (mem_addr < REGION0_SIZE
+            : (mem_addr < $REGION0_SIZE
                 ? pmpcfg0.read
                 : pmpcfg1.read
             ));
         -- TODO: Throw on a write without privileges?
         can_write := (priv
-            ? (mem_addr < REGION0_SIZE
+            ? (mem_addr < $REGION0_SIZE
                 ? (!pmpcfg0.locked | pmpcfg0.write)
                 : (!pmpcfg1.locked | pmpcfg1.write)
             )
-            : (mem_addr < REGION0_SIZE
+            : (mem_addr < $REGION0_SIZE
                 ? pmpcfg0.write
                 : pmpcfg1.write
             ));
@@ -254,38 +267,36 @@ MODULE main
         TRUE: priv;
     esac;
 
-    #ifdef SP_ENABLE
+    $if(SP_ENABLE)
         TRANS next(sp_sel) = case
             do_trap | !priv: sp_sel;
             op = SPSEL: rs1 mod 2;
             TRUE: sp_sel;
         esac;
 
-        -- for PUSH and POP ensure that stack wraps around in region
-        #define next_sp(i) \
-            (case \
-                do_trap | i != sp_sel: sp[i]; \
-                priv & op = SPSET: mem_addr; \
-                op = PUSH: case \
-                    sp[i] < REGION0_SIZE: (sp[i] + 1 = REGION0_SIZE ? 0 : sp[i] + 1); \
-                    TRUE: (sp[i] + 1 = MEM_SIZE ? REGION0_SIZE : sp[i] + 1); \
-                esac; \
-                op = POP: case \
-                    sp[i] < REGION0_SIZE: (sp[i] - 1 < 0 ? REGION0_SIZE - 1 : sp[i] - 1); \
-                    TRUE: (sp[i] - 1 < REGION0_SIZE ? MEM_SIZE - 1 : sp[i] - 1); \
-                esac; \
-                TRUE: sp[i]; \
-            esac)
-
-        TRANS next(sp)[0] = next_sp(0);
-        TRANS next(sp)[1] = next_sp(1);
-    #endif
+        $for(i in range(0, 2))
+            TRANS next(sp)[$i] = case
+                do_trap | $i != sp_sel: sp[$i];
+                priv & op = SPSET: mem_addr;
+                -- for PUSH and POP ensure that stack wraps around in region
+                op = PUSH: case
+                    sp[$i] < $REGION0_SIZE: (sp[$i] + 1 = $REGION0_SIZE ? 0 : sp[$i] + 1);
+                    TRUE: (sp[$i] + 1 = $MEM_SIZE ? $REGION0_SIZE : sp[$i] + 1);
+                esac;
+                op = POP: case
+                    sp[$i] < $REGION0_SIZE: (sp[$i] - 1 < 0 ? $REGION0_SIZE - 1 : sp[$i] - 1);
+                    TRUE: (sp[$i] - 1 < $REGION0_SIZE ? $MEM_SIZE - 1 : sp[$i] - 1);
+                esac;
+                TRUE: sp[$i];
+            esac;
+        $endfor
+    $endif
 
     -- mstatus
     -- Scale m_external_interrupt to a bitmask
     DEFINE
         csr_write_mask := __csrs_write_privs[csr_rs] -> __priv_vec;
-        __meip_input := resize(m_external_interrupt, XLEN) << 3;
+        __meip_input := resize(m_external_interrupt, $XLEN) << 3;
     TRANS next(mstatus) = (__meip_input | (do_trap
         ?   pmacfg                  -- preserve pmacfg
             :: 0b_00                -- MEIP := 0 and MIE := 0
@@ -313,301 +324,176 @@ MODULE main
 
     DEFINE
         csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
+
     -- register transitions
-    #ifdef SP_ENABLE
-        #define SP_REG_TRANS(i) op = POP: memory[sp[sp_sel]];
-    #else
-        #define SP_REG_TRANS(i)
-    #endif
-    #define next_reg(i) \
-        (case \
-            rd != i | do_trap: regs[i]; \
-            SP_REG_TRANS(i) \
-            op = LOAD & can_load: cache.__read; \
-            op = ADD: regs[rs1] + regs[rs2]; \
-            op = SUB: regs[rs1] - regs[rs2]; \
-            op = AND: regs[rs1] & regs[rs2]; \
-            op = OR: regs[rs1] | regs[rs2]; \
-            op = MOV: regs[rs1]; \
-            op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00; \
-            op = SLL: regs[rs1] << clamp(toint(regs[rs2]), 0, XLEN); \
-            op = SRA: regs[rs1] >> clamp(toint(regs[rs2]), 0, XLEN); \
-            op = CSRRS | op = CSRRC: signed(csrs[csr_rs] & csr_read_mask); \
-            TRUE: regs[i]; \
-        esac)
+    $for(i in range(0, REG_NUM))
+        TRANS (rd = $i & op = LOADI & !do_trap)
+            | (next(regs)[$i] = case
+                rd != $i | do_trap: regs[$i];
+                $if(SP_ENABLE)
+                    op = POP: memory[sp[sp_sel]];
+                $endif
+                op = LOAD & can_load: cache.__read;
+                op = ADD: regs[rs1] + regs[rs2];
+                op = SUB: regs[rs1] - regs[rs2];
+                op = AND: regs[rs1] & regs[rs2];
+                op = OR: regs[rs1] | regs[rs2];
+                op = MOV: regs[rs1];
+                op = SLT: regs[rs1] < regs[rs2] ? 0sh_01 : 0sh_00;
+                op = SLL: regs[rs1] << $clamp("toint(regs[rs2])", 0, XLEN);
+                op = SRA: regs[rs1] >> $clamp("toint(regs[rs2])", 0, XLEN);
+                op = CSRRS | op = CSRRC: signed(csrs[csr_rs] & csr_read_mask);
+                TRUE: regs[$i];
+            esac);
+    $endfor
 
-    #define loadi_targeted(i) (rd = i & op = LOADI & !do_trap)
-    TRANS loadi_targeted(0) | (next(regs)[0] = next_reg(0));
-    TRANS loadi_targeted(1) | (next(regs)[1] = next_reg(1));
-    TRANS loadi_targeted(2) | (next(regs)[2] = next_reg(2));
-    TRANS loadi_targeted(3) | (next(regs)[3] = next_reg(3));
-
-    -- Cast conf reg to signed on right shift for correct sign extension
-    #ifdef SP_ENABLE
-        #define SP_REG_TRANS_CONF(i) op = POP: memory_conf[next(sp)[sp_sel]];
-    #else
-        #define SP_REG_TRANS_CONF(i)
-    #endif
-    #define next_reg_conf(i) \
-        (case \
-            do_trap: regs_conf[i]; \
-            op = CLR: 0h_00; \
-            rd != i: regs_conf[i]; \
-            SP_REG_TRANS_CONF(i) \
-            op = LOAD & can_load: cache.__read_conf; \
-            op = LOADI: unsigned(resize(signed(word1(priv)), XLEN)); \
-            op = ADD: extend_sup_conf(regs_conf[rs1] | regs_conf[rs2]); \
-            op = SUB: extend_sup_conf(regs_conf[rs1] | regs_conf[rs2]); \
-            op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00); \
-            op = SLL: ( \
-                regs_conf[rs1] << clamp(toint(regs[rs2]), 0, XLEN) \
-            ) | (0h_FF = regs_conf[rs2] ? 0h_FF : 0h_00); \
-            op = SRA: unsigned( \
-                signed(regs_conf[rs1]) >> clamp(toint(regs[rs2]), 0, XLEN) \
-            ) | (0h_FF = regs_conf[rs2] ? 0h_FF : 0h_00); \
-            op = CSRRS | op = CSRRC: __csrs_conf[csr_rs] & csr_read_mask; \
-            TRUE: regs_conf[i]; \
-        esac)
-
-    TRANS next(regs_conf)[0] = next_reg_conf(0);
-    TRANS next(regs_conf)[1] = next_reg_conf(1);
-    TRANS next(regs_conf)[2] = next_reg_conf(2);
-    TRANS next(regs_conf)[3] = next_reg_conf(3);
+    $for(i in range(0, REG_NUM))
+        TRANS next(regs_conf)[$i] = case
+            do_trap: regs_conf[$i];
+            op = CLR: 0h_00;
+            rd != $i: regs_conf[$i];
+            $if(SP_ENABLE)
+                op = POP: memory_conf[next(sp)[sp_sel]];
+            $endif
+            op = LOAD & can_load: cache.__read_conf;
+            op = LOADI: unsigned(resize(signed(word1(priv)), $XLEN));
+            op = ADD: $extend_sup_conf("regs_conf[rs1] | regs_conf[rs2]");
+            op = SUB: $extend_sup_conf("regs_conf[rs1] | regs_conf[rs2]");
+            op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00);
+            op = SLL: (
+                regs_conf[rs1] << $clamp("toint(regs[rs2])", 0, XLEN)
+            ) | (0h_FF = regs_conf[rs2] ? 0h_FF : 0h_00);
+            -- Cast conf reg to signed on right shift for correct sign extension
+            op = SRA: unsigned(
+                signed(regs_conf[rs1]) >> $clamp("toint(regs[rs2])", 0, XLEN)
+            ) | (0h_FF = regs_conf[rs2] ? 0h_FF : 0h_00);
+            op = CSRRS | op = CSRRC: __csrs_conf[csr_rs] & csr_read_mask;
+            TRUE: regs_conf[$i];
+        esac;
+    $endfor
 
     -- This pseudo-function casts a signed bitvector into an int in the range of
     -- [0, 8] by hand. Doing this with the macro clamp leads to a bug when used
     -- in a bit-shift, cf. https://essvn.fbk.eu/bugs/view.php?id=5410.
-    #define clamp_buggy(w) (case \
-        w < 0sd8_0: 0; \
-        0sd8_8 <= w: 8; \
-        TRUE: toint(resize(unsigned(w), 3)); \
-    esac)
-
-    #ifdef SP_ENABLE
-        #define SP_REG_TRANS_INTEGRITY(i) \
-            op = POP: memory_integrity[next(sp)[sp_sel]];
-    #else
-        #define SP_REG_TRANS_INTEGRITY(i)
-    #endif
-    #define next_reg_integrity(i) \
-        (case \
-            do_trap: regs_integrity[i]; \
-            op = SAN: 0h_FF; \
-            rd != i: regs_integrity[i]; \
-            SP_REG_TRANS_INTEGRITY(i) \
-            op = LOAD & can_load: cache.__read_integrity; \
-            op = LOADI: (priv ? 0h_FF : 0h_00); \
-            op = ADD: extend_sup_integrity( \
-                regs_integrity[rs1] & regs_integrity[rs2] \
-            ); \
-            op = SUB: extend_sup_integrity( \
-                regs_integrity[rs1] & regs_integrity[rs2] \
-            ); \
-            op = SLT: ( \
-                    0h_FF = (regs_integrity[rs1] & regs_integrity[rs2]) \
-                        ? 0h_FF \
-                        : 0h_FE \
-                ); \
-            op = SLL: ( \
-                ( \
-                    (priv ? 0h_FF : 0h_00) >> (XLEN - clamp_buggy(regs[rs2])) \
-                ) | (regs_integrity[rs1] << clamp(toint(regs[rs2]), 0, XLEN)) \
-            ) & (0h_FF = regs_integrity[rs2] ? 0h_FF : 0h_00); \
-            op = SRA: ( \
-                ( \
-                    (priv ? 0h_FF : 0h_00) << (XLEN - clamp_buggy(regs[rs2])) \
-                ) | (regs_integrity[rs1] >> clamp(toint(regs[rs2]), 0, XLEN)) \
-            ) & (0h_FF = regs_integrity[rs2] ? 0h_FF : 0h_00); \
-            op = CSRRS | op = CSRRC: __csrs_integrity[csr_rs] & csr_read_mask; \
-            TRUE: regs_integrity[i]; \
+    $macro(clamp_buggy, w)
+        (case\
+            $w < 0sd8_0: 0;\
+            0sd8_8 <= $w: 8;\
+            TRUE: toint(resize(unsigned($w), 3));\
         esac)
+    $endmacro
 
-    TRANS next(regs_integrity)[0] = next_reg_integrity(0);
-    TRANS next(regs_integrity)[1] = next_reg_integrity(1);
-    TRANS next(regs_integrity)[2] = next_reg_integrity(2);
-    TRANS next(regs_integrity)[3] = next_reg_integrity(3);
+    $for(i in range(0, REG_NUM))
+        TRANS next(regs_integrity)[$i] = case
+            do_trap: regs_integrity[$i];
+            op = SAN: 0h_FF;
+            rd != $i: regs_integrity[$i];
+            $if(SP_ENABLE)
+                op = POP: memory_integrity[next(sp)[sp_sel]];
+            $endif
+            op = LOAD & can_load: cache.__read_integrity;
+            op = LOADI: (priv ? 0h_FF : 0h_00);
+            op = ADD: $extend_sup_integrity("regs_integrity[rs1] & regs_integrity[rs2]");
+            op = SUB: $extend_sup_integrity("regs_integrity[rs1] & regs_integrity[rs2]");
+            op = SLT: (0h_FF = (regs_integrity[rs1] & regs_integrity[rs2])
+                ? 0h_FF
+                : 0h_FE
+            );
+            op = SLL: (
+                ((priv ? 0h_FF : 0h_00) >> ($XLEN - $clamp_buggy("regs[rs2]")))
+                | (regs_integrity[rs1] << $clamp("toint(regs[rs2])", 0, XLEN))
+            ) & (0h_FF = regs_integrity[rs2] ? 0h_FF : 0h_00);
+            op = SRA: (
+                ((priv ? 0h_FF : 0h_00) << ($XLEN - $clamp_buggy("regs[rs2]")))
+                | (regs_integrity[rs1] >> $clamp("toint(regs[rs2])", 0, XLEN))
+            ) & (0h_FF = regs_integrity[rs2] ? 0h_FF : 0h_00);
+            op = CSRRS | op = CSRRC: __csrs_integrity[csr_rs] & csr_read_mask;
+            TRUE: regs_integrity[$i];
+        esac;
+    $endfor
 
     -- memory transitions
-    #ifdef SP_ENABLE
-        #define SP_MEM_TRANS(i, r_source) \
-            op = PUSH & sp[sp_sel] = i: r_source[rs1];
-    #else
-        #define SP_MEM_TRANS(i, r_source)
-    #endif
-    #define store_targeted(i) (mem_addr = i & op = STORE & can_write \
-        & (i < REGION0_SIZE ? !pmacfg0.write_back : !pmacfg1.write_back))
-    #define try_store(i, r_source, mem_source, write_back_source) \
-        (case \
-            do_trap: mem_source[i]; \
-            SP_MEM_TRANS(i, r_source) \
-            store_targeted(i): r_source[rs2]; \
-            cache.addr = i & cache.valid & (( \
-                next(cache.addr) != i \
-                & (i < REGION0_SIZE ? pmacfg0.write_back : pmacfg1.write_back) \
-            ) | (i < REGION0_SIZE \
-                ? (pmacfg0.write_back & !next(pmacfg0.write_back)) \
-                : (pmacfg1.write_back & !next(pmacfg1.write_back)) \
-            )): \
-                write_back_source; \
-            TRUE: mem_source[i]; \
-        esac)
-    TRANS next(memory)[0] = try_store(0, regs, memory, cache.__read);
-    TRANS next(memory)[1] = try_store(1, regs, memory, cache.__read);
-    TRANS next(memory)[2] = try_store(2, regs, memory, cache.__read);
-    TRANS next(memory)[3] = try_store(3, regs, memory, cache.__read);
+    $for(i in range(0, MEM_SIZE))
+        $# Decide the region this memory cell is in
+        $py(region=0 if i < REGION0_SIZE else 1)
+        $for(suffix in ["", "_conf", "_integrity"])
+            TRANS next(memory${suffix})[$i] = case
+                do_trap: memory${suffix}[$i];
+                $if(SP_ENABLE)
+                    op = PUSH & sp[sp_sel] = $i: regs${suffix}[rs1];
+                $endif
+                op = STORE & mem_addr = $i & can_write
+                    & !pmacfg${region}.write_back: regs${suffix}[rs2];
+                -- Persist cache writes to memory if cache address or attributes
+                -- change
+                cache.addr = $i & cache.valid & (
+                    (next(cache.addr) != $i & pmacfg${region}.write_back)
+                    | (pmacfg${region}.write_back
+                        & !next(pmacfg${region}.write_back))
+                $# By standard, use the cache.__read attribute
+                ): cache.$(suffix.strip("_") if suffix else "__read");
+                TRUE: memory${suffix}[$i];
+            esac;
+        $endfor
+    $endfor
 
-    TRANS next(memory_conf)[0] = try_store(
-        0,
-        regs_conf,
-        memory_conf,
-        cache.conf
-    );
-    TRANS next(memory_conf)[1] = try_store(
-        1,
-        regs_conf,
-        memory_conf,
-        cache.conf
-    );
-    TRANS next(memory_conf)[2] = try_store(
-        2,
-        regs_conf,
-        memory_conf,
-        cache.conf
-    );
-    TRANS next(memory_conf)[3] = try_store(
-        3,
-        regs_conf,
-        memory_conf,
-        cache.conf
-    );
-
-    TRANS next(memory_integrity)[0] = try_store(
-        0,
-        regs_integrity,
-        memory_integrity,
-        cache.integrity
-    );
-    TRANS next(memory_integrity)[1] = try_store(
-        1,
-        regs_integrity,
-        memory_integrity,
-        cache.integrity
-    );
-    TRANS next(memory_integrity)[2] = try_store(
-        2,
-        regs_integrity,
-        memory_integrity,
-        cache.integrity
-    );
-    TRANS next(memory_integrity)[3] = try_store(
-        3,
-        regs_integrity,
-        memory_integrity,
-        cache.integrity
-    );
-
-    #ifdef CLEAR_ON_RET
-        #undef CLEAR_ON_RET
-        #define CLEAR_ON_RET G (priv & X !priv -> Y op = CLR) &
-    #else
-        #define CLEAR_ON_RET
-    #endif
-
-    #ifdef SANITIZE_ON_CALL
-        #undef SANITIZE_ON_CALL
-        #define SANITIZE_ON_CALL G (!priv & X priv -> X op = SAN) &
-    #else
-        #define SANITIZE_ON_CALL
-    #endif
-
-    #ifdef NO_PUBLIC_READS
-        #undef NO_PUBLIC_READS
-        #define NO_PUBLIC_READS G (priv & op = LOAD \
-            -> (mem_addr < REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write)) &
-    #else
-        #define NO_PUBLIC_READS
-    #endif
-
-    #ifdef NO_PUBLIC_WRITES
-        #undef NO_PUBLIC_WRITES
-        #define NO_PUBLIC_WRITES G (priv & op = STORE \
-            -> (mem_addr < REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read)) &
-    #else
-        #define NO_PUBLIC_WRITES
-    #endif
-
-    #ifdef CLEAR_ON_DECLASSIFICATION
-        #undef CLEAR_ON_DECLASSIFICATION
-        #define CLEAR_ON_DECLASSIFICATION \
-            G (!pmpcfg0.read & X pmpcfg0.read \
-                -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00) \
-            & G (!pmpcfg1.read & X pmpcfg1.read \
+    $macro(assumptions)
+        $if(CLEAR_ON_RET)
+            G (priv & X !priv -> Y op = CLR) &
+        $endif
+        $if(SANITIZE_ON_CALL)
+            G (!priv & X priv -> X op = SAN) &
+        $endif
+        $if(NO_PUBLIC_READS)
+            G (priv & op = LOAD -> (
+                mem_addr < $REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write
+            )) &
+        $endif
+        $if(NO_PUBLIC_WRITES)
+            G (priv & op = STORE -> (
+                mem_addr < $REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read
+            )) &
+        $endif
+        $if(CLEAR_ON_DECLASSIFICATION)
+            G (!pmpcfg0.read & X pmpcfg0.read
+                -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00)
+            & G (!pmpcfg1.read & X pmpcfg1.read
                 -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00) &
-    #else
-        #define CLEAR_ON_DECLASSIFICATION
-    #endif
-
-    #ifdef CLEAR_CACHE_ON_DECLASSIFICATION
-        #undef CLEAR_CACHE_ON_DECLASSIFICATION
-        #define CLEAR_CACHE_ON_DECLASSIFICATION \
-            G (!pmpcfg0.read & X pmpcfg0.read \
-                    & cache.valid & cache.addr < REGION0_SIZE \
-                -> cache.conf = 0h_00) & \
-            G (!pmpcfg1.read & X pmpcfg1.read \
-                    & cache.valid & REGION0_SIZE <= cache.addr \
+        $endif
+        $if(CLEAR_CACHE_ON_DECLASSIFICATION)
+            G (!pmpcfg0.read & X pmpcfg0.read
+                    & cache.valid & cache.addr < $REGION0_SIZE
                 -> cache.conf = 0h_00) &
-    #else
-        #define CLEAR_CACHE_ON_DECLASSIFICATION
-    #endif
-
-    #ifdef SANITIZE_ON_CLASSIFICATION
-        #undef SANITIZE_ON_CLASSIFICATION
-        #define SANITIZE_ON_CLASSIFICATION ( \
-            G (pmpcfg0.write & X !pmpcfg0.write \
-                -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF) \
-            & G (pmpcfg1.write & X !pmpcfg1.write \
-                -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF) \
-        ) &
-    #else
-        #define SANITIZE_ON_CLASSIFICATION
-    #endif
-
-    #ifdef SANITIZE_CACHE_ON_CLASSIFICATION
-        #undef SANITIZE_CACHE_ON_CLASSIFICATION
-        #define SANITIZE_CACHE_ON_CLASSIFICATION \
-            G (pmpcfg0.write & X !pmpcfg0.write \
-                    & cache.valid & cache.addr < REGION0_SIZE \
-                -> cache.integrity = 0h_FF) & \
-            G (pmpcfg1.write & X !pmpcfg1.write \
-                    & cache.valid & REGION0_SIZE <= cache.addr \
+            G (!pmpcfg1.read & X pmpcfg1.read
+                    & cache.valid & $REGION0_SIZE <= cache.addr
+                -> cache.conf = 0h_00) &
+        $endif
+        $if(SANITIZE_ON_CLASSIFICATION)
+            G (pmpcfg0.write & X !pmpcfg0.write
+                -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF)
+            & G (pmpcfg1.write & X !pmpcfg1.write
+                -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF) &
+        $endif
+        $if(SANITIZE_CACHE_ON_CLASSIFICATION)
+            G (pmpcfg0.write & X !pmpcfg0.write
+                    & cache.valid & cache.addr < $REGION0_SIZE
                 -> cache.integrity = 0h_FF) &
-    #else
-        #define SANITIZE_CACHE_ON_CLASSIFICATION
-    #endif
-
-    #ifdef SP_BANK
-        #ifdef SP_ENABLE
-            #undef SP_BANK
-            #define SP_BANK \
-                G (priv & X !priv -> X (sp_sel = 0)) \
-                & G (!priv & X priv -> X ((op in { SAN, CLR, SPSEL } & priv) U sp_sel = 1)) \
-                & G (priv & sp_sel = 0 -> op in { SAN, CLR, SPSEL, SPSET, MRET }) &
-        #endif
-    #else
-        #define SP_BANK
-    #endif
-
-    #ifdef SP_NO_PUBLIC
-        #ifdef SP_ENABLE
-            #undef SP_NO_PUBLIC
-            #define SP_NO_PUBLIC \
-                G (priv & op = SPSET & sp_sel = 1 -> X REGION0_SIZE <= sp[sp_sel]) &
-        #endif
-    #else
-        #define SP_NO_PUBLIC
-    #endif
-
-    #define assumptions (SP_NO_PUBLIC SP_BANK CLEAR_ON_RET SANITIZE_ON_CALL NO_PUBLIC_READS NO_PUBLIC_WRITES CLEAR_ON_DECLASSIFICATION CLEAR_CACHE_ON_DECLASSIFICATION SANITIZE_ON_CLASSIFICATION SANITIZE_CACHE_ON_CLASSIFICATION TRUE)
+            G (pmpcfg1.write & X !pmpcfg1.write
+                    & cache.valid & $REGION0_SIZE <= cache.addr
+                -> cache.integrity = 0h_FF) &
+        $endif
+        $if(SP_BANK and SP_ENABLE)
+            G (priv & X !priv -> X (sp_sel = 0))
+            & G (!priv & X priv
+                -> X ((op in { SAN, CLR, SPSEL } & priv) U sp_sel = 1))
+            & G (priv & sp_sel = 0 -> op in { SAN, CLR, SPSEL, SPSET, MRET }) &
+        $endif
+        $if(SP_NO_PUBLIC and SP_ENABLE)
+            G (priv & op = SPSET & sp_sel = 1
+                -> X $REGION0_SIZE <= sp[sp_sel]) &
+        $endif
+        TRUE
+    $endmacro
 
     -- This property is here to be targeted by the user to check whether the
     -- model is syntactically correct without starting expensive proofs.
@@ -615,7 +501,7 @@ MODULE main
 
     -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
-    LTLSPEC NAME NO_LEAK := assumptions -> G (priv | (
+    LTLSPEC NAME NO_LEAK := $assumptions() -> G (priv | (
         regs_conf[0] = 0h_00
         & regs_conf[1] = 0h_00
         & regs_conf[2] = 0h_00
@@ -625,13 +511,13 @@ MODULE main
     -- Control and status registers are only written with machine-mode
     -- controlled values
     LTLSPEC NAME CSR_INTEGRITY :=
-        assumptions -> G (
+        $assumptions() -> G (
             priv & op in { CSRRS, CSRRC }
             -> regs_integrity[rs2] = 0h_FF
         );
 
     LTLSPEC NAME MEMORY_OP_INTEGRITY :=
-        assumptions -> G (
+        $assumptions() -> G (
             priv & op in { LOAD, STORE }
             -> (regs_integrity[rs1] & 0h_03) = 0h_03
         );

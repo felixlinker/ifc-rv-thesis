@@ -15,17 +15,17 @@ This document will focus on the technical aspect of the thesis.
 I use a model of a simplified RISC-V ISA written in nuXmv.
 In order to run the proofs you will need to install nuXmv (cf. https://nuxmv.fbk.eu).
 
-### cpp
+### pyexpander
 
 nuXmv is a very lightweight language that has very few features to make life of programmers easier.
-Therefore I used the C-preprocessor to define macros that make the model more flexible and less redundant at times.
-You will need to preprocess the model with `cpp`.
+Therefore I used the `pyexpander` macro engine to make the model more flexible and less redundant.
+You will need to preprocess the model with `expander3.py -s`.
 
 Additionally, the model supports dynamic assumptions and optional extensions.
-These can be enabled with sime `#define` statements.
-There is no list of all assumptions and options available but in `trace.ps1`, the default value for the `-assumptions` argument *should* give you all available assumptions and looking for `#ifdef` preprocessor-directives in the code will give you all available options and assumptions.
+These can be enabled by setting corresponding variables to `True`.
+All assumptions and options can be found at the head of the model file, where default values are assigned to the corresponding variables.
 
-Assumption-macros are used in `#define assumptions` which (as of writing this) can be found in line 610.
+Cf. http://pyexpander.sourceforge.net for more information on `pyexpander`.
 
 ### smvtrcviz
 
@@ -40,8 +40,8 @@ You can find it under https://github.com/felixlinker/smvtrcviz.
 File/Folder             | Description
 ----------------------- | -----------
 `README.md`             | You are reading this file
-`trace-bmc.template`    | Template file that holds commands for nuXmv to run proofs; words written in `[...]` should be replaced
-`trace.ps1`             | PowerShell-script that runs proofs, e.g. invokes `cpp` and handles templating
+`trace-bmc.template`    | Template file that holds commands for nuXmv to run proofs; must be preprocessed with `pyexpander`
+`trace.ps1`             | PowerShell-script that runs proofs, e.g. invokes `expander3.py` and handles templating
 `model/min-rv.smv`      | The actual model
 `model/partial/`        | Other auxiliary proofs and helper files
 `thesis/`               | The thesis written in LaTeX
