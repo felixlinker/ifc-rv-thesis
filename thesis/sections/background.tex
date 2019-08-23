@@ -179,6 +179,71 @@ This would massively contradict the key idea of \gls{spin} of simple models bein
 In this case, we'd have skipped the whole step of abstracting from some computational model that has distributed components running in parallel.
 Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing \gls{spin}.
 
-\subsubsection{\muZ{} \& SPACER}
+\subsubsection{\muZ{} \& \gls{spacer}}
+
+\gls{spacer} is an algorithm that was originally presented in \cite{Komuravelli13} combining two widely implemented approaches of currently available formal verification tools: \gls{2bmc} and \gls{cegar}.
+In its implementation, \gls{spacer} uses \muZ{} as a backend.
+\muZ{} is a \gls{datalog}-engine that provides querying fixed points with constraints and has been proposed in \cite{Hoder11}.
+
+In this section, we will give an introduction to all of the aforementioned tools and concepts and discuss them regarding their applicability to the subject of this thesis.
+
+According to \textit{An Introduction to Database Systems} \cite[p.790ff]{Date00}, \gls{datalog} is a descriptive and querying language that originated in the field of database management systems.
+At its core, \gls{datalog} programs are sets of \textit{rules} that combine predicates only using variables and constants to Horn-clauses, i.e. disjunctions with one positive literal at maximum.
+For example, consider following rule $ \pi_0 $ which expresses the transitivity of a predicate $ P $:
+\begin{equation*}
+    \pi_0 := P(a, b) \land P(b, c) \Rightarrow P(a, c)
+\end{equation*}
+Such programs are then used to \textit{deduct} facts from the set of rules.
+To illustrate what this means, we introduce two other rules.
+\begin{align*}
+    \pi_1 := & P(0, 1) \Rightarrow \top \\
+    \pi_2 := & P(a, b) \Rightarrow P(a + 1, b + 1)
+\end{align*}
+The \gls{datalog}-program $ \Pi := \{ \pi_0, \pi_1, \pi_2 \} $ now induces the relation $ < $ on all natural numbers including $ 0 $.
+$ \pi_1 $ sets up a start of induction which, stating that $ 0 $ is smaller than $ 1 $ which is generalized for all natural numbers by $ \pi_2 $.
+
+Whether or not this exact \gls{datalog}-program is supported by a given \gls{datalog}-engine depends on the extensions implemented by the respective engine.
+Our example relies on an extension for scalar operators since we use the $ + $ operator.
+
+As briefly mentioned, \gls{datalog} also supports queries.
+\gls{datalog} queries comprise only one predicate and a special head $ ? $.
+\begin{equation*}
+    q_0 := P(0, x) \Rightarrow \; ?
+\end{equation*}
+The result to a query is the set of all values for each variable that make the predicate true.
+In this case, the result set would be $ \{ 1, 2, 3, \dots \} $.
+If no variables but only constants are given in the query, \gls{datalog} simply determines whether the given predicate can be derived for the given constants.
+
+\muZ{} now is a \gls{datalog}-engine that comes as part of the SMT solver z3 \cite{Moura08} and adds support for expressing Horn-clauses to it.
+For example, consider the implementation of the program $ \Pi $ for \muZ{} as depicted in snippet \ref{snpt:muz-exm}.
+
+\begin{figure}
+    \begin{lstlisting}[
+        language=SMT2,
+        caption={Implementation of $ \Pi $ for \muZ{}},
+        label={snpt:muz-exm}
+    ]
+        (declare-var a Int)
+        (declare-var b Int)
+        (declare-var c Int)
+
+        (declare-rel ge (Int Int))
+        (declare-rel goal ())
+
+        (rule (ge 0 1))                     ; pi_1
+        (rule (=>   (ge a b)                ; pi_2
+                    (ge (+ a 1) (+ b 1))))
+        (rule (=>   (and (ge a b) (ge b c)) ; pi_0
+                    (ge a c)))
+
+        (rule (=>   (ge 10 15)
+                    goal))
+        (query goal)
+    \end{lstlisting}
+\end{figure}
+
+This example yields \smt{sat} as result when executed, meaning, that \smt{goal} can be derived from the rules at hand.
+As you might have guessed by the example, \muZ{} does not directly support querying for full predicates with variables or constants.
+However, this can be circumvented by adding auxiliary relations (i.e. predicates) to the model that can only be derived from predicates you would have queried with a \textit{pure} \gls{datalog} query.
 
 \subsubsection{nuXmv}
