@@ -36,7 +36,7 @@
     morekeywords=[3]{!,_,as,DECIMAL,exists,forall,let,NUMERAL,par,STRING},
     morekeywords=[4]{assert,check-sat,declare-sort, declare-fun,define-sort,define-fun,exit,get-assertions, get-assignment,get-info,get-option,get-proof,get-unsat-core,get-value,pop,push,set-logic,set-info,set-option,rule,query,declare-rel,declare-var},
     sensitive=false,
-    morecomment=[l]{--},
+    morecomment=[l]{;},
     alsoletter={:},
     alsodigit={-},
 }
