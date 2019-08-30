@@ -181,15 +181,10 @@ Not only could this lead to performance issues, it also can be safely assumed th
 
 \subsubsection{\muZ{} \& \gls{spacer}}
 
-\gls{spacer} is an algorithm that was originally presented in \cite{Komuravelli13} combining two widely implemented approaches of currently available formal verification tools: \gls{2bmc} and \gls{cegar}.
-In its implementation, \gls{spacer} uses \muZ{} as a backend.
 \muZ{} is a \gls{datalog}-engine that provides querying fixed points with constraints and has been proposed in \cite{Hoder11}.
-
-In this section, we will give an introduction to all of the aforementioned tools and concepts and discuss them regarding their applicability to the subject of this thesis.
-
 According to \textit{An Introduction to Database Systems} \cite[p.790ff]{Date00}, \gls{datalog} is a descriptive and querying language that originated in the field of database management systems.
 At its core, \gls{datalog} programs are sets of \textit{rules} that combine predicates only using variables and constants to Horn-clauses, i.e. disjunctions with one positive literal at maximum.
-For example, consider following rule $ \pi_0 $ which expresses the transitivity of a predicate $ P $:
+For example, consider the following rule $ \pi_0 $ which expresses the transitivity of a predicate $ P $:
 \begin{equation*}
     \pi_0 := P(a, b) \land P(b, c) \Rightarrow P(a, c)
 \end{equation*}
@@ -216,6 +211,7 @@ If no variables but only constants are given in the query, \gls{datalog} simply 
 
 \muZ{} now is a \gls{datalog}-engine that comes as part of the SMT solver z3 \cite{Moura08} and adds support for expressing Horn-clauses to it.
 For example, consider the implementation of the program $ \Pi $ for \muZ{} as depicted in snippet \ref{snpt:muz-exm}.
+This example yields \smt{sat} as result when executed, meaning, that \smt{goal} can be derived from the rules at hand.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -242,8 +238,109 @@ For example, consider the implementation of the program $ \Pi $ for \muZ{} as de
     \end{lstlisting}
 \end{figure}
 
-This example yields \smt{sat} as result when executed, meaning, that \smt{goal} can be derived from the rules at hand.
-As you might have guessed by the example, \muZ{} does not directly support querying for full predicates with variables or constants.
-However, this can be circumvented by adding auxiliary relations (i.e. predicates) to the model that can only be derived from predicates you would have queried with a \textit{pure} \gls{datalog} query.
+\gls{spacer} \cite{Komuravelli13} is an algorithm that combines two widely implemented approaches of currently available formal verification tools: \gls{2bmc} and \gls{cegar}.
+In its implementation, \gls{spacer} uses \muZ{} as a backend.
+The paper describes those techniques as follows:
+\begin{displaycquote}[p.1f]{Komuravelli13}
+    The key idea of \gls{2bmc} is to iteratively construct an under-approximation \textins{(or refinement)} $ U $ of the target program $ P $ by unwinding its transition relation and check whether $ U $ is safe using \gls{bmc}.
+    If $ U $ is unsafe, so is $ P $.
+    Otherwise, a proof $ \pi_U $ is produced explaining \textit{why} $ U $ is safe.
+    Finally, $ \pi_U $ is generalized (if possible) to a safety proof of $ P $.
+    \textelp{}
+
+    Thea idea of \textins{\gls{cegar}} is to iteratively construct, verify, and refine an abstraction (\textit{i.e.}, an over-approximation) of $ P $ based on abstract counterexamples.
+\end{displaycquote}
+
+The key to understand how \gls{spacer} works is to understand what under- or over-approximation of programs are.
+For the sake of brevity, consider the program $ P $ as depicted in snippet \ref{snpt:spacer-p}.
+$ P $ performs an integer division with remainder for a natural number \lstinline{n} by a divisor \lstinline{div} storing the results in \lstinline{ratio} and \lstinline{mod}.
+Intuitively speaking, $ \hat{P} $ is an under-approximation (or abstraction) of $ P $ if for every part of $ P $ there is a corresponding part of $ \hat{P} $ whose effects are logically entailed by the original part.
+On the other hand, $ P $ is an over-approximation of $ \hat{P} $.
+An example for an over-approximation of $ P $ in snippet \ref{snpt:over-p} and an example for an under-approximation of in snippet \ref{snpt:under-p}.
+For abstracting $ P $ to $ \hat{P} $ a couple of lines were removed whilst all other were left untouched.
+
+\begin{figure}
+    \centering
+    \begin{minipage}{.45\linewidth}
+        \begin{lstlisting}[
+            linewidth=0.9\linewidth,
+            caption={Program $ P $},
+            label={snpt:spacer-p}
+        ]
+            n = abs(input());
+            div = abs(input());
+            ratio = 0;
+            mod = 0;
+            n = n - div;
+            while (0 <= n) {
+                ratio++;
+                n = n - div;
+            }
+            mod = div + n;
+        \end{lstlisting}
+    \end{minipage}
+
+    \begin{minipage}[t]{.45\linewidth}
+        \begin{lstlisting}[
+            linewidth=0.9\linewidth,
+            caption={Refinement $ \bar{P} $},
+            label={snpt:under-p}
+        ]
+            n = abs(input());
+            div = abs(input());
+            ratio = 0;
+            mod = 0;
+            n = n - div;
+            if (0 <= n) {
+                ratio++;
+                n = n - div;
+                if (0 <= n) {
+                    (*\dots*)
+                }
+            }
+        \end{lstlisting}
+    \end{minipage}\hspace{0.1\linewidth}%
+    \begin{minipage}[t]{.45\linewidth}
+        \begin{lstlisting}[
+            linewidth=0.9\linewidth,
+            caption={Abstraction $ \hat{P} $},
+            label={snpt:over-p},
+            showlines=true
+        ]
+        n = abs(input());
+        div = abs(input());
+        ratio = 0;
+        mod = 0;
+
+        while (0 <= n) {
+
+            n = n - div;
+        }
+
+        \end{lstlisting}
+    \end{minipage}
+\end{figure}
+
+With this example at hand it can more easily be seen how \gls{2bmc} and \gls{cegar} relate to under- and over-approximations respectively.
+Assume that we want to prove that always \lstinline{0 <= ratio}.
+In the case of the refinement $ \bar{P} $ in snippet \ref{snpt:under-p} we could follow the idea of \gls{2bmc} and iteratively check whether \lstinline{0 <= ratio} for finite traces of $ P $.
+If a counterexample is found in $ \bar{P} $ it is obvious that this counterexample must also apply to $ P $.
+However, if no counterexample is found but a proof for the property at hand can be constructed one can only hope that this proof can be generalized to $ P $.
+
+On the other hand, the converse holds for over-approximations, i.e. abstractions.
+If a property is checked for the abstraction $ \hat{P} $ of $ P $ and a positive result in form of a correctness proof is given this proof will apply to $ P $ as well.
+However, when a counterexample is given, it is unclear whether it applies to $ P $.
+If the counterexample does not apply to $ P $, the idea of \gls{cegar} \cite{Clark00} is to refine the abstraction at hand in such a way that the counterexample does not apply to it anymore and re-iterate on the verification process.
+
+\gls{spacer} uses both of these techniques to prove safety properties of programs expressed in \gls{datalog} using \muZ{}.
+These safety properties are expressed using custom relations in \gls{datalog} such as \smt{goal} in snippet \ref{snpt:muz-exm}.
+\gls{spacer} then tries to construct a proof why the property at hand cannot be derived from the axioms of the \gls{datalog} program or it gives a counterexample illustrating a possible weakness of the program.
+In theory, \gls{datalog} could be used for the implementation of this thesis.
+A single predicate could be used to simulate the architectural state of the instruction set architecture at hand whilst each instruction could be modelled via a separate rule.
+
+However, whereas the limiting factor for \gls{spin} was the modelling language, the limiting factor for \gls{spacer} is the output of the tool.
+In case of a property failing to be verified, no counterexamples are given but \gls{spacer} simply outputs there is an trace of the program for which a given property does not hold but without specifying the trace itself.
+\muZ{} itself can be configured to give a more detailed result however that would still not include a \textit{trace of derivations}.
+For \gls{spacer} or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
 
 \subsubsection{nuXmv}
