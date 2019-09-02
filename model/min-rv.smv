@@ -13,6 +13,7 @@ MEM_ADDR_LEN=int(math.log(MEM_SIZE, 2))
 $# Available extensions
 $default(
     CACHE_VULN=False,
+    SP_MEM_CHECKS=False,
     SP_ENABLE=False
 )
 
@@ -65,6 +66,28 @@ $macro(clamp, v, l, h)
 $endmacro
 $macro(read_addr, source)
     (toint(unsigned(regs[$source])) mod $MEM_SIZE)\
+$endmacro
+$macro(can_load, source)
+    (priv
+        ? ($source < $REGION0_SIZE
+            ? (!pmpcfg0.locked | pmpcfg0.read)
+            : (!pmpcfg1.locked | pmpcfg1.read)
+        )
+        : ($source < $REGION0_SIZE
+            ? pmpcfg0.read
+            : pmpcfg1.read
+        ))
+$endmacro
+$macro(can_write, target)
+    (priv
+        ? ($target < $REGION0_SIZE
+            ? (!pmpcfg0.locked | pmpcfg0.write)
+            : (!pmpcfg1.locked | pmpcfg1.write)
+        )
+        : ($target < $REGION0_SIZE
+            ? pmpcfg0.write
+            : pmpcfg1.write
+        ))
 $endmacro
 
 MODULE cache_line(main_module)
@@ -240,25 +263,21 @@ MODULE main
     DEFINE
         mem_addr := $read_addr("rs1");
         -- TODO: Throw on a load without privileges?
-        can_load := (priv
-            ? (mem_addr < $REGION0_SIZE
-                ? (!pmpcfg0.locked | pmpcfg0.read)
-                : (!pmpcfg1.locked | pmpcfg1.read)
-            )
-            : (mem_addr < $REGION0_SIZE
-                ? pmpcfg0.read
-                : pmpcfg1.read
-            ));
+        can_load := $can_load("mem_addr");
         -- TODO: Throw on a write without privileges?
-        can_write := (priv
-            ? (mem_addr < $REGION0_SIZE
-                ? (!pmpcfg0.locked | pmpcfg0.write)
-                : (!pmpcfg1.locked | pmpcfg1.write)
-            )
-            : (mem_addr < $REGION0_SIZE
-                ? pmpcfg0.write
-                : pmpcfg1.write
-            ));
+        can_write := $can_write("mem_addr");
+        $if(SP_ENABLE)
+            can_load_sp := $if(SP_MEM_CHECKS)
+                $can_load("sp[sp_sel]")
+            $else
+                TRUE
+            $endif;
+            can_write_sp := $if(SP_MEM_CHECKS)
+                $can_write("sp[sp_sel]")
+            $else
+                TRUE
+            $endif;
+        $endif
 
     -- privelege mode transitions
     TRANS next(priv) = case
@@ -279,11 +298,11 @@ MODULE main
                 do_trap | $i != sp_sel: sp[$i];
                 priv & op = SPSET: mem_addr;
                 -- for PUSH and POP ensure that stack wraps around in region
-                op = PUSH: case
+                op = PUSH & can_write_sp: case
                     sp[$i] < $REGION0_SIZE: (sp[$i] + 1 = $REGION0_SIZE ? 0 : sp[$i] + 1);
                     TRUE: (sp[$i] + 1 = $MEM_SIZE ? $REGION0_SIZE : sp[$i] + 1);
                 esac;
-                op = POP: case
+                op = POP & can_load_sp: case
                     sp[$i] < $REGION0_SIZE: (sp[$i] - 1 < 0 ? $REGION0_SIZE - 1 : sp[$i] - 1);
                     TRUE: (sp[$i] - 1 < $REGION0_SIZE ? $MEM_SIZE - 1 : sp[$i] - 1);
                 esac;
@@ -331,7 +350,7 @@ MODULE main
             | (next(regs)[$i] = case
                 rd != $i | do_trap: regs[$i];
                 $if(SP_ENABLE)
-                    op = POP: memory[sp[sp_sel]];
+                    op = POP & can_load_sp: memory[sp[sp_sel]];
                 $endif
                 op = LOAD & can_load: cache.__read;
                 op = ADD: regs[rs1] + regs[rs2];
@@ -353,7 +372,7 @@ MODULE main
             op = CLR: 0h_00;
             rd != $i: regs_conf[$i];
             $if(SP_ENABLE)
-                op = POP: memory_conf[next(sp)[sp_sel]];
+                op = POP & can_load_sp: memory_conf[next(sp)[sp_sel]];
             $endif
             op = LOAD & can_load: cache.__read_conf;
             op = LOADI: unsigned(resize(signed(word1(priv)), $XLEN));
@@ -389,7 +408,7 @@ MODULE main
             op = SAN: 0h_FF;
             rd != $i: regs_integrity[$i];
             $if(SP_ENABLE)
-                op = POP: memory_integrity[next(sp)[sp_sel]];
+                op = POP & can_load_sp: memory_integrity[next(sp)[sp_sel]];
             $endif
             op = LOAD & can_load: cache.__read_integrity;
             op = LOADI: (priv ? 0h_FF : 0h_00);
@@ -420,7 +439,7 @@ MODULE main
             TRANS next(memory${suffix})[$i] = case
                 do_trap: memory${suffix}[$i];
                 $if(SP_ENABLE)
-                    op = PUSH & sp[sp_sel] = $i: regs${suffix}[rs1];
+                    op = PUSH & can_write_sp & sp[sp_sel] = $i: regs${suffix}[rs1];
                 $endif
                 op = STORE & mem_addr = $i & can_write
                     & !pmacfg${region}.write_back: regs${suffix}[rs2];
