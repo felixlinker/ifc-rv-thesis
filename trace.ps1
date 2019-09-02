@@ -7,7 +7,6 @@ param(
     [switch]$clean = $false,
     [string[]]$options = @(),
     [string[]]$assumptions = @(
-        "SP_NO_PUBLIC",
         "SP_BANK",
         "CLEAR_ON_RET",
         "SANITIZE_ON_CALL",

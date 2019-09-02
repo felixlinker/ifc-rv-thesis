@@ -19,7 +19,6 @@ $default(
 
 $# Available assumptions
 $default(
-    SP_NO_PUBLIC=False,
     SP_BANK=False,
     CLEAR_ON_RET=False,
     SANITIZE_ON_CALL=False,
@@ -236,14 +235,6 @@ MODULE main
     INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
     INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
-    INIT memory_integrity[0] = 0h_00 & memory_integrity[1]= 0h_00 & memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
-    INIT memory_conf[0] = 0h_00 & memory_conf[1]= 0h_00 & memory_conf[2] = 0h_FF & memory_conf[3] = 0h_FF;
-    $if(SP_ENABLE)
-        INIT sp_sel = 0 <-> !priv;
-        INIT sp_sel = 1 <-> priv;
-        INIT sp[0] = 0;
-        INIT sp[1] = 2;
-    $endif
 
     IVAR
         op : {
@@ -502,14 +493,20 @@ MODULE main
                 -> cache.integrity = 0h_FF) &
         $endif
         $if(SP_BANK and SP_ENABLE)
-            G (priv & X !priv -> X (sp_sel = 0))
-            & G (!priv & X priv
-                -> X ((op in { SAN, CLR, SPSEL } & priv) U sp_sel = 1))
-            & G (priv & sp_sel = 0 -> op in { SAN, CLR, SPSEL, SPSET, MRET }) &
-        $endif
-        $if(SP_NO_PUBLIC and SP_ENABLE)
-            G (priv & op = SPSET & sp_sel = 1
-                -> X $REGION0_SIZE <= sp[sp_sel]) &
+            G (priv & X !priv -> X (
+                sp[sp_sel] < $REGION0_SIZE
+                    ? pmpcfg0.read & pmpcfg0.write
+                    : pmpcfg1.read & pmpcfg1.write
+            ))
+            & G (priv & op = POP
+                -> (sp[sp_sel] < $REGION0_SIZE
+                    ? !pmpcfg0.write
+                    : !pmpcfg1.write
+                ))
+            & G (priv & op = PUSH
+                -> (sp[sp_sel] < $REGION0_SIZE
+                    ? !pmpcfg0.read
+                    : !pmpcfg1.read)) &
         $endif
         TRUE
     $endmacro
