@@ -3,7 +3,6 @@ param(
     [string]$outDir = ".\dist",
     [string]$cmd = ".\trace-bmc.template",
     [switch]$dry = $false,
-    [switch]$clean = $false,
     [string[]]$options = @(),
     [string[]]$assumptions = @(
         "SP_BANK",
@@ -34,16 +33,10 @@ if (!(Test-Path $preprocessedPath)) {
 }
 $preprocessed = Get-Item $preprocessedPath
 
-if (
-    $clean -or
-    ($Null -eq (Get-Content $preprocessed)) -or
-    (($preprocessed.LastWriteTime) -lt (Get-Item $in).LastWriteTime)
-) {
-    # Preprocess the model
-    $expr = ($assumptions + $options | ForEach-Object { "$PSItem=True" }) -join ";"
-    expander3.py -s --eval=$expr $header $in `
-        | Out-File -Encoding ascii $preprocessed
-}
+# Preprocess the model
+$expr = ($assumptions + $options | ForEach-Object { "$PSItem=True" }) -join ";"
+expander3.py -s --eval=$expr $header $in `
+    | Out-File -Encoding ascii $preprocessed
 
 if ($dry) {
     exit
