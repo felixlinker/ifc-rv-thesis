@@ -1,5 +1,5 @@
 set input_file $INPUT
 go_bmc
-check_ltlspec_klive -P $PROPNAME
+$CMD -P $PROPNAME
 show_traces -o $OUTPUT -p 4
 quit

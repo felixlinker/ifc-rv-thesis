@@ -26,6 +26,9 @@ Default: .\trace-bmc.template
 .PARAMETER Dry
 True to only preprocess the model and not perform any proofs. Default: False
 
+.PARAMETER Cmd
+Will replace $CMD in the command file. Default: check_ltlspec_klive
+
 .PARAMETER Options
 List of options to be enabled. Default: None.
 
@@ -58,6 +61,7 @@ param(
     [string]$OutDir = ".\dist",
     [string]$CmdFile = ".\trace-bmc.template",
     [switch]$Dry = $false,
+    [string]$Cmd = "check_ltlspec_klive",
     [string[]]$Options = @(),
     [string[]]$Assumptions = @(
         "SP_BANK",
@@ -108,7 +112,8 @@ foreach ($prop in $Props) {
     $expr = @(
         "INPUT='$($preprocessed.FullName)'",
         "PROPNAME='$prop'",
-        "OUTPUT='$($trace.FullName)'"
+        "OUTPUT='$($trace.FullName)'",
+        "CMD='$($Cmd)'"
     ) -join ";"
     $expr = $expr.Replace("\", "/")
     expander3.py -s --eval=$expr $CmdFile | Out-File -encoding ascii $replaced_cmd
