@@ -2,7 +2,6 @@ param(
     [string]$in = ".\model\min-rv.smv",
     [string]$outDir = ".\dist",
     [string]$cmd = ".\trace-bmc.template",
-    [int]$tracelen = 10,
     [switch]$dry = $false,
     [switch]$clean = $false,
     [string[]]$options = @(),
@@ -50,15 +49,14 @@ $trace = New-TemporaryFile
 $replaced_cmd = New-TemporaryFile
 
 # Track property time and success
-$took_millis = @{}
+$took_seconds = @{}
 $outs = @{}
 foreach ($prop in $props) {
     # Replace template-like variables in the command file
     $expr = @(
         "INPUT='$($preprocessed.FullName)'",
         "PROPNAME='$prop'",
-        "OUTPUT='$($trace.FullName)'",
-        "MAXLEN=$tracelen"
+        "OUTPUT='$($trace.FullName)'"
     ) -join ";"
     $expr = $expr.Replace("\", "/")
     expander3.py -s --eval=$expr $cmd | Out-File -encoding ascii $replaced_cmd
