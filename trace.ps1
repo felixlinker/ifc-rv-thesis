@@ -1,10 +1,65 @@
+<#
+.SYNOPSIS
+
+Runs proof in nuXmv.
+
+.DESCRIPTION
+
+The trace.ps1 script runs proofs with a list of assumtpions and options. It
+attempts to prove each property given. If a property fails, its trace will be
+pretty-printed as HTML table.
+
+.PARAMETER In
+Path to the .smv model. Model will be preprocessed with expander3.py.
+Default: .\model\min-rv.smv
+
+
+.PARAMETER OutDir
+Path where results are placed. These include the preprocessed model and any
+counter-example as HTML table. Default: .\dist
+
+.PARAMETER CmdFile
+Path to a file that holds commands for nuXmv. Will be preprocessed with
+expander3.py. Various other options to this script will be used as variable.
+Default: .\trace-bmc.template
+
+.PARAMETER Dry
+True to only preprocess the model and not perform any proofs. Default: False
+
+.PARAMETER Options
+List of options to be enabled. Default: None.
+
+.PARAMETER Assumptions
+Array of assumptions for proofs. Default: All assumptions available.
+
+.PARAMETER Props
+List of properties to prove. Default: All properties but SYNTAX_CANARY.
+
+.INPUTS
+
+None.
+
+.OUTPUTS
+
+Miscellaneous logs and a summary how long the proofs took to run.
+
+.EXAMPLE
+
+PS> .\trace.ps1
+
+.EXAMPLE
+
+PS> .\trace.ps1 -cmd "check_ltlspec_bmc -k 10" -options CACHE_VULN
+
+#>
+
 param(
-    [string]$in = ".\model\min-rv.smv",
-    [string]$outDir = ".\dist",
-    [string]$cmd = ".\trace-bmc.template",
-    [switch]$dry = $false,
-    [string[]]$options = @(),
-    [string[]]$assumptions = @(
+    [string]$In = ".\model\min-rv.smv",
+    [string]$OutDir = ".\dist",
+    [string]$CmdFile = ".\trace-bmc.template",
+    [switch]$Dry = $false,
+    [string[]]$Options = @(),
+    [string[]]$Assumptions = @(
         "SP_BANK",
         "CLEAR_ON_RET",
         "SANITIZE_ON_CALL",
@@ -15,7 +70,7 @@ param(
         "SANITIZE_ON_CLASSIFICATION",
         "SANITIZE_CACHE_ON_CLASSIFICATION"
     ),
-    [string[]]$props = @(
+    [string[]]$Props = @(
         "NO_LEAK",
         "CSR_INTEGRITY",
         "MEMORY_OP_INTEGRITY"
@@ -27,18 +82,18 @@ function unixTime() {
 }
 
 # Create temporary files needed in this script
-$preprocessedPath = Join-Path $outDir (Split-Path $in -Leaf)
+$preprocessedPath = Join-Path $OutDir (Split-Path $In -Leaf)
 if (!(Test-Path $preprocessedPath)) {
     New-Item $preprocessedPath
 }
 $preprocessed = Get-Item $preprocessedPath
 
 # Preprocess the model
-$expr = ($assumptions + $options | ForEach-Object { "$PSItem=True" }) -join ";"
-expander3.py -s --eval=$expr $header $in `
+$expr = ($Assumptions + $Options | ForEach-Object { "$PSItem=True" }) -join ";"
+expander3.py -s --eval=$expr $header $In `
     | Out-File -Encoding ascii $preprocessed
 
-if ($dry) {
+if ($Dry) {
     exit
 }
 
@@ -48,7 +103,7 @@ $replaced_cmd = New-TemporaryFile
 # Track property time and success
 $took_seconds = @{}
 $outs = @{}
-foreach ($prop in $props) {
+foreach ($prop in $Props) {
     # Replace template-like variables in the command file
     $expr = @(
         "INPUT='$($preprocessed.FullName)'",
@@ -56,7 +111,7 @@ foreach ($prop in $props) {
         "OUTPUT='$($trace.FullName)'"
     ) -join ";"
     $expr = $expr.Replace("\", "/")
-    expander3.py -s --eval=$expr $cmd | Out-File -encoding ascii $replaced_cmd
+    expander3.py -s --eval=$expr $CmdFile | Out-File -encoding ascii $replaced_cmd
 
     # Clear the trace of any possible previous proof
     Clear-Content $trace
@@ -68,7 +123,7 @@ foreach ($prop in $props) {
 
     # Map the trace to an html table
     if ($Null -ne (Get-Content $trace)) {
-        $out = Join-Path $outDir ($prop + ".html")
+        $out = Join-Path $OutDir ($prop + ".html")
         $outs[$prop] = $out
         # Execute https://github.com/felixlinker/smvtrcviz by script
         smvtrcviz.bat $trace.FullName $out
@@ -76,7 +131,7 @@ foreach ($prop in $props) {
 }
 
 $took_sum = 0
-foreach ($prop in $props) {
+foreach ($prop in $Props) {
     $s = $took_seconds[$prop]
     $took_sum += $s
     $proven = ![Bool]$outs[$prop]
