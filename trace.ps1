@@ -23,6 +23,10 @@ param(
     )
 )
 
+function unixTime() {
+    return [double]::Parse((Get-Date -UFormat %s))
+}
+
 # Create temporary files needed in this script
 $preprocessedPath = Join-Path $outDir (Split-Path $in -Leaf)
 if (!(Test-Path $preprocessedPath)) {
@@ -64,9 +68,10 @@ foreach ($prop in $props) {
     # Clear the trace of any possible previous proof
     Clear-Content $trace
     # Run nuXmv
-    $took_millis[$prop] = (Measure-Command {
-        nuXmv.exe -source $replaced_cmd.FullName
-    }).Milliseconds
+    $delta = unixTime
+    nuXmv.exe -source $replaced_cmd.FullName
+    $delta -= unixTime
+    $took_seconds[$prop] = [System.Math]::Abs($delta)
 
     # Map the trace to an html table
     if ($Null -ne (Get-Content $trace)) {
@@ -79,13 +84,13 @@ foreach ($prop in $props) {
 
 $took_sum = 0
 foreach ($prop in $props) {
-    $ms = $took_millis[$prop]
-    $took_sum += $ms
+    $s = $took_seconds[$prop]
+    $took_sum += $s
     $proven = ![Bool]$outs[$prop]
-    Write-Host "$prop was proven to be $proven in $ms ms"
+    Write-Host "$prop was proven to be $proven in $s s"
 }
 $outs.Values | ForEach-Object { Start-Process $PSItem }
-Write-Host "All proofs took $took_sum ms"
+Write-Host "All proofs took $took_sum s"
 
 # Clean up temporary files
 Remove-Item $trace
