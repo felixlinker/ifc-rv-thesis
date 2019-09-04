@@ -61,6 +61,7 @@ param(
     [string]$OutDir = ".\dist",
     [string]$CmdFile = ".\trace-bmc.template",
     [switch]$Dry = $false,
+    [switch]$TeX = $false,
     [string]$Cmd = "check_ltlspec_klive",
     [string[]]$Options = @(),
     [string[]]$Assumptions = @(
@@ -129,7 +130,11 @@ foreach ($prop in $Props) {
         $out = Join-Path $OutDir ($prop + ".html")
         $outs[$prop] = $out
         # Execute https://github.com/felixlinker/smvtrcviz by script
-        smvtrcviz.bat $trace $out
+        smvtrcviz.ps1 -i $trace | Out-File $out
+        if ($TeX) {
+            smvtrcviz.ps1 -i $trace -m MINRV8 `
+                | Out-File (Join-Path $OutDir ($prop + ".tex"))
+        }
     }
 }
 
