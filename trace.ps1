@@ -101,7 +101,6 @@ if ($Dry) {
     exit
 }
 
-$trace = New-TemporaryFile
 $replaced_cmd = New-TemporaryFile
 
 # Track property time and success
@@ -109,17 +108,16 @@ $took_seconds = @{}
 $outs = @{}
 foreach ($prop in $Props) {
     # Replace template-like variables in the command file
+    $trace = Join-Path $OutDir ($prop + ".xml")
     $expr = @(
         "INPUT='$($preprocessed.FullName)'",
         "PROPNAME='$prop'",
-        "OUTPUT='$($trace.FullName)'",
+        "OUTPUT='$trace'",
         "CMD='$($Cmd)'"
     ) -join ";"
     $expr = $expr.Replace("\", "/")
     expander3.py -s --eval=$expr $CmdFile | Out-File -encoding ascii $replaced_cmd
 
-    # Clear the trace of any possible previous proof
-    Clear-Content $trace
     # Run nuXmv
     $delta = unixTime
     nuXmv.exe -source $replaced_cmd.FullName
@@ -127,11 +125,11 @@ foreach ($prop in $Props) {
     $took_seconds[$prop] = [System.Math]::Abs($delta)
 
     # Map the trace to an html table
-    if ($Null -ne (Get-Content $trace)) {
+    if (Test-Path $trace) {
         $out = Join-Path $OutDir ($prop + ".html")
         $outs[$prop] = $out
         # Execute https://github.com/felixlinker/smvtrcviz by script
-        smvtrcviz.bat $trace.FullName $out
+        smvtrcviz.bat $trace $out
     }
 }
 
@@ -146,5 +144,4 @@ $outs.Values | ForEach-Object { Start-Process $PSItem }
 Write-Host "All proofs took $took_sum s"
 
 # Clean up temporary files
-Remove-Item $trace
 Remove-Item $replaced_cmd
