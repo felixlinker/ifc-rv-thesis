@@ -133,8 +133,9 @@ foreach ($prop in $Props) {
         # Execute https://github.com/felixlinker/smvtrcviz by script
         smvtrcviz.ps1 -i $trace | Out-File $out
         if ($TeX) {
+            $texName = $prop + ".tex" -replace "_","-"
             smvtrcviz.ps1 -i $trace -m MINRV8 `
-                | Out-File (Join-Path $OutDir ($prop + ".tex"))
+                | Out-File (Join-Path $OutDir $texName)
         }
     }
 }

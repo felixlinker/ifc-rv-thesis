@@ -17,7 +17,7 @@ $assumptions = @(
     "SANITIZE_CACHE_ON_CLASSIFICATION"
 )
 foreach ($assumption in $assumptions) {
-    $out = Join-Path $OutDir $assumption
+    $out = (Join-Path $OutDir $assumption) -replace "_","-"
     New-Item -ItemType Directory -Path $out -Force
     $localAssumptions = $assumptions | Where-Object { $PSItem -ne $assumption }
     .\trace.ps1 -Cmd "check_ltlspec_bmc -k $TraceLen" -OutDir $out -NoStart `
