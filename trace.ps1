@@ -135,7 +135,7 @@ foreach ($prop in $Props) {
         if ($TeX) {
             $texName = $prop + ".tex" -replace "_","-"
             smvtrcviz.ps1 -i $trace -m MINRV8 `
-                | Out-File (Join-Path $OutDir $texName)
+                | Out-File -Encoding ascii (Join-Path $OutDir $texName)
         }
     }
 }
