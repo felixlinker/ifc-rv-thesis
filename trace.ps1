@@ -62,6 +62,7 @@ param(
     [string]$CmdFile = ".\trace-bmc.template",
     [switch]$Dry = $false,
     [switch]$TeX = $false,
+    [switch]$NoStart = $false,
     [string]$Cmd = "check_ltlspec_klive",
     [string[]]$Options = @(),
     [string[]]$Assumptions = @(
@@ -145,7 +146,9 @@ foreach ($prop in $Props) {
     $proven = ![Bool]$outs[$prop]
     Write-Host "$prop was proven to be $proven in $s s"
 }
-$outs.Values | ForEach-Object { Start-Process $PSItem }
+if (!$NoStart) {
+    $outs.Values | ForEach-Object { Start-Process $PSItem }
+}
 Write-Host "All proofs took $took_sum s"
 
 # Clean up temporary files

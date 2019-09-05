@@ -12,3 +12,4 @@
 *.toc
 *.o.smv
 /dist
+/results/**/*.smv
