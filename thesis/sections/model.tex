@@ -43,7 +43,7 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
     \label{tbl:min-arch-instrs}
 \end{table}
 
-Besides the general purpose storage options, MINRV8 also includes three \glspl{csr}: a \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration of some \glspl{pma} as described in section \ref{sec:memory-attrs}.
+Besides the general purpose storage options, MINRV8 also includes three \glspl{csr}: an \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration of some \glspl{pma} as described in section \ref{sec:memory-attrs}.
 MINRV8 supports external interrupts as the only source of interrupts and an environment call to machine-mode as the only source of exceptions.
 Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits that include two stacking bits for taking traps, a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts and excludes other bits that are present in the RV32E architecture such as other interrupt pending bits.
 

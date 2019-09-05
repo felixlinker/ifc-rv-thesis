@@ -7,7 +7,7 @@ In this section we will outline the process of the actual \textit{verification} 
 The verification process itself is threefold:
 Before any verification can be done, it needs to be clear what shall be verified - not in the sense what the object of verification is but what its goal is, i.e. which properties express the security of the architecture adequately?
 This allows the actual verification of these properties as the next step which will lead to first results.
-In the case of a real world verification attempt these results hopefully are that the system to be verified is perfectly valid - it is, however, most likely that the majority of properties verified will end up with a negative result.
+In the case of a real world verification attempt these results hopefully are that the system to be verified is perfectly valid - it is, however, most likely that at least some of the properties verified will end up with a negative result.
 In this case, the model and/or properties are refined which marks the last step.
 
 Not only will we detail these steps themselves, we will also reflect whether this process of verification is trustworthy by shedding light on the methodology of deriving the concretization of these by now only loosely described steps.
@@ -29,7 +29,7 @@ What hasn't been used in the definition of information flow is the label of the 
 It is intuitive that the address does not influence the label of the information itself.
 % TODO: is security a good word?
 However, this suggests that the labels of the address of the memory operation might be relevant for the security of architecture as a whole in another.
-This leads to the following two properties:
+This leads to the following property:
 \begin{enumerate}[label=\Roman*.,series=]
     \item \label{itm:prop-mem-i}
     Whenever a memory operation is performed in privileged mode, the target address must be integrous.
