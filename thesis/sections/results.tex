@@ -48,6 +48,7 @@ A check mark denotes that the respective assumption is critical for the respecti
     \label{tbl:assumptions-overview}
 \end{table}
 
+\paragraph{Clear registers on return to user-mode}
 The first assumption that was introduced to the model is called \smv{CLEAR_ON_RET} and mandates from machine-mode to always clear the registers of confidential information when returning control to user-mode.
 For the sake of simplicity the instruction \minrv{Clr} (\textit{clear}) was added to the model.
 This instruction simply changes the confidentiality labels of all register to \textit{public}, i.e. \minrv{0}.
@@ -111,6 +112,7 @@ This led to the addition of the assumption \smv{CLEAR_ON_RET} (cf. snippet \ref{
     \label{tbl:cex-no-leak-cor}
 \end{table}
 
+\paragraph{Sanitize registers on calling machine-mode}
 The next assumption to be introduced is similar to \smv{CLEAR_ON_RET}.
 \smv{SANITIZE_ON_CALL} demands from machine-mode to clear the registers from any untrusted data before continuing to use their contents when entering machine-mode from user-mode.
 To allow this, another abstract instruction was added to the model: \minrv{San}, which stands for \textit{sanitize}.
