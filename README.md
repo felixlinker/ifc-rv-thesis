@@ -1,7 +1,7 @@
 
 # ifc-rv-thesis
 
-This repository holds the master thesis me, Felix Linker, and the code that comes with it.
+This repository holds the master thesis of me, Felix Linker, and the code that comes with it.
 The thesis is about information flow tracking for instruction set architectures using model checking.
 I apply my approach to the RISC-V ISA.
 For more details about the idea I direct the reader to `thesis/outline.tex`.
@@ -44,6 +44,7 @@ File/Folder             | Description
 `trace.ps1`             | PowerShell-script that runs proofs, e.g. invokes `expander3.py` and handles templating
 `model/min-rv.smv`      | The actual model
 `model/partial/`        | Other auxiliary proofs and helper files
+`results/`              | nuXmv traces mapped to HTML and LaTeX tables
 `thesis/`               | The thesis written in LaTeX
 `thesis/sections/`      | Individual sections of the thesis
 
