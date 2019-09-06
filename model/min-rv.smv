@@ -22,7 +22,9 @@ $default(
     SP_BANK=False,
     CLEAR_ON_RET=False,
     SANITIZE_ON_CALL=False,
+    SANITIZE_PUBLIC_READS=False,
     NO_PUBLIC_READS=False,
+    CLEAR_PUBLIC_WRITES=False,
     NO_PUBLIC_WRITES=False,
     CLEAR_ON_DECLASSIFICATION=False,
     CLEAR_CACHE_ON_DECLASSIFICATION=False,
@@ -454,10 +456,20 @@ MODULE main
         $if(SANITIZE_ON_CALL)
             G (!priv & X priv -> X op = SAN) &
         $endif
+        $if(SANITIZE_PUBLIC_READS)
+            G (priv & op = LOAD & (
+                mem_addr < $REGION0_SIZE ? pmpcfg0.write : pmpcfg1.write
+            ) -> X op = SAN) &
+        $endif
         $if(NO_PUBLIC_READS)
             G (priv & op = LOAD -> (
                 mem_addr < $REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write
             )) &
+        $endif
+        $if(CLEAR_PUBLIC_WRITES)
+            G (priv & op = STORE & (
+                mem_addr < $REGION0_SIZE ? pmpcfg0.read : pmpcfg1.read
+            ) -> Y op = CLR) &
         $endif
         $if(NO_PUBLIC_WRITES)
             G (priv & op = STORE -> (
