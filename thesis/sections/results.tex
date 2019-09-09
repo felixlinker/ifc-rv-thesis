@@ -60,6 +60,14 @@ The formal implementation of \smv{CLEAR_ON_RET} is given in snippet \ref{snpt:cl
 \begin{figure}
     \begin{lstlisting}[
         language=smv,
+        caption={Assumption \lstinline{SANITIZE_ON_CALL}},
+        label={snpt:san-on-call}
+    ]
+        G (!priv & X priv -> X op = SAN)
+    \end{lstlisting}
+
+    \begin{lstlisting}[
+        language=smv,
         caption={Assumption \smv{CLEAR_ON_RET}},
         label={snpt:clr-on-ret}
     ]
@@ -105,29 +113,11 @@ Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example since machine-mode
 This clearly is a problem that can never be mitigated by architectural measures since the architecture has no way to tell whether data is confidential.
 This led to the addition of the assumption \smv{CLEAR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) being added to the model which demands exactly that.
 
-\begin{table}
-    \centering
-    \input{../results/CLEAR-ON-RET/NO-LEAK.tex}
-    \caption{\smv{CLEAR_ON_RET} counter-example for \smv{NO_LEAK} (\ref{itm:prop-no-leak})}
-    \label{tbl:cex-no-leak-cor}
-\end{table}
-
-\paragraph{Sanitize registers on calling machine-mode}
 The next assumption to be introduced is similar to \smv{CLEAR_ON_RET}.
 \smv{SANITIZE_ON_CALL} demands from machine-mode to clear the registers from any untrusted data before continuing to use their contents when entering machine-mode from user-mode.
 To allow this, another abstract instruction was added to the model: \minrv{San}, which stands for \textit{sanitize}.
 When this instruction is executed, the integrity labels of all registers are set to \textit{trusted}, i.e. \minrv{1}.
 The formal implementation of \smv{SANITIZE_ON_CALL} can be found in snippet \ref{snpt:san-on-call}.
-
-\begin{figure}
-    \begin{lstlisting}[
-        language=smv,
-        caption={Assumption \lstinline{SANITIZE_ON_CALL}},
-        label={snpt:san-on-call}
-    ]
-        G (!priv & X priv -> X op = SAN)
-    \end{lstlisting}
-\end{figure}
 
 Without assuming \smv{SANITIZE_ON_CALL} nuXmv manages to find two counter-examples.
 One for property \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) and one for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}).
@@ -137,17 +127,27 @@ In both traces, the processor starts in user-mode with some untrusted data in th
 User-mode then calls machine-mode which decides to use the contents of the registers without sanitization to either write a \gls{csr} or to memory.
 
 \begin{table}
-    \centering
-    \input{../results/SANITIZE-ON-CALL/CSR-INTEGRITY.tex}
-    \caption{\smv{SANITIZE_ON_CALL} counter-example for \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
-    \label{tbl:cex-csr-i-soc}
-\end{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SANITIZE-ON-CALL/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+        \label{tbl:cex-mem-i-soc}
+    \end{subtable}
 
-\begin{table}
-    \centering
-    \input{../results/SANITIZE-ON-CALL/MEMORY-OP-INTEGRITY.tex}
-    \caption{\smv{SANITIZE_ON_CALL} counter-example for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
-    \label{tbl:cex-mem-i-soc}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SANITIZE-ON-CALL/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+        \label{tbl:cex-csr-i-soc}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/CLEAR-ON-RET/NO-LEAK.tex}
+        \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
+        \label{tbl:cex-no-leak-cor}
+    \end{subtable}
+    \caption{Counter-examples for \smv{SANITIZE_ON_CALL} and \smv{CLEAR_ON_RET}}
 \end{table}
 
 It has already been touched that both assumptions \smv{CLEAR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) and \smv{SANITIZE_ON_CALL} (cf. snippet \ref{snpt:san-on-call}) are similar to each other.
@@ -164,6 +164,18 @@ These two assumptions don't express more than the title says; they require machi
 \begin{figure}
     \begin{lstlisting}[
         language=smv,
+        caption={Assumption \lstinline{NO_PUBLIC_READS}},
+        label={snpt:no-public-reads}
+    ]
+        G (priv & op = LOAD -> (
+            mem_addr < $REGION0_SIZE
+                ? !pmpcfg0.write
+                : !pmpcfg1.write
+        ))
+    \end{lstlisting}
+
+    \begin{lstlisting}[
+        language=smv,
         caption={Assumption \lstinline{NO_PUBLIC_WRITES}},
         label={snpt:no-public-writes}
     ]
@@ -175,44 +187,33 @@ These two assumptions don't express more than the title says; they require machi
     \end{lstlisting}
 \end{figure}
 
-\begin{figure}
-    \begin{lstlisting}[
-        language=smv,
-        caption={Assumption \lstinline{NO_PUBLIC_READS}},
-        label={snpt:no-public-reads}
-    ]
-        G (priv & op = LOAD -> (
-            mem_addr < $REGION0_SIZE
-                ? !pmpcfg0.write
-                : !pmpcfg1.write
-        ))
-    \end{lstlisting}
-\end{figure}
-
 The three counter-examples involved in this two assumptions are rather straight-forward as well.
 If machine-mode is allowed to store arbitrary words into public memory, a simple counter-example to the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) is that machine-mode simply stores a secret into public memory which is then loaded by user-mode as illustrated by the trace in table \ref{tbl:cex-no-leak-npw}.
 On the other hand, if machine-mode is allowed to load arbitrary words from public memory nuXmv gives a counter-example to the properties \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) and \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) where all memory is untrusted in the initial state, machine-mode loads some word from memory and uses it to write a \gls{csr} with or as target address.
 These counter-examples are illustrated in table \ref{tbl:cex-csr-i-npw} and \ref{tbl:cex-mem-i-npw} respectively.
 
 \begin{table}
-    \centering
-    \input{../results/NO-PUBLIC-WRITES/NO-LEAK.tex}
-    \caption{\smv{NO_PUBLIC_WRITES} counter-example for \smv{NO_LEAK} (\ref{itm:prop-no-leak})}
-    \label{tbl:cex-no-leak-npw}
-\end{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/NO-PUBLIC-WRITES/NO-LEAK.tex}
+        \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
+        \label{tbl:cex-no-leak-npw}
+    \end{subtable}
 
-\begin{table}
-    \centering
-    \input{../results/NO-PUBLIC-READS/CSR-INTEGRITY.tex}
-    \caption{\smv{NO_PUBLIC_READS} counter-example for \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
-    \label{tbl:cex-csr-i-npw}
-\end{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/NO-PUBLIC-READS/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+        \label{tbl:cex-csr-i-npw}
+    \end{subtable}
 
-\begin{table}
-    \centering
-    \input{../results/NO-PUBLIC-READS/MEMORY-OP-INTEGRITY.tex}
-    \caption{\smv{NO_PUBLIC_READS} counter-example for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
-    \label{tbl:cex-mem-i-npw}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/NO-PUBLIC-READS/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+        \label{tbl:cex-mem-i-npw}
+    \end{subtable}
+    \caption{Counter-examples for \smv{NO_PUBLIC_WRITES} and \smv{NO_PUBLIC_READS}}
 \end{table}
 
 \subsection{Canaries}
