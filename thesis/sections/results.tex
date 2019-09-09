@@ -2,53 +2,67 @@
 
 \section{Results}
 
-For the model as it was described in section \ref{sec:model-implementation} a fixpoint of the verification process as depicted in figure \ref{fig:ver-process} was reached after introducing 8 assumptions in total and applying roughly 19 bug fix patches\footnote{%
-    A patch was considered to be a bug fix if it contained the word \enquote{fix} in its description and was applied to the model file.
-} to the model.
-After applying these changes to the model all of the properties were proven successfully.
-In the next section these 8 assumptions will be presented each of which comes with at least one counter-example stressing the assumption's necessity.
+This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
+The main finding was that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if we assume the 8 assumptions that will be introduced in subsequent sections.
+
+Additionally, roughly 19 bug fix patches\footnote{%
+    The number of 19 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
+} were applied to the model.
+Taken together with aforementioned assumptions these changes to the model mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
+
+This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions that have been added to the model during the verification process.
+Section \ref{sec:alt-approaches} will discuss the approach to finding and phrasing said assumptions and investigate possible alternative approaches to ensuring that all the architecture models the information flow properties.
 
 Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the model would behave when deliberate breaking points were introduced to it.
 These breaking points tried to mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
-The results to these tests will be presented in section \ref{sec:canaries}.
+The results to these tests will finally be presented in section \ref{sec:canaries}.
 
-\subsection{Properties}
+\subsection{Assumptions}
+\label{sec:assumptions}
 
-As already mentioned, 8 assumptions have been introduced throughout the verification process.
+The 8 assumptions that have been introduced throughout the verification process can be grouped into three categories:
+\begin{itemize}
+    \item Mode-boundary crossing related assumptions
+    \item Memory related assumptions
+    \item Memory privilege related assumptions
+\end{itemize}
+
 Find an overview of all these assumptions in table \ref{tbl:assumptions-overview}.
 Each row represents one assumption and each column one property.
-A check mark denotes that the respective assumption is critical for the respective property, i.e. there exists a counter-example proving the property to be false if the given assumption is not assumed.
+A check mark denotes that the respective assumption is critical for the respective property, i.e. there exists a counter-example proving the property to be false if the assumption at hand is not assumed.
+Note that each of the assumptions is critical for at least one property.
+This stresses that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $} as opposed to \enquote{$ \text{assumptions} \Rightarrow \text{properties} $} since \enquote{$ \neg \text{assumptions} \Rightarrow \neg \text{properties} $}.
 
 \begin{table}
     \centering
-    \begin{tabular}{ r | c | c | c |}
-        \multicolumn{1}{r}{} &
+    \begin{tabular}{| c r | c | c | c |}
+        \multicolumn{1}{r}{} & \multicolumn{1}{r}{} &
         \multicolumn{1}{l}{\tilthdr{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}} &
         \multicolumn{1}{l}{\tilthdr{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}} &
         \multicolumn{1}{l}{\tilthdr{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}} \\
-        \cline{2-4}
-        \smv{CLEAR_ON_RET} &&& \checkmark \\
-        \cline{2-4}
-        \smv{SANITIZE_ON_CALL} & \checkmark & \checkmark & \\
-        \cline{2-4}
-        \smv{NO_PUBLIC_WRITES} &&& \checkmark \\
-        \cline{2-4}
-        \smv{NO_PUBLIC_READS} & \checkmark & \checkmark & \\
-        \cline{2-4}
-        \smv{CLEAR_ON_DECLASSIFICATION} &&& \checkmark \\
-        \cline{2-4}
-        \smv{SANITIZE_ON_CLASSIFICATION} & \checkmark & \checkmark & \\
-        \cline{2-4}
-        \smv{CLEAR_CACHE_ON_DECLASSIFICATION} &&& \checkmark \\
-        \cline{2-4}
-        \smv{SANITIZE_CACHE_ON_CLASSIFICATION} & \checkmark & \checkmark & \\
-        \cline{2-4}
+        \hline % \cline{3-5}
+        \multirow{2}{*}{Mode-boundary} & \smv{SAN_ON_CALL} & \checkmark & \checkmark & \\
+        \cline{3-5}
+        & \smv{CLR_ON_RET} &&& \checkmark \\
+        \hline % \cline{3-5}
+        \multirow{2}{*}{Memory} & \smv{NO_PUBLIC_READS} & \checkmark & \checkmark & \\
+        \cline{3-5}
+        & \smv{NO_PUBLIC_WRITES} &&& \checkmark \\
+        \hline % \cline{3-5}
+        \multirow{4}{*}{Memory privilege} & \smv{SAN_ON_CLASSIFICATION} & \checkmark & \checkmark & \\
+        \cline{3-5}
+        & \smv{CLR_ON_DECLASSIFICATION} &&& \checkmark \\
+        \cline{3-5}
+        & \smv{SAN_CACHE_ON_CLASSIFICATION} & \checkmark & \checkmark & \\
+        \cline{3-5}
+        & \smv{CLR_CACHE_ON_DECLASSIFICATION} &&& \checkmark \\
+        \hline % \cline{3-5}
     \end{tabular}
     \caption{Assumptions Compared to Properties}
     \label{tbl:assumptions-overview}
 \end{table}
 
-\paragraph{Clear registers on return to user-mode}
+\paragraph{Mode-boundary crossing related assumptions}
 The first assumption that was introduced to the model is called \smv{CLEAR_ON_RET} and mandates from machine-mode to always clear the registers of confidential information when returning control to user-mode.
 For the sake of simplicity the instruction \minrv{Clr} (\textit{clear}) was added to the model.
 This instruction simply changes the confidentiality labels of all register to \textit{public}, i.e. \minrv{0}.
@@ -157,7 +171,7 @@ This can be easily seen in table \ref{tbl:assumptions-overview} where in alterna
 Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
 Whereas confidentiality related assumptions always constrain flow of information going \textit{out} of machine-mode, integrity related assumptions always constrain flow of information going \textit{in} machine-mode.
 
-\paragraph{No public memory accesses in machine-mode}
+\paragraph{Memory related assumptions}
 Two assumptions about memory reads and writes join the ranks of these groups, namely \smv{NO_PUBLIC_WRITES} and \smv{NO_PUBLIC_READS} which are formally given in snippet \ref{snpt:no-public-writes} and \ref{snpt:no-public-reads} respectively.
 These two assumptions don't express more than the title says; they require machine-mode to never read from or write to public memory.
 
@@ -215,6 +229,9 @@ These counter-examples are illustrated in table \ref{tbl:cex-csr-i-npw} and \ref
     \end{subtable}
     \caption{Counter-examples for \smv{NO_PUBLIC_WRITES} and \smv{NO_PUBLIC_READS}}
 \end{table}
+
+\subsection{Alternative Approaches}
+\label{sec:alt-approaches}
 
 \subsection{Canaries}
 \label{sec:canaries}
