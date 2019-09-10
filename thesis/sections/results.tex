@@ -63,18 +63,18 @@ This stresses that \enquote{$ \text{assumptions} \Leftrightarrow \text{propertie
 \end{table}
 
 \paragraph{Mode-boundary crossing related assumptions}
-The first assumption that was introduced to the model is called \smv{CLEAR_ON_RET} and mandates from machine-mode to always clear the registers of confidential information when returning control to user-mode.
+The first assumption to be introduced is called \smv{CLR_ON_RET} and mandates from machine-mode to always clear the registers of confidential information when returning control to user-mode.
 For the sake of simplicity the instruction \minrv{Clr} (\textit{clear}) was added to the model.
 This instruction simply changes the confidentiality labels of all register to \textit{public}, i.e. \minrv{0}.
 It is meant to allow machine-mode to deliberately make the decision of evaluating all registers contents and clearing whatever is confidential.
 Therefore, the \minrv{CLR} instruction simulates a routine that might be executed on real-world implementations of code managing a platform.
-The \smv{CLEAR_ON_RET} assumption mandates from machine-mode to always execute the \minrv{Clr} instruction before privilege mode changes from machine- to user-mode.
-The formal implementation of \smv{CLEAR_ON_RET} is given in snippet \ref{snpt:clr-on-ret}.
+The \smv{CLR_ON_RET} assumption mandates from machine-mode to always execute the \minrv{Clr} instruction before privilege mode changes from machine- to user-mode.
+The formal implementation of \smv{CLR_ON_RET} is given in snippet \ref{snpt:clr-on-ret}.
 
 \begin{figure}
     \begin{lstlisting}[
         language=smv,
-        caption={Assumption \lstinline{SANITIZE_ON_CALL}},
+        caption={Assumption \lstinline{SAN_ON_CALL}},
         label={snpt:san-on-call}
     ]
         G (!priv & X priv -> X op = SAN)
@@ -82,7 +82,7 @@ The formal implementation of \smv{CLEAR_ON_RET} is given in snippet \ref{snpt:cl
 
     \begin{lstlisting}[
         language=smv,
-        caption={Assumption \smv{CLEAR_ON_RET}},
+        caption={Assumption \smv{CLR_ON_RET}},
         label={snpt:clr-on-ret}
     ]
         G (priv & X !priv -> Y op = CLR)
@@ -125,15 +125,15 @@ For the sake of completeness, the last instruction of counter-example traces wil
 To fully understand the counter-example to the \smv{NO_LEAK} (cf. \ref{sec:props}, \ref{itm:prop-no-leak}) property recall that it says: Never can the processor be in user-mode and there is some confidential data in some register.
 Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example since machine-mode directly hands over confidential data to user-mode by returning control to user-mode without clearing its registers.
 This clearly is a problem that can never be mitigated by architectural measures since the architecture has no way to tell whether data is confidential.
-This led to the addition of the assumption \smv{CLEAR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) being added to the model which demands exactly that.
+This led to the addition of the assumption \smv{CLR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) being added to the model which demands exactly that.
 
-The next assumption to be introduced is similar to \smv{CLEAR_ON_RET}.
-\smv{SANITIZE_ON_CALL} demands from machine-mode to clear the registers from any untrusted data before continuing to use their contents when entering machine-mode from user-mode.
+The next assumption to be introduced is similar to \smv{CLR_ON_RET}.
+\smv{SAN_ON_CALL} demands from machine-mode to clear the registers from any untrusted data before continuing to use their contents when entering machine-mode from user-mode.
 To allow this, another abstract instruction was added to the model: \minrv{San}, which stands for \textit{sanitize}.
 When this instruction is executed, the integrity labels of all registers are set to \textit{trusted}, i.e. \minrv{1}.
-The formal implementation of \smv{SANITIZE_ON_CALL} can be found in snippet \ref{snpt:san-on-call}.
+The formal implementation of \smv{SAN_ON_CALL} can be found in snippet \ref{snpt:san-on-call}.
 
-Without assuming \smv{SANITIZE_ON_CALL} nuXmv manages to find two counter-examples.
+Without assuming \smv{SAN_ON_CALL} nuXmv manages to find two counter-examples.
 One for property \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) and one for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}).
 The traces for both counter-examples are depicted in tables \ref{tbl:cex-csr-i-soc} and \ref{tbl:cex-mem-i-soc} respectively.
 Note that both traces are very similar.
@@ -161,12 +161,12 @@ User-mode then calls machine-mode which decides to use the contents of the regis
         \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
         \label{tbl:cex-no-leak-cor}
     \end{subtable}
-    \caption{Counter-examples for \smv{SANITIZE_ON_CALL} and \smv{CLEAR_ON_RET}}
+    \caption{Counter-examples for \smv{SAN_ON_CALL} and \smv{CLR_ON_RET}}
 \end{table}
 
-It has already been touched that both assumptions \smv{CLEAR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) and \smv{SANITIZE_ON_CALL} (cf. snippet \ref{snpt:san-on-call}) are similar to each other.
+It has already been touched that both assumptions \smv{CLR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) and \smv{SAN_ON_CALL} (cf. snippet \ref{snpt:san-on-call}) are similar to each other.
 This relation characterizes a pattern that can be recognized for other groups of assumptions.
-It turned out that for every confidentiality related assumption such as \smv{CLEAR_ON_RET}, there was a similar integrity related assumption such as \smv{SANITIZE_ON_CALL}.
+It turned out that for every confidentiality related assumption such as \smv{CLR_ON_RET}, there was a similar integrity related assumption such as \smv{SAN_ON_CALL}.
 This can be easily seen in table \ref{tbl:assumptions-overview} where in alternating rows, two groups of assumptions can be distinguished those which are relevant to the \smv{NO_LEAK} property and those which are relevant to the \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} property.
 Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
 Whereas confidentiality related assumptions always constrain flow of information going \textit{out} of machine-mode, integrity related assumptions always constrain flow of information going \textit{in} machine-mode.

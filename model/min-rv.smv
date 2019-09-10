@@ -20,16 +20,16 @@ $default(
 $# Available assumptions
 $default(
     SP_BANK=False,
-    CLEAR_ON_RET=False,
-    SANITIZE_ON_CALL=False,
-    SANITIZE_PUBLIC_READS=False,
+    CLR_ON_RET=False,
+    SAN_ON_CALL=False,
+    SAN_PUBLIC_READS=False,
     NO_PUBLIC_READS=False,
-    CLEAR_PUBLIC_WRITES=False,
+    CLR_PUBLIC_WRITES=False,
     NO_PUBLIC_WRITES=False,
-    CLEAR_ON_DECLASSIFICATION=False,
-    CLEAR_CACHE_ON_DECLASSIFICATION=False,
-    SANITIZE_ON_CLASSIFICATION=False,
-    SANITIZE_CACHE_ON_CLASSIFICATION=False
+    CLR_ON_DECLASSIFICATION=False,
+    CLR_CACHE_ON_DECLASSIFICATION=False,
+    SAN_ON_CLASSIFICATION=False,
+    SAN_CACHE_ON_CLASSIFICATION=False
 )
 
 -- Extend the first one we can find
@@ -450,13 +450,13 @@ MODULE main
     $endfor
 
     $macro(assumptions)
-        $if(CLEAR_ON_RET)
+        $if(CLR_ON_RET)
             G (priv & X !priv -> Y op = CLR) &
         $endif
-        $if(SANITIZE_ON_CALL)
+        $if(SAN_ON_CALL)
             G (!priv & X priv -> X op = SAN) &
         $endif
-        $if(SANITIZE_PUBLIC_READS)
+        $if(SAN_PUBLIC_READS)
             G (priv & op = LOAD & (
                 mem_addr < $REGION0_SIZE ? pmpcfg0.write : pmpcfg1.write
             ) -> X op = SAN) &
@@ -466,7 +466,7 @@ MODULE main
                 mem_addr < $REGION0_SIZE ? !pmpcfg0.write : !pmpcfg1.write
             )) &
         $endif
-        $if(CLEAR_PUBLIC_WRITES)
+        $if(CLR_PUBLIC_WRITES)
             G (priv & op = STORE & (
                 mem_addr < $REGION0_SIZE ? pmpcfg0.read : pmpcfg1.read
             ) -> Y op = CLR) &
@@ -476,13 +476,13 @@ MODULE main
                 mem_addr < $REGION0_SIZE ? !pmpcfg0.read : !pmpcfg1.read
             )) &
         $endif
-        $if(CLEAR_ON_DECLASSIFICATION)
+        $if(CLR_ON_DECLASSIFICATION)
             G (!pmpcfg0.read & X pmpcfg0.read
                 -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00)
             & G (!pmpcfg1.read & X pmpcfg1.read
                 -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00) &
         $endif
-        $if(CLEAR_CACHE_ON_DECLASSIFICATION)
+        $if(CLR_CACHE_ON_DECLASSIFICATION)
             G (!pmpcfg0.read & X pmpcfg0.read
                     & cache.valid & cache.addr < $REGION0_SIZE
                 -> cache.conf = 0h_00) &
@@ -490,13 +490,13 @@ MODULE main
                     & cache.valid & $REGION0_SIZE <= cache.addr
                 -> cache.conf = 0h_00) &
         $endif
-        $if(SANITIZE_ON_CLASSIFICATION)
+        $if(SAN_ON_CLASSIFICATION)
             G (pmpcfg0.write & X !pmpcfg0.write
                 -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF)
             & G (pmpcfg1.write & X !pmpcfg1.write
                 -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF) &
         $endif
-        $if(SANITIZE_CACHE_ON_CLASSIFICATION)
+        $if(SAN_CACHE_ON_CLASSIFICATION)
             G (pmpcfg0.write & X !pmpcfg0.write
                     & cache.valid & cache.addr < $REGION0_SIZE
                 -> cache.integrity = 0h_FF) &

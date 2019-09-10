@@ -67,14 +67,14 @@ param(
     [string[]]$Options = @(),
     [string[]]$Assumptions = @(
         "SP_BANK",
-        "CLEAR_ON_RET",
-        "SANITIZE_ON_CALL",
+        "CLR_ON_RET",
+        "SAN_ON_CALL",
         "NO_PUBLIC_READS",
         "NO_PUBLIC_WRITES",
-        "CLEAR_ON_DECLASSIFICATION",
-        "CLEAR_CACHE_ON_DECLASSIFICATION",
-        "SANITIZE_ON_CLASSIFICATION",
-        "SANITIZE_CACHE_ON_CLASSIFICATION"
+        "CLR_ON_DECLASSIFICATION",
+        "CLR_CACHE_ON_DECLASSIFICATION",
+        "SAN_ON_CLASSIFICATION",
+        "SAN_CACHE_ON_CLASSIFICATION"
     ),
     [string[]]$Props = @(
         "NO_LEAK",
