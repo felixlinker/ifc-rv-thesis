@@ -7,10 +7,10 @@ The main finding was that there are 8 assumptions which in total grant that the 
 
 Additionally, roughly 19 bug fix patches\footnote{%
     The number of 19 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
-} were applied to the model.
+} and some \smv{INIT} constraints were applied to the model.
 Taken together with aforementioned assumptions these changes to the model mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
 
-This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions that have been added to the model during the verification process.
+This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints that have been added to the model during the verification process.
 Section \ref{sec:alt-approaches} will discuss the approach to finding and phrasing said assumptions and investigate possible alternative approaches to ensuring that all the architecture models the information flow properties.
 
 Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the model would behave when deliberate breaking points were introduced to it.
@@ -19,6 +19,26 @@ The results to these tests will finally be presented in section \ref{sec:canarie
 
 \subsection{Assumptions}
 \label{sec:assumptions}
+
+Technically, \smv{INIT} constraints and assumptions serve the same purpose: They limit the state spaces that will be searched for property violations.
+Semantically, however, these two concepts should be distinguished in this thesis.
+In the model, \smv{INIT} constraints are used to only limit the search of the state space to \textit{valid} counter-examples only.
+Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
+
+The former aspect of validity is guaranteed by constraining the contents of registers to only contain confidential data when the model starts in machine-mode and to only contain malicious data when the model starts in user-mode.
+Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
+The aforementioned \smv{INIT} constraints simply ensure that the properties to prove are not false upfront.
+If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv could find a counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register trivially violating the respective property.
+
+The latter aspect of validity is guaranteed by one simple constraint that is depicted in the following snippet:
+\begin{lstlisting}[
+    language=smv,
+    caption={\gls{mstatus} \smv{INIT} constraint for the model}
+]
+    INIT MIE = 0b_1 -> MPP = 0b_0;
+\end{lstlisting}
+This ensures that the interrupt handling mechanisms are set up correctly and is mandated by the \gls{riscv} specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
+No other \smv{INIT} constraints are required to set up the initial state of the model correctly and sensibly.
 
 The 8 assumptions that have been introduced throughout the verification process can be grouped into three categories:
 \begin{itemize}
