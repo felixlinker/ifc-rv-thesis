@@ -230,6 +230,162 @@ These counter-examples are illustrated in table \ref{tbl:cex-csr-i-npw} and \ref
     \caption{Counter-examples for \smv{NO_PUBLIC_WRITES} and \smv{NO_PUBLIC_READS}}
 \end{table}
 
+\paragraph{Memory privilege related assumptions}
+The four assumptions that have been introduced up to this point seem to cover all relevant media of information transmission: registers and memory.
+However, these are not enough to ensure that the MINRV8 architecture implements all information flow properties subject to this thesis.
+Whereas the last two memory related properties covered the group of actions by machine-mode where information directly is given to or taken from user-mode, it is also possible to transmit information indirectly via memory by writing it to or reading it from safe memory regions but doing so while changing the attributes of respective memory regions.
+The two assumptions \smv{CLR_ON_DECLASSIFICATION} and \smv{SANITIZE_ON_DECLASSIFICATION} express this notion.
+The former demands from machine-mode to always ensure that a memory region does not contain confidential information when its made publicly accessible.
+This assumption is formalized in snippet \ref{snpt:clr-on-declassify}.
+The latter assumption demands from machine-mode to ensure that a memory region does not contain malicious information when its set to be publicly inaccessible.
+This assumption is formalized in snippet \ref{snpt:san-on-classify}.
+
+\begin{figure}
+    \begin{lstlisting}[
+        language=smv,
+        caption={Assumption \lstinline{SAN_ON_CLASSIFICATION}},
+        label={snpt:san-on-classify}
+    ]
+        G (pmpcfg0.write & X !pmpcfg0.write
+            -> memory_integrity[0] = 0h_FF
+             & memory_integrity[1] = 0h_FF)
+        & G (pmpcfg1.write & X !pmpcfg1.write
+            -> memory_integrity[2] = 0h_FF
+             & memory_integrity[3] = 0h_FF)
+    \end{lstlisting}
+
+    \begin{lstlisting}[
+        language=smv,
+        caption={Assumption \lstinline{CLR_ON_DECLASSIFICATION}},
+        label={snpt:clr-on-declassify}
+    ]
+        G (!pmpcfg0.read & X pmpcfg0.read
+            -> memory_conf[0] = 0h_00
+             & memory_conf[1] = 0h_00)
+        & G (!pmpcfg1.read & X pmpcfg1.read
+            -> memory_conf[2] = 0h_00
+             & memory_conf[3] = 0h_00)
+    \end{lstlisting}
+\end{figure}
+
+The counter-example given when not assuming \smv{CLR_ON_DECLASSIFICATION} (cf. table \ref{tbl:cex-no-leak-cod}) illustrates exactly what has been given as intuition for this assumption in the introduction of this paragraph.
+The architecture starts with some confidential data in the memory of the second memory region which is not publicly readable.
+In the first step, machine-mode however sets just that memory to being publicly readable.
+Machine-mode does clear its registers before giving control back to user-mode, yet this is irrelevant since user-mode can just load the contents from the now accessible memory region one which violates the \smv{NO_LEAK} property (cf. \ref{itm:prop-no-leak}).
+
+The counter-examples when not assuming \smv{SAN_ON_CLASSIFICATION} for properties \smv{CSR_INTEGRITY} and \smv{MEMORY_OP_INTEGRITY} - as usual - work analogously (cf. tables \ref{tbl:cex-csr-i-socl}, \ref{tbl:cex-mem-i-socl}).
+This time, the both memory regions are writable for user-mode to begin with and initially contain untrusted data.
+Again, machine-mode changes the privilege settings of one memory region making it non-writable to user-mode and then loads and uses a machine-word which is untrusted violating the respective integrity related property.
+
+\begin{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/CLEAR-ON-DECLASSIFICATION/NO-LEAK.tex}
+        \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
+        \label{tbl:cex-no-leak-cod}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SANITIZE-ON-CLASSIFICATION/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+        \label{tbl:cex-csr-i-socl}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SANITIZE-ON-CLASSIFICATION/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+        \label{tbl:cex-mem-i-socl}
+    \end{subtable}
+    \caption{Counter-examples for \smv{CLR_ON_DECLASSIFICATION} and \smv{SAN_ON_CLASSIFICATION}}
+\end{table}
+
+Yet, these two assumptions still not suffice to grant the absence of memory privilege related property counter-examples.
+It turns out that only ensuring memory regions to not contain confidential/malicious words when (de-)classifying respective regions allows problematic information to remain in cache and bypasses \smv{CLR_ON_DECLASSIFICATION} and \smv{SAN_ON_CLASSIFICATION}.
+This brings the need to also assume that the cache is cleared and sanitized by the architecture whenever a memory region is (de-)classified.
+This is expressed in the the assumptions \smv{CLR_CACHE_ON_DECLASSFICATION} and \smv{SAN_ON_CLASSIFICATION} (cf. snippets \ref{snpt:clrc-on-declassify}, \ref{snpt:sanc-on-classify}).
+
+\begin{figure}
+    \begin{lstlisting}[
+        language=smv,
+        caption={Assumption \lstinline{SAN_CACHE_ON_CLASSIFICATION}},
+        label={snpt:sanc-on-classify}
+    ]
+        G (pmpcfg0.write & X !pmpcfg0.write
+                & cache.valid & cache.addr < $REGION0_SIZE
+            -> cache.integrity = 0h_FF) &
+        G (pmpcfg1.write & X !pmpcfg1.write
+                & cache.valid & $REGION0_SIZE <= cache.addr
+            -> cache.integrity = 0h_FF)
+    \end{lstlisting}
+
+    \begin{lstlisting}[
+        language=smv,
+        caption={Assumption \lstinline{CLR_CACHE_ON_DECLASSIFICATION}},
+        label={snpt:clrc-on-declassify}
+    ]
+        G (!pmpcfg0.read & X pmpcfg0.read
+                & cache.valid & cache.addr < $REGION0_SIZE
+            -> cache.conf = 0h_00) &
+        G (!pmpcfg1.read & X pmpcfg1.read
+                & cache.valid & $REGION0_SIZE <= cache.addr
+            -> cache.conf = 0h_00)
+    \end{lstlisting}
+\end{figure}
+
+\begin{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SANITIZE-CACHE-ON-CLASSIFICATION/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+        \label{tbl:cex-mem-i-scocl}
+    \end{subtable}
+    \caption{Counter-examples for \smv{CLR_CACHE_ON_DECLASSIFICATION} and \smv{SAN_CACHE_ON_CLASSIFICATION}}
+\end{table}
+
+This time around, the counter-examples given by nuXmv are not completely straight forward.
+As a start, consider the counter-examples generated when not assuming \smv{SAN_CACHE_ON_DECLASSFICATION} for the \smv{MEMORY_OP_INTEGRITY} property in table \ref{tbl:cex-mem-i-scocl}.
+In the first three instructions, machine-mode sets memory region zero to be writable by user-mode which is also set to be write-back-cacheable and hands back control to user-mode.
+User-mode generates an untrusted constant by loading an immediate value and stores respective value in memory region zero.
+Since this region is set to be write-back-cacheable, the store is not persisted in memory but only reflected in cache.
+In the next instruction, control is transferred back to machine-mode again.
+Since no \minrv{Ecall} instruction has been executed, an external interrupt must have been set pending in the past which is not being handled.
+Machine-mode first clears the inputs from user-mode by executing the \minrv{San} instruction and then prevents write accesses to memory region zero for user-mode which is permitted by the current assumptions since all memory cells of the respective region contain trusted values.
+However, when machine-mode then attempts to load a word from said region, an untrusted word is loaded which has only been reflected in cache.
+This word is then used as address for a \minrv{Store} instruction violating property \ref{itm:prop-mem-i}.
+The counter-example for property \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) depicted in table \ref{tbl:cex-csr-i-scocl} follows the same pattern and therefore will not be handled separately in this context.
+
+The trace generated to prove the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) is much simpler.
+It is given in table \ref{tbl:cex-no-leak-ccod}.
+Again, memory region zero is set to be write-back-cacheable.
+As a first step, machine-mode set this region to be unreadable for user-mode and then stores some confidential data to it.
+This write, however, is only reflected in cache.
+Since only \smv{CLR_ON_DECLASSFICATION} is assumed, nothing prevents machine-mode to declassify memory region zero after the write.
+Machine-mode gives back control to user-mode which is than able to gain access to the secret by loading it from cache.
+
+\begin{table}
+    \ContinuedFloat
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SANITIZE-CACHE-ON-CLASSIFICATION/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+        \label{tbl:cex-csr-i-scocl}
+    \end{subtable}
+    \caption{Counter-examples for \smv{CLR_CACHE_ON_DECLASSIFICATION} and \smv{SAN_CACHE_ON_CLASSIFICATION} (cont.)}
+\end{table}
+
+\begin{table}
+    \ContinuedFloat
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/CLEAR-CACHE-ON-DECLASSIFICATION/NO-LEAK.tex}
+        \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
+        \label{tbl:cex-no-leak-ccod}
+    \end{subtable}
+    \caption{Counter-examples for \smv{CLR_CACHE_ON_DECLASSIFICATION} and \smv{SAN_CACHE_ON_CLASSIFICATION} (cont.)}
+\end{table}
+
 \subsection{Alternative Approaches}
 \label{sec:alt-approaches}
 
