@@ -111,6 +111,9 @@ $outs = @{}
 foreach ($prop in $Props) {
     # Replace template-like variables in the command file
     $trace = Join-Path $OutDir ($prop + ".xml")
+    if (Test-Path $trace) {
+        Remove-Item $trace
+    }
     $expr = @(
         "INPUT='$($preprocessed.FullName)'",
         "PROPNAME='$prop'",
