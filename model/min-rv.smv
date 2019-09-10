@@ -121,8 +121,6 @@ MODULE cache_line(main_module)
             ? integrity
             : main_module.memory_integrity[__mem_addr]);
 
-    INIT valid = FALSE;
-
     TRANS next(valid) = case
         main_module.do_trap: valid;
         __op = LOAD $if(not CACHE_VULN) & main_module.can_load $endif:
@@ -200,12 +198,6 @@ MODULE main
         pmacfg := mstatus[7:4];
         pmpcfg := csrs[1];
 
-    -- Initialize mstatus to have interrupts enable and nothing else; do not
-    -- constrain pmacfg
-    INIT mstatus = (mstatus & 0b_1111_0110);
-    INIT mstatus = (mstatus | 0b_0000_0110);
-    --                        0b_reg1_reg0
-
     DEFINE
         __mstatus_high_guard := 0b_00001000;
         __mstatus_low_guard := 0b_11110111;
@@ -216,6 +208,10 @@ MODULE main
 
         do_trap := (op = ECALL) | (bool(MIE) & bool(MEIP));
 
+    -- MIE = 1 means that we are *not* handling an exception; then MPP is set to
+    -- 0; cf. RISC-V manual p.20.
+    INIT MIE = 0b_1 -> MPP = 0b_0;
+
     VAR
         pmpcfg0 : pmpcfg_module(pmpcfg[3:0]);
         pmpcfg1 : pmpcfg_module(pmpcfg[7:4]);
@@ -225,18 +221,24 @@ MODULE main
     DEFINE
         __init_high := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
         __init_low := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
-    INIT priv <-> regs_integrity = __init_high;
-    INIT !priv <-> regs_integrity = __init_low;
-    INIT priv <-> regs_conf = __init_high;
-    INIT !priv <-> regs_conf = __init_low;
-    INIT !pmpcfg0.read <-> memory_conf[0] = 0h_FF & memory_conf[1] = 0h_FF;
-    INIT pmpcfg0.read <-> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00;
-    INIT !pmpcfg0.write <-> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF;
-    INIT pmpcfg0.write <-> memory_integrity[0] = 0h_00 & memory_integrity[1] = 0h_00;
-    INIT !pmpcfg1.read <-> memory_conf[2] = 0h_FF & memory_conf[3] = 0h_FF;
-    INIT pmpcfg1.read <-> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
-    INIT !pmpcfg1.write <-> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
-    INIT pmpcfg1.write <-> memory_integrity[2] = 0h_00 & memory_integrity[3] = 0h_00;
+    INIT priv -> regs_integrity = __init_high;
+    INIT !priv -> regs_conf = __init_low;
+    INIT pmpcfg0.read -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00;
+    INIT !pmpcfg0.write -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF;
+    INIT pmpcfg1.read -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
+    INIT !pmpcfg1.write -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
+    INIT
+        pmpcfg0.read & cache.addr < $REGION0_SIZE & cache.valid
+        -> cache.conf = 0h_00;
+    INIT
+        pmpcfg1.read & $REGION0_SIZE <= cache.addr & cache.valid
+        -> cache.conf = 0h_00;
+    INIT
+        !pmpcfg0.write & cache.addr < $REGION0_SIZE & cache.valid
+        -> cache.integrity = 0h_FF;
+    INIT
+        !pmpcfg1.write & $REGION0_SIZE <= cache.addr & cache.valid
+        -> cache.integrity = 0h_FF;
 
     IVAR
         op : {
