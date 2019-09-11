@@ -246,7 +246,7 @@ MODULE main
                 SPSEL, SPSET, PUSH, POP,
             $endif
             LOAD, STORE, LOADI, ADD, SUB, AND, OR, MOV, SLT, SLL, SRA,
-            ECALL, MRET, CSRRS, CSRRC, SAN, CLR
+            ECALL, MRET, CSRRS, CSRRC, SAN
         };
         rd : 0..$(REG_NUM - 1);
         rs1 : 0..$(REG_NUM - 1);
@@ -364,7 +364,6 @@ MODULE main
     $for(i in range(0, REG_NUM))
         TRANS next(regs_conf)[$i] = case
             do_trap: regs_conf[$i];
-            op = CLR: 0h_00;
             rd != $i: regs_conf[$i];
             $if(SP_ENABLE)
                 op = POP & can_load_sp: memory_conf[next(sp)[sp_sel]];
@@ -453,7 +452,12 @@ MODULE main
 
     $macro(assumptions)
         $if(CLR_ON_RET)
-            G (priv & X !priv -> Y op = CLR) &
+            G (
+                priv & X !priv -> regs_conf[0] = 0h_00
+                    & regs_conf[1] = 0h_00
+                    & regs_conf[2] = 0h_00
+                    & regs_conf[3] = 0h_00
+            ) &
         $endif
         $if(SAN_ON_CALL)
             G (!priv & X priv -> X op = SAN) &
@@ -471,7 +475,10 @@ MODULE main
         $if(CLR_PUBLIC_WRITES)
             G (priv & op = STORE & (
                 mem_addr < $REGION0_SIZE ? pmpcfg0.read : pmpcfg1.read
-            ) -> Y op = CLR) &
+            ) ->  regs_conf[0] = 0h_00
+                & regs_conf[1] = 0h_00
+                & regs_conf[2] = 0h_00
+                & regs_conf[3] = 0h_00) &
         $endif
         $if(NO_PUBLIC_WRITES)
             G (priv & op = STORE -> (

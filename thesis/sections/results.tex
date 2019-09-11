@@ -83,12 +83,7 @@ This stresses that \enquote{$ \text{assumptions} \Leftrightarrow \text{propertie
 \end{table}
 
 \paragraph{Mode-boundary crossing related assumptions}
-The first assumption to be introduced is called \smv{CLR_ON_RET} and mandates from machine-mode to always clear the registers of confidential information when returning control to user-mode.
-For the sake of simplicity the instruction \minrv{Clr} (\textit{clear}) was added to the model.
-This instruction simply changes the confidentiality labels of all register to \textit{public}, i.e. \minrv{0}.
-It is meant to allow machine-mode to deliberately make the decision of evaluating all registers contents and clearing whatever is confidential.
-Therefore, the \minrv{CLR} instruction simulates a routine that might be executed on real-world implementations of code managing a platform.
-The \smv{CLR_ON_RET} assumption mandates from machine-mode to always execute the \minrv{Clr} instruction before privilege mode changes from machine- to user-mode.
+The first assumption to be introduced is called \smv{CLR_ON_RET} and mandates from machine-mode to only return control to user-mode when the registers are cleared of any confidential data.
 The formal implementation of \smv{CLR_ON_RET} is given in snippet \ref{snpt:clr-on-ret}.
 
 \begin{figure}
@@ -105,7 +100,12 @@ The formal implementation of \smv{CLR_ON_RET} is given in snippet \ref{snpt:clr-
         caption={Assumption \smv{CLR_ON_RET}},
         label={snpt:clr-on-ret}
     ]
-        G (priv & X !priv -> Y op = CLR)
+        G (
+            priv & X !priv -> regs_conf[0] = 0h_00
+                & regs_conf[1] = 0h_00
+                & regs_conf[2] = 0h_00
+                & regs_conf[3] = 0h_00
+        )
     \end{lstlisting}
 \end{figure}
 
