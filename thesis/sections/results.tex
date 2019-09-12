@@ -5,8 +5,8 @@
 This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
 The main finding was that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if we assume the 8 assumptions that will be introduced in subsequent sections.
 
-Additionally, roughly 19 bug fix patches\footnote{%
-    The number of 19 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
+Additionally, roughly 20 bug fix patches\footnote{%
+    The number of 20 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
 } and some \smv{INIT} constraints were applied to the model.
 Taken together with aforementioned assumptions these changes to the model mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
 
@@ -30,15 +30,17 @@ Furthermore, cache and memory can only contain confidential data if the respecti
 The aforementioned \smv{INIT} constraints simply ensure that the properties to prove are not false upfront.
 If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv could find a counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register trivially violating the respective property.
 
-The latter aspect of validity is guaranteed by one simple constraint that is depicted in the following snippet:
+The latter aspect of validity is guaranteed by two constraints.
+The first is rather simple and is depicted in the following snippet:
 \begin{lstlisting}[
     language=smv,
     caption={\gls{mstatus} \smv{INIT} constraint for the model}
 ]
     INIT MIE = 0b_1 -> MPP = 0b_0;
 \end{lstlisting}
-This ensures that the interrupt handling mechanisms are set up correctly and is mandated by the \gls{riscv} specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
+This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the \gls{riscv} specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
 No other \smv{INIT} constraints are required to set up the initial state of the model correctly and sensibly.
+The second constraint sets up caching correctly, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
 The 8 assumptions that have been introduced throughout the verification process can be grouped into three categories:
 \begin{itemize}

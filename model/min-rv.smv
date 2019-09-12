@@ -227,6 +227,15 @@ MODULE main
     INIT !pmpcfg0.write -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF;
     INIT pmpcfg1.read -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
+    INIT cache.valid -> (cache.addr < $REGION0_SIZE & !pmacfg0.uncached)
+        | ($REGION0_SIZE <= cache.addr & !pmacfg1.uncached);
+    INIT cache.valid
+        & (
+            (cache.addr < $REGION0_SIZE & !pmacfg0.write_back)
+            | ($REGION0_SIZE <= cache.addr & !pmacfg1.write_back)
+        ) -> cache.line = memory[cache.addr]
+            & cache.conf = memory_conf[cache.addr]
+            & cache.integrity = memory_integrity[cache.addr];
     INIT
         pmpcfg0.read & cache.addr < $REGION0_SIZE & cache.valid
         -> cache.conf = 0h_00;
