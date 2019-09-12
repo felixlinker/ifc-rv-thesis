@@ -11,7 +11,6 @@ Additionally, roughly 20 bug fix patches\footnote{%
 Taken together with aforementioned assumptions these changes to the model mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
 
 This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints that have been added to the model during the verification process.
-Section \ref{sec:alt-approaches} will discuss the approach to finding and phrasing said assumptions and investigate possible alternative approaches to ensuring that all the architecture models the information flow properties.
 
 Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the model would behave when deliberate breaking points were introduced to it.
 These breaking points tried to mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
@@ -396,9 +395,6 @@ Again, a mysterious confidential word appears in register three which must have 
     \end{subtable}
     \caption{Counter-examples for \smv{CLR_CACHE_ON_DECLASSIFICATION} and \smv{SAN_CACHE_ON_CLASSIFICATION}}
 \end{table}
-
-\subsection{Alternative Approaches}
-\label{sec:alt-approaches}
 
 \subsection{Canaries}
 \label{sec:canaries}
