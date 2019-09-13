@@ -356,6 +356,9 @@ MODULE main
                 $if(SP_ENABLE)
                     op = POP & can_load_sp: memory[sp[sp_sel]];
                 $endif
+                $if(CACHE_VULN)
+                    op = LOAD & cache.__hit & cache.valid: cache.line;
+                $endif
                 op = LOAD & can_load: cache.__read;
                 op = ADD: regs[rs1] + regs[rs2];
                 op = SUB: regs[rs1] - regs[rs2];
@@ -376,6 +379,9 @@ MODULE main
             rd != $i: regs_conf[$i];
             $if(SP_ENABLE)
                 op = POP & can_load_sp: memory_conf[next(sp)[sp_sel]];
+            $endif
+            $if(CACHE_VULN)
+                op = LOAD & cache.__hit & cache.valid: cache.conf;
             $endif
             op = LOAD & can_load: cache.__read_conf;
             op = LOADI: unsigned(resize(signed(word1(priv)), $XLEN));
@@ -412,6 +418,9 @@ MODULE main
             rd != $i: regs_integrity[$i];
             $if(SP_ENABLE)
                 op = POP & can_load_sp: memory_integrity[next(sp)[sp_sel]];
+            $endif
+            $if(CACHE_VULN)
+                op = LOAD & cache.__hit & cache.valid: cache.integrity;
             $endif
             op = LOAD & can_load: cache.__read_integrity;
             op = LOADI: (priv ? 0h_FF : 0h_00);
