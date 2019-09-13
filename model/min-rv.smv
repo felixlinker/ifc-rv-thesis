@@ -452,8 +452,8 @@ MODULE main
                     (next(cache.addr) != $i & pmacfg${region}.write_back)
                     | (pmacfg${region}.write_back
                         & !next(pmacfg${region}.write_back))
-                $# By standard, use the cache.__read attribute
-                ): cache.$(suffix.strip("_") if suffix else "__read");
+                $# By standard, use the cache.line attribute
+                ): cache.$(suffix.strip("_") if suffix else "line");
                 TRUE: memory${suffix}[$i];
             esac;
         $endfor
