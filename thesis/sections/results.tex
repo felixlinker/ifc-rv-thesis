@@ -5,8 +5,8 @@
 This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
 The main finding was that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if we assume the 8 assumptions that will be introduced in subsequent sections.
 
-Additionally, roughly 21 bug fix patches\footnote{%
-    The number of 21 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
+Additionally, roughly 22 bug fix patches\footnote{%
+    The number of 22 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
 } and some \smv{INIT} constraints were applied to the model.
 Taken together with aforementioned assumptions these changes to the model mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
 

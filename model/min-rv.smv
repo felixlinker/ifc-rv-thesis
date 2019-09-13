@@ -101,17 +101,25 @@ MODULE cache_line(main_module)
 
     DEFINE
         __op := main_module.op;
-        __rd := main_module.rd;
         __mem_addr := main_module.mem_addr;
         __rs2 := main_module.rs2;
         regs := main_module.regs;
+        __un := (addr < $REGION0_SIZE
+            ? main_module.pmacfg0.uncached
+            : main_module.pmacfg1.uncached);
+        __target_un := (__mem_addr < $REGION0_SIZE
+            ? main_module.pmacfg0.uncached
+            : main_module.pmacfg1.uncached);
+        __target_wt := (__mem_addr < $REGION0_SIZE
+            ? main_module.pmacfg0.write_through
+            : main_module.pmacfg1.write_through);
+        __target_wb := (__mem_addr < $REGION0_SIZE
+            ? main_module.pmacfg0.write_back
+            : main_module.pmacfg1.write_back);
+        __target_wp := (__mem_addr < $REGION0_SIZE
+            ? main_module.pmacfg0.write_protected
+            : main_module.pmacfg1.write_protected);
 
-        __can_cache_read := (__mem_addr < $REGION0_SIZE
-            ? !main_module.pmacfg0.uncached
-            : !main_module.pmacfg1.uncached);
-        __can_cache_write := (__mem_addr < $REGION0_SIZE
-            ? main_module.pmacfg0.write_back | main_module.pmacfg0.write_through
-            : main_module.pmacfg1.write_back | main_module.pmacfg1.write_through);
         __hit := __mem_addr = addr;
         __read := (__hit & valid ? line : main_module.memory[__mem_addr]);
         __read_conf := (__hit & valid
@@ -121,21 +129,26 @@ MODULE cache_line(main_module)
             ? integrity
             : main_module.memory_integrity[__mem_addr]);
 
+        __read_fill_condition := __op = LOAD & !__target_un & (__target_wb -> !valid | !__hit)
+            $if(not CACHE_VULN) & main_module.can_load $endif;
+        __write_fill_condition := __op = STORE
+            $if(not CACHE_VULN) & main_module.can_write $endif
+            & (__target_wb | (__target_wt & __hit));
+
     TRANS next(valid) = case
         main_module.do_trap: valid;
-        __op = LOAD $if(not CACHE_VULN) & main_module.can_load $endif:
-            __can_cache_read;
-        __op = STORE & __hit $if(not CACHE_VULN) & main_module.can_write $endif:
-            __can_cache_write;
+        -- Invalidate cache when cache gets disabled
+        next(__un): FALSE;
+        __read_fill_condition | __write_fill_condition: TRUE;
+        -- write invalidate condition
+        __op = STORE & __target_wp
+            $if(not CACHE_VULN) & main_module.can_write $endif: FALSE;
         TRUE: valid;
     esac;
 
     TRANS next(addr) = case
         main_module.do_trap: addr;
-        __op = LOAD & __can_cache_read
-            $if(not CACHE_VULN) & main_module.can_load $endif: __mem_addr;
-        __op = STORE & __can_cache_write & __hit
-            $if(not CACHE_VULN) & main_module.can_write $endif: __mem_addr;
+        __read_fill_condition | __write_fill_condition: __mem_addr;
         TRUE: addr;
     esac;
 
@@ -145,12 +158,8 @@ MODULE cache_line(main_module)
         $py(suffix=f"_{var}" if var != "line" else "")
         TRANS next($var) = case
             main_module.do_trap: $var;
-            __op = LOAD & __can_cache_read
-                $if(not CACHE_VULN) & main_module.can_load $endif:
-                main_module.memory${suffix}[__mem_addr];
-            __op = STORE & __can_cache_write & __hit
-                $if(not CACHE_VULN) & main_module.can_write $endif:
-                main_module.regs${suffix}[__rs2];
+            __read_fill_condition: main_module.memory${suffix}[__mem_addr];
+            __write_fill_condition: main_module.regs${suffix}[__rs2];
             TRUE: $var;
         esac;
     $endfor
@@ -357,6 +366,8 @@ MODULE main
                     op = POP & can_load_sp: memory[sp[sp_sel]];
                 $endif
                 $if(CACHE_VULN)
+                    -- When given the cache vulnerability the cache can be read
+                    -- without sufficient privilege
                     op = LOAD & cache.__hit & cache.valid: cache.line;
                 $endif
                 op = LOAD & can_load: cache.__read;
@@ -381,6 +392,8 @@ MODULE main
                 op = POP & can_load_sp: memory_conf[next(sp)[sp_sel]];
             $endif
             $if(CACHE_VULN)
+                -- When given the cache vulnerability the cache can be read
+                -- without sufficient privilege
                 op = LOAD & cache.__hit & cache.valid: cache.conf;
             $endif
             op = LOAD & can_load: cache.__read_conf;
@@ -420,6 +433,8 @@ MODULE main
                 op = POP & can_load_sp: memory_integrity[next(sp)[sp_sel]];
             $endif
             $if(CACHE_VULN)
+                -- When given the cache vulnerability the cache can be read
+                -- without sufficient privilege
                 op = LOAD & cache.__hit & cache.valid: cache.integrity;
             $endif
             op = LOAD & can_load: cache.__read_integrity;
