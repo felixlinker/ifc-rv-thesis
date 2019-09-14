@@ -52,8 +52,44 @@ Each memory region can either be set as uncacheable, write-back-cacheable, write
 % TODO: Introduce intel architecture
 % TODO: Is it really the x86 architecture?
 % TODO: Introduce caching in detail
-These caching mechanisms are inspired by the caching mechanisms that are available in the x86 architecture from intel as described in section 11.3 \textit{Methods of Caching Available} of the System Programming Guide in the Software Developer's Manual \cite{IntelSystemProgramming}.
-% TODO: Explain how each of these mechanisms work
+These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the System Programming Guide in the Software Developer's Manual.
+This manual describes these methods of caching as follows:
+\begin{displaycquote}[p.11-7]{IntelSystemProgramming}
+    \begin{description}
+        \item[Write-through (WT)] --- \textelp{} Reads come from cache on cache hits; read misses cause cache fills. \textelp{}
+        All writes are written to a cache line (when possible) and through to system memory.
+        When writing through to memory, invalid cache lines are never filled, and cache lines are either filled or invalidated. \textelp{}
+        \item[Write-back (WB)] --- \textelp{} Reads come from cache lines on cache hits; read misses cause cache fills. \textelp{}
+        Write misses cause cache line fills \textelp{}, and writes are performed entirely in the cache, when possible. \textelp{}
+        The write-back memory type reduces bus traffic by eliminating many unnecessary writes to system memory.
+        Writes to a cache line are not immediately forwarded to system memory; instead, they are accumulated in the cache.
+        The modified cache lines are written to system memory later, when a write-back operation is performed.
+        Write-back operations are triggered when a cache lines need to be deallocated, such as when new cache lines are being allocated in a cache that is already fill. \textelp{}
+        \item[Write-protected (WP)] --- Reads come from cache lines when possible, and read misses cause cache fills.
+        Writes are propagated to the system bus and cause corresponding cache lines on all processors on the bus to be invalidated.
+        \textelp{}
+    \end{description}
+\end{displaycquote}
+
+These paragraphs vom the System Programming Guide are summarized in table \ref{tbl:cache-methods}.
+In this setting, it was decided to always fill the cache on write-hits for write-through-cacheable memory regions to make the caching methods as concise as possible although the manual leaves it open to implementations to also invalidate the cache.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| c r | c c c c |}
+        \hline
+        && Uncached & WB & WT & WP \\
+        \hline
+        \multirow{2}{*}{Write} & Hit & \ding{53} & Fill & Fill if valid & Invalidate \\
+        & Miss & \ding{53} & Fill & \ding{53} & \ding{53} \\
+        \hline
+        \multirow{2}{*}{Read} & Hit & \ding{53} & Read & Read & Read \\
+        & Miss & \ding{53} & Fill & Fill & Fill \\
+        \hline
+    \end{tabular}
+    \caption{Caching Methods}
+    \label{tbl:cache-methods}
+\end{table}
 
 The \gls{pmpcfg} register allows to set read and write privileges per memory region and also allows to lock the settings of individual regions.
 
