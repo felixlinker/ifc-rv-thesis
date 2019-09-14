@@ -196,10 +196,7 @@ MODULE main
 
     DEFINE
         __csrs_read_privs := [ 0h_0F, 0h_00 ];
-        __csrs_write_privs := [
-            $if(CACHE_VULN) 0h_0F $else 0h_FF $endif,
-            0h_FF
-        ];
+        __csrs_write_privs := [ 0h_FF, 0h_FF ];
         __priv_vec := (priv ? 0h_FF : 0h_00);
         __csrs_conf := [ 0h_0F, 0h_00 ];
         __csrs_integrity := [ 0h_FF, 0h_FF ];
