@@ -407,8 +407,8 @@ By default, the MINRV8 architecture was not vulnerable to these attacks, however
 
 The - as it will be called here - cache poisoning attack was discovered and presented by Rafal Wojtczuk and Joanna Rutkowska in their publication \textit{Attacking SMM Memory via Intel\textsuperscript{\textregistered} CPU Cache Poisoning} \cite{Wojtczuk09}.
 The term \enquote{SMM memory} refers to a specific region of memory that is designed to be only accessible by the mode of highest privilege in x86 architectures: System Management Mode.
-This mode should be written only on start-up and then locked down for later write-accesses.
-Wojtczuk and Rutkowska, however, managed to find a vulnerability to the x86 architecture which allowed them to effectively write to SMM memeory without SMM privileges by marking respective memory region as write-back-cacheable.
+This memory should be written only on start-up and then locked down for later write-accesses.
+Wojtczuk and Rutkowska, however, managed to find a vulnerability to the x86 architecture which allowed them to effectively write to SMM memory without SMM privileges by marking respective memory region as write-back-cacheable.
 The attack comprises the following steps and requires administrator privileges on the machine to be attacked:
 \begin{enumerate}
     \item Mark SMM memory as write-back-cacheable using administrator privileges
@@ -432,6 +432,38 @@ However, the basic idea can still be implemented if the following changes are ma
 
 These changes manage to introduce a vulnerability to the MINRV8 architecture.
 If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv manages to find a counter-example for all three information flow properties.
+These are depicted in table \ref{tbl:cex-cache-vuln}.
+As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
+In both cases, the user-mode initially executes a \minrv{Store} instruction which is not reflected in memory.
+The changes are written to cache-only and therefore must target memory region one since this is set to be write-back cacheable.
+Here, it can be clearly seen that dropping memory privilege controls on cache-writes and -reads leads to certain states which are inconsistent with the MINRV8 specification since memory region one is locked and as neither the read- nor the write- bit is set, both user- and machine-mode should not be able to read from or write to memory region one.
+Yet, the cache-access succeeds.
+
+In the next step, a pending external interrupt is taken which leads to the transition to machine-mode.
+Machine-mode sanitizes the input registers and performs a load instruction targeting the same address as the user's store instruction.
+Which leads to an untrusted value being stored in register two.
+This value is then used to perform a load or store operation.
+In the case of the original cache-poisoning attack, the authors wrote to executable memory directly influencing what would be executed by System Management Mode.
+Since the MINRV8 model does not support a model of executable memory, it is not possible to implement this exact vulnerability.
+However, these counter-examples show that it is still possible to implement the very core of the cache poisoning attack into the MINRV8 model which leads to a similar vulnerability in the architecture.
+
+This carries over to the counter-example for property \smv{NO_LEAK} (\ref{itm:prop-no-leak}) which is depicted in table \ref{tbl:cex-no-leak-cache-vuln}.
+This counter-example more closely matches the alternative version of the cache-poisoning attack used for reading SMM memory.
+nuXmv sets the initial state up such that the cache holds some confidential data for one of the memory regions which both are set to be write-back-cacheable and non-readable to user-mode.
+Yet still, user-mode can gain access to the confidential word in cache as no access controls are performed when reading from cache.
+
+One distinction from the original cache-poisoning attack to these counter-examples is that here the attacker does need need to set the attacked memory region to be cacheable in the first place.
+This difference does not play a major role since the attack can take place nonetheless if some memory region happens to be locked down to user-mode and is set to be write-back-cacheable, still this weakens the attack to some degree.
+
+What can be done to mitigate this attack?
+Obviously, the vulnerability purposefully introduced to the architecture could be dropped.
+It is not clear, though, how realistic this characteristic of the MINRV8 architecture is since at least in the case of the x86 architecture, the findings of \cite{Wojtczuk09} suggest that is not possible for the hardware to perform privilege checks when writing to the cache.
+Therefore this vulnerability stresses a weakness of the model as implemented in this thesis.
+Since the MINRV8 architecture only knows two privilege modes, the problem of setting potentially \enquote{interesting} regions of memory to be cacheable for an attack does not come into play.
+If, however, three or more privilege modes were given the question would arise which of the non-user-modes should be able to set caching methods for memory regions.
+If for example the supervisor-mode of \gls{riscv} also was part of the MINRV8 architecture and additionally would be allowed to write \gls{pmacfg} registers, a possible attack vector to gain access to machine-mode would be to first gain access to supervisor-mode and then set memory regions of interest to be write-back-cacheable.
+
+One possible approach to this would be to extend the MINRV8 architecture by said supervisor-mode and to test how architectural measures could mitigate this vulnerability, if for hardware-reasons, the platform could not check privileges for cache accesses.
 
 \begin{table}
     \begin{subtable}{\textwidth}
@@ -455,6 +487,7 @@ If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv m
         \label{tbl:cex-no-leak-cache-vuln}
     \end{subtable}
     \caption{Counter-examples for the Cache Vulnerability}
+    \label{tbl:cex-cache-vuln}
 \end{table}
 
 \subsection{Limitations}
