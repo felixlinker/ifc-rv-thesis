@@ -362,13 +362,13 @@ In the first instruction, machine-mode sets memory region one to be inaccessible
 In the next instruction, machine-mode decides to load a word from memory which happens to be untrusted.
 This must come from cache since no other memory cell matches this label.
 This is only possible because memory region one is set to be write-back-cacheable where writes not necessarily must be reflect in memory.
-This word is then used as address for a \minrv{Store} instruction violating property \ref{itm:prop-mem-i}.
+This word is then used as address for a \minrv{Load} instruction violating property \ref{itm:prop-mem-i}.
 The counter-example for property \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) depicted in table \ref{tbl:cex-csr-i-scocl} follows the same pattern and therefore will not be handled separately in this context.
 
 The trace generated to prove the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) wrong when not assuming \minrv{CLR_CACHE_ON_DECLASSIFICATION} flips the integrity related counter-examples.
 It is given in table \ref{tbl:cex-no-leak-ccod}.
-Memory region one again is set to be write-back-cacheable.
-This time though, machine-mode declassifies it in the first instruction as opposed to the previous counter-examples where the second region was being classified.
+Here, memory region zero is set to be write-back-cacheable.
+This time though, machine-mode declassifies it in the first instruction as opposed to the previous counter-examples where the respective region was being classified.
 Machine-mode then gives back control to user-mode which performs a load.
 Again, a mysterious confidential word appears in register three which must have come from the cache of memory region one since only this region is accessible to user-mode.
 
