@@ -12,6 +12,7 @@ MEM_ADDR_LEN=int(math.log(MEM_SIZE, 2))
 
 $# Available extensions
 $default(
+    SP_AUTOBANK=False,
     CACHE_VULN=False,
     SP_ENABLE=False
 )
@@ -290,7 +291,12 @@ MODULE main
     $if(SP_ENABLE)
         TRANS next(sp_sel) = case
             do_trap | !priv: sp_sel;
-            op = SPSEL: rs1 mod 2;
+            $if(SP_AUTOBANK)
+                next(!priv): 0;
+                next(priv): 1;
+            $else
+                op = SPSEL: rs1 mod 2;
+            $endif
             TRUE: sp_sel;
         esac;
 
