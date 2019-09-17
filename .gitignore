@@ -13,3 +13,5 @@
 *.o.smv
 /dist
 /results/**/*.smv
+*.bcf
+*.run.xml

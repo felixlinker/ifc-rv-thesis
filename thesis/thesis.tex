@@ -15,6 +15,7 @@
 \usepackage{adjustbox}
 \usepackage{rotating}
 \usepackage{pifont}
+\usepackage[backend=biber,style=alphabetic]{biblatex}
 \usetikzlibrary{positioning,calc,graphs,shapes,arrows}
 
 \setlength{\grammarindent}{8em}
@@ -144,6 +145,8 @@
 
 \hyphenation{im-ple-ment-ed ap-pro-xi-ma-ti-on}
 
+\addbibresource{references.bib}
+
 \begin{document}
 
 \begin{titlepage}
@@ -194,7 +197,6 @@
 \input{sections/related.tex}
 \input{sections/conclusion.tex}
 
-\bibliography{references}
-\bibliographystyle{apalike}
+\printbibliography
 
 \end{document}
