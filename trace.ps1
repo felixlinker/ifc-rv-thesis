@@ -76,6 +76,7 @@ param(
         "SAN_ON_CLASSIFICATION",
         "SAN_CACHE_ON_CLASSIFICATION"
     ),
+    [string[]]$IgnoreAssumptions = @(),
     [string[]]$Props = @(
         "NO_LEAK",
         "CSR_INTEGRITY",
@@ -95,7 +96,11 @@ if (!(Test-Path $preprocessedPath)) {
 $preprocessed = Get-Item $preprocessedPath
 
 # Preprocess the model
-$expr = ($Assumptions + $Options | ForEach-Object { "$PSItem=True" }) -join ";"
+$localAssumptions = $Assumptions | Where-Object {
+    !$IgnoreAssumptions.Contains($PSItem)
+}
+$expr = ($localAssumptions + $Options `
+    | ForEach-Object { "$PSItem=True" }) -join ";"
 expander3.py -s --eval=$expr $header $In `
     | Out-File -Encoding ascii $preprocessed
 
