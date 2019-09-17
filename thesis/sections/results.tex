@@ -291,8 +291,8 @@ This assumption is formalized in snippet \ref{snpt:clr-on-declassify}.
 \end{figure}
 
 The counter-examples when not assuming \smv{SAN_ON_CLASSIFICATION} for properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} (cf. tables \ref{tbl:cex-csr-i-socl}, \ref{tbl:cex-mem-i-socl}) - as usual - work analogously and illustrate exactly what has been given as intuition for this assumption in the introduction of this paragraph.
-In each counter-example, both memory regions are writable for user-mode to begin with and initially contain untrusted data.
-Machine-mode changes the privilege settings of the memory regions making them non-writable to user-mode and then loads and uses a machine-word which is untrusted violating the respective integrity related property.
+In each counter-example, at least one memory region initially is writable for user-mode and contains untrusted data.
+Machine-mode changes the privilege settings of that memory region making it non-writable to user-mode and then loads and uses a machine-word which is untrusted violating the respective integrity related property.
 
 The counter-example given when not assuming \smv{CLR_ON_DECLASSIFICATION} is given in table \ref{tbl:cex-no-leak-cod}.
 The architecture starts with some confidential data in the memory of the first memory region which is not publicly readable.
