@@ -13,7 +13,6 @@ MEM_ADDR_LEN=int(math.log(MEM_SIZE, 2))
 $# Available extensions
 $default(
     CACHE_VULN=False,
-    SP_MEM_CHECKS=False,
     SP_ENABLE=False
 )
 
@@ -277,16 +276,8 @@ MODULE main
         -- TODO: Throw on a write without privileges?
         can_write := $can_write("mem_addr");
         $if(SP_ENABLE)
-            can_load_sp := $if(SP_MEM_CHECKS)
-                $can_load("sp[sp_sel]")
-            $else
-                TRUE
-            $endif;
-            can_write_sp := $if(SP_MEM_CHECKS)
-                $can_write("sp[sp_sel]")
-            $else
-                TRUE
-            $endif;
+            can_load_sp := $can_load("sp[sp_sel]");
+            can_write_sp := $can_write("sp[sp_sel]");
         $endif
 
     -- privelege mode transitions
@@ -544,20 +535,24 @@ MODULE main
                 -> cache.integrity = 0h_FF) &
         $endif
         $if(SP_BANK and SP_ENABLE)
-            G (priv & X !priv -> X (
-                sp[sp_sel] < $REGION0_SIZE
-                    ? pmpcfg0.read & pmpcfg0.write
-                    : pmpcfg1.read & pmpcfg1.write
-            ))
-            & G (priv & op = POP
-                -> (sp[sp_sel] < $REGION0_SIZE
-                    ? !pmpcfg0.write
-                    : !pmpcfg1.write
-                ))
-            & G (priv & op = PUSH
-                -> (sp[sp_sel] < $REGION0_SIZE
-                    ? !pmpcfg0.read
-                    : !pmpcfg1.read)) &
+            (priv -> (sp[sp_sel] < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)) &
+            (!priv -> (sp[sp_sel] < $REGION0_SIZE
+                ? pmpcfg0.read & pmpcfg0.write
+                : pmpcfg1.read & pmpcfg1.write)) &
+            G (!priv & X priv -> X (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read))) &
+            G (op = MRET -> Y (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+                ? pmpcfg0.read & pmpcfg0.write
+                : pmpcfg1.read & pmpcfg1.write))) &
+            G (priv & op = SPSEL -> (X op = MRET) | (sp[rs1 mod 2] < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)) &
+            G (priv & op = SPSET -> (mem_addr < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)) &
         $endif
         TRUE
     $endmacro
