@@ -515,4 +515,104 @@ At the time of disclosure of the SYSRET vulnerability, several major operating s
 
 The core of the SYSRET vulnerability is the exception that is being generated during the executing of the \lstinline{SYSRET} instruction that will be handled before privilege is set back to user-mode but after the stack-pointer has been set to user-mode.
 
+\paragraph{Modification of the MINRV8 Architecture}
+This very core of the SYSRET vulnerability can be optionally added to the MINRV8 architecture.
+This extension adds three new registers and four instructions to the architecture:
+\begin{itemize}
+    \item Two stack-pointer registers, \smv{sp[0]} and \smv{sp[1]}
+    \item A register to select the active stack-pointer \smv{sp_sel}
+    \item An instruction to set the currently active stack-pointer to \minrv{rs1 \% 2}, \minrv{Spsel rs1} (stack-pointer select)
+    \item An instruction to set the value of the currently active stack-pointer to the address stored in register \minrv{rs1}, \minrv{Spset rs1} (stack-pointer set)
+    \item An instruction to push the value in register \minrv{rs1} onto the stack, \minrv{Push rs1}
+    \item An instruction to pop a value from the stack and store it into register \minrv{rd}, \minrv{Pop rd}
+\end{itemize}
+
+As can be guessed from the available instructions that deal with the stack, it does not support much automation by hardware.
+There are no stack-pointers dedicated to specific privilege-modes.
+Consequently, stack-pointers are not automatically switched by hardware on privilege-mode changes.
+However, when pushing to or popping from the stack, the stack-pointer automatically is in- or decremented.
+Additionally, when the stack-pointer after being pushed to or popped from crosses the boundary of the memory as a whole or of single memory regions, the architecture also ensures that it wraps around inside its memory region.
+This might render certain stack-pointer related vulnerabilities impossible; it might be a real threat to some architectures that the stack-pointer might move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out.
+
+Furthermore, an \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither readable nor writable to user-mode.
+This, as usual, ensures that the information flow properties are not violated by some obvious initial condition.
+
+With the extension to the architecture also comes an assumption that tries to emulate all the major steps that software vulnerable to the SYSRET attack already followed but which didn't suffice to implement a secure system.
+This assumption is called \smv{SP_BANK} and is depicted in snippet \ref{snpt:sp-bank}.
+It comprises four parts.
+Firstly, it is assumed that the first action after having sanitized the registers on a transition from user- to machine-mode is to select a stack-pointer that points to a memory region which is safe for machine-mode.
+This also implicitly assumes that there always must be such a safe region.
+Secondly, whenever machine-mode hands control back to user-mode the prior instruction must have selected a stack-pointer that is user-mode controllable.
+Obviously, this assumption is the most critical to the SYSRET vulnerability.
+Thirdly, machine-mode is only allowed to select the stack-pointer as described latterly, when it then attempts to give back control to user-mode.
+This ensures that machine-mode not deliberately decides to use a bad stack-pointer.
+And lastly, for the same reasons it is also assumed that machine-mode does not set its stack-pointer to a memory region controllable by user-mode.
+
+\begin{figure}
+    \begin{lstlisting}[
+        language=smv,
+        caption={Assumption \lstinline{SP_BANK}},
+        label={snpt:sp-bank}
+    ]
+        G (!priv & X priv -> X X (
+            op = SPSEL
+            & (sp[rs1 mod 2] < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)))
+        & G (op = MRET -> Y (
+            op = SPSEL
+            & (sp[rs1 mod 2] < $REGION0_SIZE
+                ? pmpcfg0.read & pmpcfg0.write
+                : pmpcfg1.read & pmpcfg1.write)))
+        & G (priv & op = SPSEL ->
+            (X op = MRET)
+            | (sp[rs1 mod 2] < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read))
+        & G (priv & op = SPSET -> (mem_addr < $REGION0_SIZE
+            ? !pmpcfg0.write & !pmpcfg0.read
+            : !pmpcfg1.write & !pmpcfg1.read))
+    \end{lstlisting}
+\end{figure}
+
+All these assumptions, however, do not ensure that the architecture does not violate any information flow property.
+Similar to the SYSRET vulnerability, there is a stream of instructions that violates each of these properties.
+Here, only the -related properties shall be covered as only these are relevant to the SYSRET vulnerability.
+The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.
+The tables that can be found there use a new feature to visualize the two stack-pointers.
+It has already been mentioned that the architecture supports two stack-pointers being indexed by \minrv{0} and \minrv{1}.
+These indices are visualized by a superscript in the cells that contain the memory labels.
+For example, in table \ref{tbl:cex-mem-i-sysret} the stack-pointer \minrv{sp[1]} points to address \minrv{1} and \minrv{sp[0]} to address \minrv{3}.
+The stack-pointer selected as currently active is highlighted by being underlined.
+
+As usual, both counter-examples for the \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRTIY} (\ref{itm:prop-csr-i}) properties are very similar.
+Therefore, only the first of these counter-examples will be introduced in detail.
+In the counter-example for the \smv{MEMORY_OP_INTEGRITY} property, the architecture starts in machine-mode with stack-pointer one being active and set to memory region zero which only contains trusted values\footnote{%
+    Furthermore, memory region zero is locked and not set to be write- or readable which makes it inaccessible to machine-mode but this is not relevant to the counter-example.
+}.
+In the first two instructions, machine-mode selects a user-mode controlled stack-pointer as the active one and attempts to give back control to user-mode.
+However, an external interrupt must have been set pending and taken exactly when machine-mode attempted to execute the \minrv{Mret} instruction since no privilege-mode transition occurs.
+The memory region that is pointed towards by the now active stack-pointer contains only untrusted values.
+This alone marks the core of the SYSRET vulnerability but it only becomes a problem because machine-mode then decides to pop a value from the stack which consequently is untrusted and then uses that value.
+
+In the case of the SYSRET vulnerability, a specially crafted value must have been placed into a special register to trigger an exception during the \lstinline{SYSRET} instruction.
+In case of the MINRV8 architecture, no such special mechanisms are necessary.
+Here, the vulnerability is triggered by an external interrupt which goes along with the core idea of the SYSRET vulnerability nicely.
+
+\begin{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SP-ENABLE/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SP-ENABLE/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+    \end{subtable}
+    \caption{Counter-examples for the SYSRET vulnerability}
+    \label{tbl:cex-sysret}
+\end{table}
+
 \subsection{Limitations}

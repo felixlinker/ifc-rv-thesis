@@ -46,7 +46,7 @@
     morecomment=[l]{\#},
 }
 \lstdefinelanguage{minrv8}{
-    morekeywords=[1]{LOAD,STORE,LOADI,ADD,SUB,AND,OR,MOV,SLL,SRA,SLT,ECALL,MRET,CSRRS,CSRRC,CLR,SAN},
+    morekeywords=[1]{LOAD,STORE,LOADI,ADD,SUB,AND,OR,MOV,SLL,SRA,SLT,ECALL,MRET,CSRRS,CSRRC,CLR,SAN,SPSEL,SPSET,PUSH,POP},
     sensitive=false,
     morecomment=[l]{\#},
 }
