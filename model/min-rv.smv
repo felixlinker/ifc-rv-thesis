@@ -254,6 +254,11 @@ MODULE main
     INIT
         !pmpcfg1.write & $REGION0_SIZE <= cache.addr & cache.valid
         -> cache.integrity = 0h_FF;
+    $if(SP_ENABLE)
+        INIT priv -> (sp[sp_sel] < $REGION0_SIZE
+            ? !pmpcfg0.write & !pmpcfg0.read
+            : !pmpcfg1.write & !pmpcfg1.read);
+    $endif
 
     IVAR
         op : {
@@ -541,13 +546,7 @@ MODULE main
                 -> cache.integrity = 0h_FF) &
         $endif
         $if(SP_BANK and SP_ENABLE)
-            (priv -> (sp[sp_sel] < $REGION0_SIZE
-                ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read)) &
-            (!priv -> (sp[sp_sel] < $REGION0_SIZE
-                ? pmpcfg0.read & pmpcfg0.write
-                : pmpcfg1.read & pmpcfg1.write)) &
-            G (!priv & X priv -> X (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+            G (!priv & X priv -> X X (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
                 ? !pmpcfg0.write & !pmpcfg0.read
                 : !pmpcfg1.write & !pmpcfg1.read))) &
             G (op = MRET -> Y (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
