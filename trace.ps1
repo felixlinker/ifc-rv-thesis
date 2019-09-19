@@ -66,6 +66,7 @@ param(
     [string]$Cmd = "check_ltlspec_klive",
     [string[]]$Options = @(),
     [string[]]$Assumptions = @(
+        "SP_SAFETY",
         "SP_BANK",
         "CLR_ON_RET",
         "SAN_ON_CALL",

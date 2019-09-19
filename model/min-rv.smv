@@ -19,6 +19,7 @@ $default(
 
 $# Available assumptions
 $default(
+    SP_SAFETY=False,
     SP_BANK=False,
     CLR_ON_RET=False,
     SAN_ON_CALL=False,
@@ -556,6 +557,12 @@ MODULE main
                 ? !pmpcfg0.write & !pmpcfg0.read
                 : !pmpcfg1.write & !pmpcfg1.read)) &
             G (priv & op = SPSET -> (mem_addr < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)) &
+        $endif
+        $if(SP_SAFETY)
+            G (priv & op = SPSEL -> MIE = 0b_0) &
+            G (priv -> X (sp[sp_sel] < $REGION0_SIZE
                 ? !pmpcfg0.write & !pmpcfg0.read
                 : !pmpcfg1.write & !pmpcfg1.read)) &
         $endif
