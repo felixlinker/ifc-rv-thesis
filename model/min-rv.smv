@@ -547,21 +547,25 @@ MODULE main
                 -> cache.integrity = 0h_FF) &
         $endif
         $if(SP_BANK and SP_ENABLE)
-            G (!priv & X priv -> X X (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
-                ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read))) &
-            G (op = MRET -> Y (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
-                ? pmpcfg0.read & pmpcfg0.write
-                : pmpcfg1.read & pmpcfg1.write))) &
-            G (priv & op = SPSEL -> (X op = MRET) | (sp[rs1 mod 2] < $REGION0_SIZE
-                ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read)) &
+            $if(not SP_AUTOBANK)
+                G (!priv & X priv -> X X (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+                    ? !pmpcfg0.write & !pmpcfg0.read
+                    : !pmpcfg1.write & !pmpcfg1.read))) &
+                G (op = MRET -> Y (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+                    ? pmpcfg0.read & pmpcfg0.write
+                    : pmpcfg1.read & pmpcfg1.write))) &
+                G (priv & op = SPSEL -> (X op = MRET) | (sp[rs1 mod 2] < $REGION0_SIZE
+                    ? !pmpcfg0.write & !pmpcfg0.read
+                    : !pmpcfg1.write & !pmpcfg1.read)) &
+            $endif
             G (priv & op = SPSET -> (mem_addr < $REGION0_SIZE
                 ? !pmpcfg0.write & !pmpcfg0.read
                 : !pmpcfg1.write & !pmpcfg1.read)) &
         $endif
         $if(SP_SAFETY)
-            G (priv & op = SPSEL -> MIE = 0b_0) &
+            $if(not SP_AUTOBANK)
+                G (priv & op = SPSEL -> MIE = 0b_0) &
+            $endif
             G (priv -> X (sp[sp_sel] < $REGION0_SIZE
                 ? !pmpcfg0.write & !pmpcfg0.read
                 : !pmpcfg1.write & !pmpcfg1.read)) &
