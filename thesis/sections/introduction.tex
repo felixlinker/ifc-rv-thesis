@@ -3,6 +3,30 @@
 \section{Introduction}
 \label{sec:introduction}
 
-\subsection{Goal of the Thesis}
+This thesis falls in the realm of formal verification, i.e. the attempt to verify a system by the use of \textit{formal methods} such as SAT solvers, interactive theorem provers and model checkers.
+Here, the approaches of two papers are combined:
 
-\subsection{The Problem of Induction}
+\citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} stressed the need of verifying specifications themselves as opposed to simply verifying implementations against specifications.
+To tackle this, he proposed to verify specifications against higher level properties and used this methodology to verify the specification of the \gls{arm} M-class specification.
+In this thesis, two lines of his research will be continued: \begin{enumerate*}[label=\alph*)]
+    \item the main contribution of this thesis also is to propose a methodology for verifying specifications against higher level properties and
+    \item this methodology will be applied to an \gls{isa} specification as well.
+\end{enumerate*}
+
+The idea behind this methodology mainly stems from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
+As the title indicates, their work also falls into the domain of verification; the authors propose a new way of verifying \gls{hdl} code implementations of \glspl{isa}.
+The core idea behind this is to add a new type system to the existing \gls{hdl} language \gls{secverilog}.
+The types available to this type system serve as security annotation of information.
+By applying typing rules to expressions in the \gls{hdl} code, new labels are generated and thus information is tracked through the code.
+Certain type conversions are, however, prohibited and mark a security vulnerability.
+Thus, their approach can be summarized as tracking and controlling information flow in \gls{hdl} code.
+They evaluate their approach by applying it to the implementation of the \gls{trustzone} extension.
+In this thesis, the idea of tracking and controlling information flow as proposed in \cite{Ferraiuolo17} will be lifted to the level of the \gls{isa} specification thus following the line of research as proposed in \cite{Reid17}.
+
+This approach will be implemented using a model checker.
+This allows for enhancing on the approach proposed by \citeauthor{Reid17} \cite{Reid17} in a key aspect:
+In his work, \citeauthor{Reid17} focused on higher lever properties to verify the \gls{arm} \gls{isa} against that were limited to making specifications about a single transition of the processor only, i.e. that only take the pre- and post-state of a single cycle of the processor into account.
+By using a model checker, it is possible to consider sequences of instructions, i.e. sequences of processor-transitions, of unbounded length.
+
+% TODO: Add motivation and goal of the thesis
+% TODO: Introduce structure of thesis
