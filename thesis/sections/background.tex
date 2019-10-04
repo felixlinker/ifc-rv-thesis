@@ -20,7 +20,63 @@
 
 \subsection{Model Checking}
 
+Model checking is a technique that falls into the domain of formal verification.
+It is one way to prove that a given system complies with a given specification.
+\citeauthor{Baier08} introduce model checking in their book \citetitle{Baier08} \cite{Baier08} as:
+\begin{displaycquote}[p.7ff.]{Baier08}
+    \textit{Model-based} verification techniques are based on models describing the possible system behavior in a mathematically precise and unambiguous manner. \textelp{}
+    This provides the basis for a whole range of verification techniques ranging from an exhaustive exploration (model checking) to experiments with a restrictive set of scenarios in the model (simulation), or in reality (testing). \textelp{}
+
+    Model checking is a verification technique that explores all possible system states in a brute-force manner.
+    Similar to a computer chess program that checks possible moves, a model checker, the software tool that performs the model checking, examines all possible system scenarios in a systematic manner.
+    Int his way, it can be shown that a given system model truly satisfies a certain property. \textelp{}
+
+    Typical properties that can be checked using model checking are of a qualitative nature:
+    Is the generated result OK?,
+    Can the system reach a deadlock situation, e.g., when two concurrent programs are waiting for each other and thus halting the entire system?
+    But also timing properties can be checked:
+    Can a deadlock occur within 1 hour after a system reset?, or, Is a response always received within 8 minutes?
+\end{displaycquote}
+
+Model checking therefore deals with two parts: Firstly, a model of some system, secondly, properties formalized on the basis of some specification.
+Systems to be model checked can come in many forms.
+They range from software libraries over hardware designs to embedded controllers.
+The same is true for specifications.
+Those can be fully fledged \textit{actual} specifications that describe the requirements to system exhaustively or more higher level properties that generally should apply to systems such as deadlock freeness as mentioned in \cite{Baier08}.
+
+More technically, in model checking some system is taken and transformed into a model using a formal language like \gls{promela} (cf. section \ref{sec:spin}) and a specification is taken and transformed into a property usually expressed in some formal logic, e.g. \gls{ltl}.
+Then it is checked via a model checker whether the system model models the formal property.
+Note that \enquote{model} in this context is ambiguous.
+One the one hand this term refers to the model of the system as a simplified description.
+On the other hand, this term refers to the logical models-relation $ \models $ which is actually being checked.
+
+An overview of model checking is given in figure \ref{fig:model-checking}.
+There, the idea and purpose of model checking is depicted.
+In summary, model checking is a technique that allows to solve the problem of ensuring that a system complies with a specification.
+By translating the system into a model and the specification into a formal property this problem can be translated into \textit{checking} whether the model \textit{models} the formal property.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}
+        \tikzstyle{box}=[draw,rectangle,minimum width=2cm,minimum height=1cm,text width=2cm,align=center]
+        \node[box] (system) {System};
+        \node[box] (specification) [right=3cm of system] {Specification}
+            edge[draw=none] node[midway] (comply) {complies with?} (system);
+
+        \node[box] (model) [below=of system] {Model}
+            edge[<-] (system);
+        \node[box] (properties) [below=of specification] {Formal Property}
+            edge[draw=none] node[midway] (models) {$ \models $?} (model)
+            edge[<-] (specification);
+
+        \draw[->] (comply) to (models);
+    \end{tikzpicture}
+    \caption{Overview on Model Checking}
+    \label{fig:model-checking}
+\end{figure}
+
 \subsubsection{SPIN}
+\label{sec:spin}
 
 \gls{spin} (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker which has been originally developed by Bell Labs and has been made freely available since the nineties.
 As its name already suggests, it uses \gls{promela} as input language.
