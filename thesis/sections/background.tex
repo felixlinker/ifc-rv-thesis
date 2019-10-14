@@ -60,6 +60,248 @@ This lies in the nature of the properties taken from the natural language specif
 
 This thesis attempts to fill this gap and proposes a new way of verifying architectural specifications which will apply to multiple processor transitions.
 The work in this thesis therefore also is subject to the same requirements that have been imposed on the high-level properties in \cite{Reid17}.
+% TODO: actually compare my results to these requirements
+
+\subsection{Information Flow Control}
+\label{sec:ifc}
+
+% TODO: introduce what an HDL is
+
+In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors formally verify an implementation of the \gls{trustzone} architecture by statically type-checking an information flow policy.
+To achieve this, they enhance on the already existing \gls{hdl} language \gls{secverilog}, extending its type system to allow more fine grained modelling of information flow policies.
+Therefore, the authors verify an implementation against higher level properties as opposed verifying a specification as done by \citeauthor{Reid17} in \cite{Reid17}.
+This thesis takes this general approach and lifts it to be applied to specifications rather than implementations.
+
+\citeauthor{Ferraiuolo17} define an \textit{information flow policy} as a lattice of security labels $ (M, \sqcup, \sqcap) $; with $ \sqsubseteq $ being the partial order on $ M $ as induced by the lattice.
+Intuitively speaking, information labelled with $ a \in M $ is allowed to flow to a sink labelled with $ b \in M $ iff $ a \sqsubseteq b $, i.e. information is always allowed to flow up in the lattice but not down.
+
+\begin{example}
+    To verify an \gls{trustzone} implementation, \citeauthor{Ferraiuolo17} introduce four information flow labels $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
+    These labels form the information flow policy lattice $ (\Sigma, \sqcup, \sqcap) $ which is depicted in figure \ref{fig:sec-lattice} as a hasse diagram.
+    As you can see, each of these four labels comprises two tokens from two domains of information flow control.
+    The first of these domains is the one of \textit{confidentiality} - each of the labels states that a piece of information is either public (\P{}) or confidential (\C{}).
+    The second of these domains is the one of \textit{integrity}, i.e. are the values we deal with integrous or - in other words - not malicious?
+    Each of the labels states that a piece of information is either trusted (\T{}) or untrusted (\U{}).
+
+    \begin{figure}
+        \centering
+        \begin{tikzpicture}
+            \begin{scope}
+                \node (pt) {\PT};
+                \node[above right=of pt] (ct) {\CT}
+                    edge (pt);
+                \node[above left=of pt] (pu) {\PU}
+                    edge (pt);
+                \node[above right=of pu] (cu) {\CU}
+                    edge (ct)
+                    edge (pu);
+            \end{scope}
+        \end{tikzpicture}
+        \caption{Security lattice for verifying an \gls{trustzone} implementation \cite{Ferraiuolo17}}
+        \label{fig:sec-lattice}
+    \end{figure}
+
+    It can be seen in the diagram depicting the lattice of security labels (fig. \ref{fig:sec-lattice}) that public information is always allowed to flow to confidential sinks but not vice versa and that trusted information is always allowed to flow to untrusted sinks but not vice versa.
+    Intuitively, this means that trusted parts of the architecture must only receive trusted data and that confidential data must be handled by confidential parts of the architecture.
+\end{example}
+
+To implement the actual \textit{control} of such an information flow policy, \citeauthor{Ferraiuolo17} introduce the \gls{hdl} language \gls{secverilogbl} that builds upon the \gls{hdl} \gls{secverilog}.
+The core of both of these languages when it comes to information flow control is a type-system that adds the syntax to the core \gls{hdl} to allow for annotating variables with security labels and enables verifying an information flow control policy by static type-checking.
+In \gls{secverilog}, variables are typed by labels of the respective information flow control policy.
+The type of a variable is described either by a label $ l \in M $ directly, by the conjunction $ \sqcap $ or disjunction $ \sqcup $ of two labels or by a type-level function $ f $ that maps some program variable $ v $ to a type.
+\gls{secverilogbl} enhances on this by tracking security labels not only per variable but also per bit and array element and therefore allows for more fine grained annotation of the \gls{hdl} code and also adds the mechanism to downgrade information.
+Since information is not allowed to flow \enquote{down} in the lattice, downgrading can be understood best as a typecast that allows such behavior.
+In some \gls{hdl} programs, it might be necessary to allow for insecure flows (in regard to the information flow policy) of information.
+In those cases, a programmer can use \lstinline[mathescape]{downgrade(e, $ \tau $)} to annotate the expression \lstinline{e} as being of type $ \tau $, regardless of any prior annotations.
+
+In total, \gls{secverilogbl} knows seven ways to express:
+\begin{align*}
+    \text{Types } \tau ::= l \mid \tau_1 \sqcup \tau_2 \mid \tau_1 \sqcap \tau_2 \mid x \mapsto \tau \mid f(x) \mid \textit{if $ e^\tau $ $ \tau_t $ $ \tau_f $} \mid \textit{case $ e^\tau $ $ \tau_1 $ \dots $ \tau_n $}
+\end{align*}
+
+As can be seen above, types are either given as simple labels of the information flow policy $ (M, \sqcup, \sqcap) $, as the disjunction or conjunction of two types, as a mapping from an index variable $ x $ to some type, as the application of some program variable $ x $ to the function $ f $ or as an $ \textit{if} $- or $ \textit{case} $-expression where $ e^\tau $ is a pure-expression, i.e. side-effect free.
+Types of the form $ f(x) $ are called \textit{dependent types} because the type depends on the value of some program variable $ x $.
+$ e^\tau $ in $ \textit{if} $- or $ \textit{case}- $ expressions might also contain program variables; if it does, these expressions also form dependent types.
+
+Types are of a certain kind:
+\begin{align*}
+    \text{Kinds } k ::= l \mid \texttt{int} \rightarrow k
+\end{align*}
+
+Any type is of kind $ l $.
+Furthermore, the type $ x \mapsto \tau $ is of kind $ \texttt{int} \rightarrow k $ where $ k $ is the kind of $ \tau $.
+However, when type-checking is performed, types of kind $ l $ are lifted to be of kind $ \texttt{int} \rightarrow l $ such that every type is a partial function from bit indices to information flow labels.
+
+% TODO: Move to end of the section
+% They evaluated their approach by successfully finding some known bugs in the Arm architecture.
+% TODO: evaluate their results more strongly and compare them to mine
+
+\begin{example}
+    The following snippet shows the type annotation of parts of a register file definition in \gls{secverilogbl}:
+    \begin{lstlisting}[
+        language=SecVerilogBL,
+        label={snpt:reg-file},
+        caption={A register file code segment \cite{Ferraiuolo17}}
+    ]
+        reg [0:31] {world(ns)} read;
+        reg [0:31] { i -> j -> world(reg_ns[i]) } mem[0:1023];
+        reg {PT} reg_ns [0:1023];
+        (*\dots*)
+        if(ns == 1) begin (*\label{ln:assignment}*)
+            read = (reg_ns[read_addr] == 1) ?
+                mem[read_addr] : 32'b0;
+        end else begin
+        (*\dots*)
+    \end{lstlisting}
+
+    The variables \lstinline{read} and \lstinline{reg_ns} illustrate the purpose of lifting types to higher kinds.
+    Both types \lstinline{world(ns)} and \lstinline{PT} are of kind $ l $, yet they are used to annotate variables that store more than one bit.
+    % TODO: This is not explicitly mentioned; the definition only allows lifting of l not arbitrary kinds k
+    Because \lstinline{read} is a register with 32 bits, \lstinline{world(ns)} is lifted to \lstinline{i -> world(ns)}, i.e. each element of \lstinline{read} is of the dependent type \lstinline{world(ns)}, and since \lstinline{reg_ns} is an array of 1024 registers of width 1, \lstinline{PT} is lifted to \lstinline{i -> j -> PT}, i.e. each array element is of type \lstinline{j -> PT}, i.e. each array element's bits are of type \lstinline{PT}.
+
+    In this example, the variable \lstinline{ns} refers to the \textit{security state} of the \gls{trustzone} architecture.
+    The \gls{trustzone} architecture not only knows different privilege but also security states which can either secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
+    The variable \lstinline{ns} in the implementation of the \gls{trustzone} architecture by \citeauthor{Ferraiuolo17} indicates whether the architecture currently is in secure- or non-secure-state.
+
+    Starting in line \ref{ln:assignment}, it can be seen how dependent types work in practice.
+    The function \lstinline{world} maps 0 to \lstinline{CT} and 1 to \lstinline{PU}.
+    The \lstinline{if}-statement first checks whether \lstinline{ns} equals 1, in which case \lstinline{read} would be of type \lstinline{PU}.
+    If this is the case, the register \lstinline{read} shall be written with \lstinline{mem[read_addr]} but only if the type of that also is of \lstinline{PU} which is checked by ensuring that \lstinline{reg_ns[read_addr]} also equals one.
+    In this case, since each element's type of \lstinline{mem} depends on \lstinline{reg_ns}, the assignment is safe since obviously, a variable annotated with type \lstinline{PU} can be written with a value of the same type.
+
+    If the check was omitted and when \lstinline{ns == 1}, \lstinline{read} would be written with \lstinline{mem[read_addr]} when \lstinline{reg_ns[read_addr] == 0}, a variable of type \lstinline{PU} would be written with a value of type \lstinline{CT}.
+    But since $ \CT \not \sqsubseteq \PU $, this would result in a type-checker error.
+\end{example}
+
+The details of this type-system are given by a collection of typing rules.
+These rules are written as proofs of sequent calculus.
+
+\begin{example}
+    Consider this example of a proof written in sequent calculus:
+    \begin{prooftree}
+        \AxiomC{$ A $}
+        \AxiomC{$ B $}
+        \BinaryInfC{$ C $}
+    \end{prooftree}
+
+    This proof states that the formula $ C $ can be derived from the formulas $ A $ and $ B $ or more formally that: $ A, B \vdash C $.
+\end{example}
+
+In the context of type systems, formulas used in proofs of sequent calculus often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} types some \textit{expression}, e.g. if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type, one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
+In \cite{Ferraiuolo17} three environments are introduced:
+
+\begin{description}
+    \item[Standard environment] $ \Gamma $ maps variables to their respective type $ \tau $.
+    \item[Width environment] $ \W $ maps variables to their respective bit vector length.
+    \item[Kind environment] $ \Theta $ maps types $ \tau $ to their respective kind $ k $.
+\end{description}
+
+\citeauthor{Ferraiuolo17} introduce eight typing rules; these are for constant expressions and variables, logical and arithmetic expressions, bit-vector concatenation and shifting as well as array indexing.
+An overview of some typing rules of \cite{Ferraiuolo17} can be found in figure \ref{fig:type-rules}\footnote{%
+    It will turn out that only these typing rules are relevant in context of this thesis.
+}.
+The most simple type system rule probably is T-Const which types constant expressions $ n $.
+% TODO: reflect on why it is sensible to assume that constants are trusted in their scenario but not in ours
+These are always of type $ \bot $, i.e. \PT, and of the corresponding width $ w $.
+The other type system rules share a pattern.
+They assume one or two expressions ($ e $ or $ e_1 $ and $ e_2 $) to be typed in $ \Gamma; \W; \Theta $ and ensure that their corresponding types ($ \tau $ or $ \tau_1 $ and $ \tau_2 $) are of the right kind in $ \Theta $.
+Then, they create a new type ($ \tau $ or $ \tau' $) and infer a type judgement for a new expression involving $ e $, $ e_1 $ or $ e_2 $ and maybe some constant $ n $.
+This structure of type system rules follows the pattern of an inductive proof or inductive definition of a set where T-Const and T-Var (the typing rule for variables) are the start of induction.
+
+When the \gls{secverilogbl} code is being type-checked, it is checked whether all right side of assignments are $ \sqsubseteq $-greater than the respective left sides taken together with the label of the program counter.
+This means that information is only considered trusted if also the program counter can be considered to be trusted and data is considered to be confidential if either the data itself or the program counter is confidential.
+
+\begin{figure}
+    \centering
+    \begin{subfigure}[t]{.5\linewidth}
+        \begin{prooftree}
+            \AxiomC{}
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash n: \bot, w $}
+        \end{prooftree}
+        \caption{T-Const}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{.5\linewidth}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_1 : \tau_1, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_1 : \texttt{int} \rightarrow l $}
+
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_2 : \tau_2, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_2 : \texttt{int} \rightarrow l $}
+
+            \BinaryInfC{$ \tau = i \mapsto \tau_1( i) \sqcup \tau_2(i) $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
+        \end{prooftree}
+        \caption{T-Logical for $ \circ \in \{ \land, \lor \} $}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{.5\linewidth}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_1 : \tau_1, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_1 : \texttt{int} \rightarrow l $}
+
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e_1 : \tau_2, w $}
+            \UnaryInfC{$ \Theta \vdash \tau_2 : \texttt{int} \rightarrow l $}
+
+            \BinaryInfC{$ \tau = i \mapsto \bigsqcup_{j \in [1, i]} (\tau_1(j) \sqcup \tau_2(j)) $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e_1 \circ e_2 : \tau, w $}
+        \end{prooftree}
+        \caption{T-Arith for $ \circ \in \{ +, - \} $}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{.5\linewidth}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e : \tau, w $}
+            \AxiomC{$ \Theta \vdash \tau : \texttt{int} \rightarrow l $}
+            \BinaryInfC{$ \tau' = i \mapsto \ite{(i < n)}{\tau(i - n + 1)}{\bot} $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e \ll n : \tau', w $}
+        \end{prooftree}
+        \caption{T-LShift}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{.5\linewidth}
+        \begin{prooftree}
+            \alwaysNoLine
+            \AxiomC{$ \Gamma; \W; \Theta \vdash e : \tau, w $}
+            \AxiomC{$ \Theta \vdash \tau : \texttt{int} \rightarrow l $}
+            \BinaryInfC{$ \tau' = i \mapsto \ite{(i > w - n)}{\bot}{\tau(i + n)} $}
+
+            \singleLine
+            \UnaryInfC{$ \Gamma; \W; \Theta \vdash e \gg n : \tau', w $}
+        \end{prooftree}
+        \caption{T-RShift}
+    \end{subfigure}
+    \caption{A selection of typing rules for SecVerilogBL expressions \cite{Ferraiuolo17}}
+    \label{fig:type-rules}
+\end{figure}
+
+In summary, the lattice of security labels taken together with the type system built on top of such a lattice implements three concepts:
+\begin{itemize}
+    \item A lattice $ (M, \sqcup, \sqcap) $ implements a information flow policy
+    \item The typing rules implement information flow tracking
+    \item Type-checking implements information flow control
+\end{itemize}
+
+\citeauthor{Ferraiuolo17} used these three concepts to verify an implementation of the \gls{trustzone} architecture.
+In doing so, they first implemented the architecture as a prototype and used the information flow policy to ensure that it did not contain bugs.
+After this, they deliberately added bugs to their implementation that have been found in other implementations of the \gls{trustzone} architecture and checked whether they were able to find these bugs.
+It turned out that their approach was able to detect all bugs besides those which were related to downgrading, i.e. the approach of type-checking information flow control policies gives a strong security assurances with the exception of bugs that due to downgrading expressions.
+
+In this thesis, the concept of an information flow control policy and information flow tracking will serve to define higher-level properties to verify an \gls{isa} against.
+To achieve this, it must be tackled how such an information flow policy as proposed by \citeauthor{Ferraiuolo17} can be applied to \glspl{isa} such that \begin{enumerate*}[label=\alph*)]
+    \item the labels can be tracked throughout the architecture by a model checker, and
+    \item the policy can be controlled by the model checker.
+\end{enumerate*}, i.e. how can the two concepts of information flow tracking and control be implemented using a model checker?
+% TODO: Do I answer above questions?
 
 \subsection{RISC-Architectures}
 

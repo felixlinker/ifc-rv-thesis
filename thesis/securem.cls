@@ -63,6 +63,11 @@
     morecomment=[l]{--},
     alsoletter={!,_},
 }
+\lstdefinelanguage{SecVerilogBL}{
+    morekeywords=[4]{reg,input,output,wire,if,else,begin,end,assign},
+    sensitive=false,
+    morecomment=[l]{//},
+}
 \lstset{
     basicstyle=\ttfamily,
     keywordstyle={[1]\scshape},
