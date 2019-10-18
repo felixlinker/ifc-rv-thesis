@@ -5,90 +5,10 @@
 
 \subsection{An Introduction to RISC-V}
 
-\gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and has undergone many changes since then.
-\gls{riscv}'s architectural specification is divided into two volumes: volume specifies 1 the base user-level \gls{isa} which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
-The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
-Such groups include for example machine- and supervisor-level \glspl{isa} and the description of a platform level interrupt controller.
-
-% TODO: Add motivation/goals of RISC-V
-
-In this thesis, we work with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
-\gls{riscv} understands itself as a highly customizable architecture.
-Currently, there are four variants of a base integer instruction set - one of which must be implemented by any \gls{riscv} processor - and 13 optional extensions.
-The base integer instruction sets include instructions for integer arithmetic, memory operations (loads and stores), control transfer (jumps and branches) and platform management (environment calls and status register operations).
-The base integer instruction sets mainly differ in the word-size and register number.
-To cope with these differences, they also make small adjustments to some functionalities but only slightly change the instruction set itself.
-These four base integer instruction sets are given by:
-\begin{description}
-    \item[RV32I] Base integer instruction set
-    \item[RV32E] Base integer instruction set for embedded computing
-    \item[RV64I] Base integer instruction set for a 64-bit architecture
-    \item[RV128I] Base integer instruction set for a 128-bit architecture
-\end{description}
-
-The \gls{riscv} manual differentiates between standard and non-standard extensions but only introduces standard ones.
-A standard extension is meant to be compatible with any other standard extension and should be \textcquote{RiscVISA}{generally useful} whilst non-standard extensions might add support for more niche use-cases and do not need to be compatible with all standard extensions.
-
-The set of functionalities offered by standard extensions begins at quite low level with the probably most mundane being the standard extension for integer multiplication and division.
-You can find a list of all standard extensions in table \ref{tbl:rv-exts}.
-
-\begin{table}
-    \centering
-    \begin{tabular}{| c | l |}
-        \hline
-        \textbf{M} & Integer multiplication and division \\
-        \textbf{A} & Atomic instructions \\
-        \textbf{F} & Single-precision floating-point arithmetic \\
-        \textbf{D} & Double-precision floating-point arithmetic \\
-        \textbf{Q} & Quad-precision floating-point arithmetic \\
-        \textbf{L} & Decimal floating-point arithmetic \\
-        \textbf{C} & Compressed instructions \\
-        \textbf{B} & Bit manipulation \\
-        \textbf{J} & Dynamically translated languages \\
-        \textbf{T} & Transactional memory \\
-        \textbf{P} & Packed-SIMD instructions \\
-        \textbf{V} & Vector operations \\
-        \textbf{N} & User-level interrupts \\
-        \hline
-    \end{tabular}
-    \caption{All \gls{riscv} standard extensions}
-    \label{tbl:rv-exts}
-\end{table}
-
-\paragraph{Naming strings}
-A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{RiscVISA}{\gls{isa} naming string} which comes in the following form:
-
-\begin{grammar}
-    <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
-\end{grammar}
-
-An example for a naming string is the very common \gls{isa}-subset RV64IMAFD which officially is abbreviated by RV64G.
-This subset includes the integer multiplication and division, user-level interrupts, atomic instructions, single-precision and double-precision floating-point arithmetic extensions.
-
 This section will introduce the core of the \gls{riscv} architecture by shedding light on the base integer instruction set in section \ref{sec:rv-base-int-isa} and the mechanisms of the privileged part of the architecture in \ref{sec:rv-priv-arch}.
 
 \subsubsection{The Base Integer Instruction Set}
 \label{sec:rv-base-int-isa}
-
-A \gls{riscv} core consists of multiple \glspl{hart}.
-Each \gls{hart} controls its own set of registers including a \gls{pc} and is equipped with its own instruction fetch unit.
-However, multiple \glspl{hart} share the same memory.
-
-\paragraph{Registers}
-A \gls{hart} might either control 16 or 32 general purpose registers which are named from x0 to x31.
-All but one instruction sets support 32 general purpose registers whereas the exception to this is the base instruction set aimed at embedded computing, RV32E, which only supports 16 general purpose registers.
-
-The first of these general purpose registers is hardwired to zero and for example can be used as a target register when the result of an instruction is not needed.
-This might seem overly restrictive at first glance but having such a dedicated \enquote{sink}-register serves a purpose as hardware can take benefit of this extra knowledge to perform optimizations.
-For example, \gls{riscv} defines the pseudo-instruction \gls{nop} as \rv{Addi x0, x0, 0} the semantics of which is: Add the constant value 0 to x0 and store the result in x0.
-The intention of this is to \textcquote{RiscVISA}{define a canonical NOP encoding to allow microarchitectural optimizations} which is only possible because the hardware can know that no register will \textit{truly} be read or written so a \gls{nop} might terminate directly without waiting for the \gls{alu} to calculate some values which will never be used.
-
-In \gls{riscv}, there is no dedicated \gls{lr} or \gls{sp}.
-Instead, it is the obligation of the software to implement certain calling conventions.
-Both jump instructions of \gls{riscv}, \gls{jal} and \gls{jalr}, receive a general purpose register as argument to which they store the return address of the respective jump which - in practice - will serve as \gls{lr}.
-
-\gls{riscv} supports up to 4096 \glspl{csr} for additional state.
-On the user-level without any extension, there are no \glspl{csr} present so we will postpone a more detailed introduction to \glspl{csr} to section \ref{sec:rv-priv-arch} where we have a look at the privileged architecture of \gls{riscv}.
 
 \paragraph{Instructions}
 

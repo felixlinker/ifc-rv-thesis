@@ -304,12 +304,164 @@ To achieve this, it must be tackled how such an information flow policy as propo
 % TODO: Do I answer above questions?
 
 \subsection{RISC-Architectures}
+\label{sec:riscs}
+
+As a target of verification, this thesis will work with \gls{risc} architectures.
+In \citetitle{Hennessy12}, \gls{risc} architectures are defined by three main concepts \cite[p.C-4]{Hennessy12}:
+\begin{itemize}
+    \item Only load and store instructions affect or touch memory
+    \item All other instructions work on registers only and always modify the full width of registers
+    \item There are very few instructions and their encoding is mostly homogenous
+\end{itemize}
+
+The latter aspect coined the name \textit{reduced} instruction set computer architecture.
+\gls{risc} architectures are often times understood as the counterparts to \gls{cisc} architectures which describe all architectures that do not implement aforementioned \gls{risc}-properties.
+The most prominent example of a \gls{cisc} architecture is the \gls{x86} architecture which is implemented by most processors manufactured by intel.
+
+In this section, three \gls{risc} architectures will be introduced: the \gls{arm} architecture, \gls{mips} and \gls{riscv}.
+It will turn out that these architectures can mainly be differentiated by the balance of customizability vs. feature-richness.
+Whereas the \gls{riscv} architecture is most customizable it also supports the fewest features out of the box.
+On the other hand, the \gls{arm} architecture is very feature-rich but not very much customizable.
+The \gls{mips} architecture strikes a middle-ground of these two extremes.
+
+The goal of this section is to illustrate the features and fundamental design that comes with realistic and realistic \gls{risc} architectures.
+It was decided to focus on \gls{risc} architectures as a target of verification because their simpler approach to \glspl{isa} makes them far easier to analyze and model than \gls{cisc} processors.
+Using a \gls{risc} architecture will allow for implementing an architecture in scope of this thesis while the results will still be applicable and comparable to real-world \glspl{isa} that are in use as of today.
+Although choosing a \gls{risc} architecture as a target of verification already embodies a facilitates an easier implementation of the approach of this thesis, verifying a complete architecture still might be out of scope to be verified as part of a master thesis.
+Introducing more than one \gls{risc} architectures will allow for choosing parts to exclude in the verification model without harming the significance of the thesis's results.
 
 \subsubsection{Arm}
 
-\subsubsection{MMIX}
+The \gls{arm} architecture knows three \textit{profiles}:
+\begin{itemize}
+    \item The generic \textit{application profile} Armv8-A,
+    \item the \textit{real-time profile} Armv8-R designed for deployment scenarios in which real-time responses from a processor is crucial, e.g. in aviation,
+    \item and the \textit{microcontroller} profile Armv8-M aimed at embedded systems.
+\end{itemize}
+
+Here, it will be focused on the Armv8-A profile.
+The \citetitle{Armv8} \cite{Armv8} introduces the \gls{arm} A-class architecture as a \gls{risc} architecture with three key properties:
+\begin{displaycquote}[p.A1-34]{Armv8}
+    \begin{itemize}
+        \item A large uniform regsiter file.
+        \item A \textit{load/store} architecture, where data-processing operations only operate on register contents, not directly on memory contents.
+        \item Simple addressing modes, with all load/store addresses determined from register contents and instruction fields only.
+    \end{itemize}
+\end{displaycquote}
+
+These properties already meet most of the aspects of \gls{risc} architectures as defined in \cite{Hennessy12}.
+When it comes to the aspect of a homogenous instruction set, the \gls{arm} architecture makes some trade-offs on this aspect to support the three profiles available.
+The \gls{arm} architecture knows three instruction sets: A64, a fixed-length 32-bit encoding instruction set for 64-bit systems, A32, a fixed 32-bit encoding length-instruction set for 32-bit systems, and T32, a variable-length instruction set that uses both 16- and 32-bit encodings to support compressed instructions.
+The Armv8-A architecture eases the challenge of correctly decoding these different instruction sets by the concept of \textit{execution states}.
+The Armv8-A supports to of these execution states: AArch64, a 64-bit execution state, and AArch32, a 32-bit execution state.
+An \gls{arm} A-class processor accepts to receive A64 instructions when in the AArch64 execution state and A32 or T32 instructions when in the AArch32 execution state.
+
+The Armv8-A specification by standard defines how the processor interacts with memory which includes the specification of a cache and a memory model covering virtual addresses, memory access order control, memory access synchronization, and application level memory restrictions.
+Furthermore, it is defined how processors work in a multi-processor setup and how debugging of the architecture works.
+The Armv8-A architecture also supports floating point and vector arithmetic standardly.
+
+If these features do not suffice for a specific use-case, there are nine optional extensions available that can be supported by an Armv8-A processor which include an extension for accelerating cryptographic tasks, for enhancing the reliability, availability and serviceability of the processor, for monitoring and profiling, for enhanced vector arithmetic, and for memory partitioning.
+
+As for registers, the Armv8-A architecture supports the most versatile types of registers of all \gls{risc} architectures to be compared in this thesis.
+Depending on the execution state, 13 to 31 32- or 64-bit registers are supported.
+Additional to this, there is a \gls{pc}, a dedicated \gls{sp} and some exception link registers.
+A general purpose register is used as the standard \gls{lr}.
+Furthermore, there are 32 64- or 128-bit registers for floating point and vector arithmetic and other \glspl{csr} that hold status information of the architecture.
+
+\subsubsection{MIPS}
+
+As opposed to the \gls{arm} architecture, the \gls{mips} architecture does not only support a smaller range of registers, it also provides fewer features by standard, i.e. without extensions.
+It introduces itself in the introductory document \citetitle{MIPS} \cite{MIPS} as: \textcquote[p.21]{MIPS}{based on a fixed-length, regularly encoded instruction set \textelp{which} uses a load/store data model, in which all operations are performed on operands in processor registers, and main memory is accessed only by load and store instructions}.
+As for the aspect of a large, uniform register file, \gls{mips} supports 32 32- or 64-bit registers the first of which is hardwired to zero, a \gls{pc} and some \glspl{csr}.
+Contrary to the \gls{arm} architecture, there are no dedicated \glspl{lr} or \gls{sp}.
+As indicated by the options in the register width, \gls{mips} supports both a 32- and a 64-bit architecture and instruction sets.
+
+\gls{mips} comes with less features out of the box than the \gls{arm} architecture; the specification only touches memory interaction including memory virtualization and cache, debugging and the interaction with a standard coprocessor that implements floating point arithmetic.
+\gls{mips}, however, is far more customizable than the \gls{arm} architecture.
+Whereas in case of the latter, customizability is only given by choosing different extensions, a processor does not need to implement all features defined in the \gls{mips} specification to be \gls{mips} compliant.
+Certain features can be left out which is called \textit{subsetting} of the architecture.
+Additionally to that, there also are extensions to the architecture.
+\gls{mips} allows to extend the architecture by user defined instructions, compressed instructions, enhanced media processing, enhanced geometry processing, smart card or object interaction, signal processing, multi threading, \gls{os} virtualization, vector arithmetic and an extensions aimed specifically at microcontrollers.
 
 \subsubsection{RISC-V}
+
+\gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and has undergone many changes since then.
+\gls{riscv}'s architectural specification is divided into two volumes: volume specifies 1 the base user-level \gls{isa} which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
+The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
+Such groups include for example machine- and supervisor-level \glspl{isa} and the description of a platform level interrupt controller.
+
+% TODO: Add motivation/goals of RISC-V
+
+This thesis works with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
+\gls{riscv} understands itself as a highly customizable architecture.
+Currently, there are four variants of a base integer instruction set - one of which must be implemented by any \gls{riscv} processor - and 13 optional extensions.
+The base integer instruction sets include instructions for integer arithmetic, memory operations (loads and stores), control transfer (jumps and branches) and platform management (environment calls and status register operations).
+The base integer instruction sets mainly differ in the word-size and register number.
+To cope with these differences, they also make small adjustments to some functionalities but only slightly change the instruction set itself.
+These four base integer instruction sets are given by:
+\begin{description}
+    \item[RV32I] Base integer instruction set
+    \item[RV32E] Base integer instruction set for embedded computing
+    \item[RV64I] Base integer instruction set for a 64-bit architecture
+    \item[RV128I] Base integer instruction set for a 128-bit architecture
+\end{description}
+
+The \gls{riscv} manual differentiates between standard and non-standard extensions but only introduces standard ones.
+A standard extension is meant to be compatible with any other standard extension and should be \textcquote{RiscVISA}{generally useful} whilst non-standard extensions might add support for more niche use-cases and do not need to be compatible with all standard extensions.
+
+The set of functionalities offered by standard extensions begins at quite low level with the probably most mundane being the standard extension for integer multiplication and division.
+You can find a list of all standard extensions in table \ref{tbl:rv-exts}.
+
+\begin{table}
+    \centering
+    \begin{tabular}{| c | l |}
+        \hline
+        \textbf{M} & Integer multiplication and division \\
+        \textbf{A} & Atomic instructions \\
+        \textbf{F} & Single-precision floating-point arithmetic \\
+        \textbf{D} & Double-precision floating-point arithmetic \\
+        \textbf{Q} & Quad-precision floating-point arithmetic \\
+        \textbf{L} & Decimal floating-point arithmetic \\
+        \textbf{C} & Compressed instructions \\
+        \textbf{B} & Bit manipulation \\
+        \textbf{J} & Dynamically translated languages \\
+        \textbf{T} & Transactional memory \\
+        \textbf{P} & Packed-SIMD instructions \\
+        \textbf{V} & Vector operations \\
+        \textbf{N} & User-level interrupts \\
+        \hline
+    \end{tabular}
+    \caption{All \gls{riscv} standard extensions}
+    \label{tbl:rv-exts}
+\end{table}
+
+A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{RiscVISA}{\gls{isa} naming string} which comes in the following form:
+
+\begin{grammar}
+    <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
+\end{grammar}
+
+An example for a naming string is the very common \gls{isa}-subset RV64IMAFD which officially is abbreviated by RV64G.
+This subset includes the integer multiplication and division, user-level interrupts, atomic instructions, single-precision and double-precision floating-point arithmetic extensions.
+
+A \gls{riscv} core consists of multiple \glspl{hart}.
+Each \gls{hart} controls its own set of registers including a \gls{pc} and is equipped with its own instruction fetch unit.
+However, multiple \glspl{hart} share the same memory.
+
+A \gls{hart} might either control 16 or 32 general purpose registers which are named from x0 to x31.
+All but one instruction sets support 32 general purpose registers whereas the exception to this is the base instruction set aimed at embedded computing, RV32E, which only supports 16 general purpose registers.
+
+Similarly to the \gls{mips} architecture, the first of these general purpose registers is hardwired to zero and for example can be used as a target register when the result of an instruction is not needed.
+Also, there is no dedicated \gls{lr} or \gls{sp}.
+\gls{riscv} supports up to 4096 \glspl{csr}.
+
+\subsubsection{Summary}
+
+In the last the sections, it was shown that the \gls{arm}, \gls{mips}, and \gls{riscv} architectures implement the three main properties of \cite{Hennessy12} characterizing \gls{risc} architectures: a small and uniformly encoded instruction set, a large and uniform register file and a load/store architecture.
+Whereas the \gls{arm} architecture supported customizability only by a list of extensions and \gls{mips} added user defined instructions and allowed subsetting its core specification, \gls{riscv} took the idea of customizability and made it part of the core idea of the architecture.
+\gls{riscv} supports the most simple yet fully specified processor in form of the RV32E.
+It was this degree of customizability and simplicity that led to the decision to use \gls{riscv} as a target of verification.
+There are no major features \gls{riscv} lacks in that are crucial to the concept of a \gls{risc} architecture.
 
 \subsection{Processor Vulnerabilities}
 
