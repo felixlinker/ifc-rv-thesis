@@ -463,11 +463,174 @@ Whereas the \gls{arm} architecture supported customizability only by a list of e
 It was this degree of customizability and simplicity that led to the decision to use \gls{riscv} as a target of verification.
 There are no major features \gls{riscv} lacks in that are crucial to the concept of a \gls{risc} architecture.
 
-\subsection{Processor Vulnerabilities}
+\subsection{The Ecosystem of an ISA}
+\label{sec:ecosystem}
 
-\subsubsection{Processors and their Ecosystem}
+\glspl{isa} are embedded in a larger context.
+The goal of this thesis is to verify an \gls{isa} against higher level properties.
+For this undertaking to be worthwhile, it must be clear what these properties can achieve to verify and what they can not.
 
-\subsubsection{Common Attack Vectors}
+An \gls{isa} sits between the hardware and compilers which are utilized by programs and in particular \glspl{os}.
+It serves an analogous purpose to a programming language (PL).
+The latter is used by programs and \glspl{os} as a specification of the input language to compilers, the former is used by compilers as a specification of the input language to the actual hardware.
+This relation is depicted in figure \ref{fig:ecosystem}.
+Yet, this thesis does not verify \glspl{os}, programs, compilers or hardware.
+With these boundaries in mind, it must be decided what will be incorporated in the model that will be developed over the course of this thesis.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[node distance=1.2cm and 0.2cm,auto]
+        \tikzstyle{block} = [
+            draw=black,
+            rectangle,
+            minimum width=2.4cm,
+            minimum height=0.8cm,
+            fill=white,
+        ]
+        \tikzstyle{vecarrow} = [
+            thick,
+            decoration={
+                markings,
+                mark=at position 1 with {
+                    \arrow[semithick]{open triangle 90}
+                }
+            },
+            double distance=3.5pt,
+            shorten >= 4.5pt,
+            preaction = {decorate},
+            postaction = {
+                draw,
+                line width=3.5pt,
+                white,
+                shorten >= 3.5pt
+            }
+        ]
+
+        \node[block] (hardware) {Hardware};
+        \node[block] (compilers) [above=of hardware] {Compilers};
+        \draw[vecarrow] (compilers) to (hardware);
+
+        \node[block] (os) [above right=of compilers] {OS};
+        \node[block] (programs) [above left=of compilers] {Programs};
+
+        \begin{scope}[on background layer]
+            \draw[vecarrow] (os.center) to (compilers);
+            \draw[vecarrow] (programs.center) to (compilers);
+        \end{scope}
+
+        \coordinate (yMid) at ($(programs)!0.5!(os)$);
+        \coordinate (mid1) at ($(yMid)!0.5!(compilers)$);
+        \coordinate (right1) at (os.east |- mid1);
+        \coordinate (mid2) at ($(compilers)!0.5!(hardware)$);
+        \coordinate (right2) at (os.east |- mid2);
+        \draw[dashed] (programs.west |- mid1) -- (right1);
+        \draw[dashed] (programs.west |- mid2) -- (right2);
+
+        \node[draw=none] (pl) [right=0cm of right1] {PLs};
+        \node[draw=none] (isas) [right=0cm of right2] {ISAs};
+    \end{tikzpicture}
+    \caption{The ecosystem of an \gls{isa}}
+    \label{fig:ecosystem}
+\end{figure}
+
+\subsubsection{Microarchitectures}
+\label{sec:microarchs}
+
+When an \gls{isa} is implemented in a chip, the layout and design of this chip is often times called \textit{microarchitecture}.
+Such implementations usually incorporate sophisticated features that speed up operation of the chip such as pipelining.
+Instructions that are defined as part of an \gls{isa} are not atomic in regard to their execution; there usually are five steps that must be taken in order to execute an instruction (cf. \cite[p.286]{Patterson13}):
+\begin{enumerate}
+    \item Instruction fetch - load the instruction from memory
+    \item Instruction decode and register file read - Read the fetched instruction and read registers targeted by the instruction
+    \item Execution or address calculation - Use the \gls{alu} to perform the instruction or to calculate a memory address
+    \item Data memory access - Access the memory for a read or write
+    \item Write back - Store the result of the instruction in a register
+\end{enumerate}
+The microarchitecture comprises hardware modules that implement each of this steps.
+To use the microarchitecture to the full, it is much more efficient to use this modules in a pipeline where after the first instruction has been fetched and the respective results are handed to the module which decodes it, the next instruction is fetched in parallel.
+In an ideal scenario, executing $ n $ instructions using a pipeline of length $ p $ only takes $ n + p - 1 $ cycles whereas without pipelining this would take $ n * p $ cycles\footnote{%
+    For a more thorough introduction to pipelining the reader is referred to chapter 4 in \cite{Patterson13}.
+}.
+
+Such features introduce \textit{sub-architectural state}.
+For example, pipelining introduces the \textit{state} of the pipeline which is sub-architecturally because it is independent of the \gls{isa}.
+An accurate model of an \gls{isa} that aims to be true to current implementations would need to include such features.
+However, since the goal of this thesis is to verify an \gls{isa}, the model to be verified must be implementation independent.
+Verifying such hardware features falls in the realm of functional correctness.
+Features such as pipelining face the risk that an implementation turns out to violate the \gls{isa} because instructions might execute not as they should.
+Adding to the first argument of the model not being implementation independent, including sub-architectural state into the model would lead to an indirect verification of the functional correctness of such parts, i.e. whether they truly implement the \gls{isa}.
+This thesis, however, is not about verifying how pipelining can be implemented correctly but about \textit{higher level} properties of \glspl{isa}.
+
+Additionally, aspects of the functional correctness of an implementation towards the \gls{isa} are served adequately by existing methods:
+In \cite{Zhang15, Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher level properties in \cite{Beatty94, Berezin98, Trippel19} or against their actual specifications in form of \glspl{isa} in \cite{Burch94, Reid16}.
+
+\subsubsection{Virtual Memory}
+
+Virtual memory is usually managed by \glspl{os} and mostly serves two purposes: \textcquote[p.428]{Patterson13}{to allow efficient and safe sharing of memory along multiple programs \textelp{} and to remove the programming burdens of small, limited amount of main memory.}
+Virtual memory is a system that replaces physical memory addresses with virtual ones.
+The virtual address space usually is far bigger than the physical.
+Memory is divided into pages with a virtual address being made up of a page index and a page offset.
+On accessing an address, the page index is translated to a physical memory address which taken together with the page offset results in the respective physical memory address.
+This allows programs to treat their \enquote{personal} address space as continuous whereas in reality it comprises several pages of memory scattered all over physical memory.
+
+Virtual memory usually is part of \glspl{isa}; e.g. the \gls{arm} architecture includes the specification of the Memory Management Unit (MMU) which translates addresses and is programmed by some \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
+The \gls{riscv} specification also includes a system for managing virtual memory with an address space of 32, 39, or 48 bits (cf. section 4 \cite{RiscVISAP}).
+Here, the setup of virtual memory also is delegated to an \gls{os} and can be configured by programming system registers.
+
+Again, it is important that hardware modules that handle address translation work functionally correct.
+This has been covered in \cite{Dalinger05} and will be left out in this context to keep the target of verification implementation independent.
+On the other hand, it can be verified whether virtual memory management systems \textit{correctly} isolate programs and correctly setup virtual memory.
+This problem, however, falls in the realm of \gls{os} verification and has been touched by \cite{Vaynberg12} in detail.
+The reader is also referenced to the sel4 project \cite{Klein09} in which a complete kernel was formally verified.
+
+With this research in mind, it was decided to not include virtual memory addresses in the model to be targeted for verification.
+Mechanisms that provide isolation between memory regions will be modelled, however, the model does not benefit from a simulation of virtual memory addresses.
+Addresses will be treated as physical ones.
+
+\subsubsection{Threat Model}
+
+Now that it has been ruled out to include sub-architectural hardware mechanisms or virtual memory in the model targeted for verification, the question still is open what \textit{will} be part of the model.
+This includes the question of the threat model of the higher level properties to be verified.
+
+A key feature of modern architectures that is used by modern \glspl{os} are different privileges levels.
+For example, the \gls{riscv} architecture supports up to three different privilege levels; from lowest to highest: user-mode, supervisor-mode and machine-mode.
+Higher privilege levels usually give access to more system control registers, specific instructions and often times work hand in hand with specific semantics of system registers, e.g. \gls{riscv} supports physical memory regions which support settings for each privilege level, i.e. certain regions of physical can be set readable to machine- but not user-mode, etc.
+
+In a sense, privilege modes play a similar role to virtual memory.
+Both concepts are used by \glspl{os} in very fundamental ways and therefore are relevant for the security of a system as a whole.
+Yet, it can be said that hardware only supports the foundation for virtual memory, i.e. address translation and the possibility to set properties of memory regions, whereas privilege levels and interrupts are systems offered to the \gls{os} and implemented in the hardware completely.
+\glspl{os} use memory management systems to offer virtual memory to applications but rely on privilege levels to function at all.
+While it was argued that verification of virtual memory systems should be targeted at \glspl{os} the same can not be said for the verification of privilege levels.
+Thus, this thesis will focus on the mechanics of privilege levels in the process of verification.
+
+This links back to \cite{Reid17}; recall that one goal of this work was to \textcquote[p.88:2]{Reid17}{express the major guarantess that programmers depend on}.
+Since \glspl{os} heavily rely on correct implementations of privilege levels and especially the mechanics to transition between those, it is of specific interest to verify high level properties about the workings of these mechanisms which will lead tp insights in these guarantees.
+
+Privilege levels go hand in hand with interrupt and/or exception handling.
+Interrupts generally are used in \glspl{isa} to transfer control to specific privilege modes and/or programs, e.g. whenever you press a key on your keyboard, a keyboard interrupt is generated that is handled by the appropriate device driver and propagated to the correct application, e.g. your text editor or shell, by the \gls{os}.
+Exceptions usually refer to error conditions that arise during computation.
+For example, coming back to physical memory regions in \gls{riscv}, if user-mode would attempt to read from a region unreadable to it an exception would be generated.
+It is the obligation of software running in machine-mode to handle such error conditions - usually such software comes as part of an \gls{os}.
+
+To put the mechanics of transitions between privilege levels to a test, the threat model taken as a basis of the verification process in this thesis is the following\footnote{%
+    Since the decision to work with \gls{riscv} in this thesis has already been made, the threat model will be phrased with this in mind.
+}:
+\begin{quote}
+    Assume that user-mode has been completely compromised.
+    Is there any way it can gain access to secret data handled by machine-mode or it can gain control over machine-mode?
+\end{quote}
+
+Intuitively, linking privilege modes back to \glspl{os}: Assume you have a malicious app on your computer.
+Is there any way it can use the \gls{isa} that is built into your computer to either access secret data or hijack your \gls{os}?
+
+This goes beyond what can be verified purely in terms of hardware verification as discussed in section \ref{sec:microarchs}.
+Even if it could be assumed that the hardware your computer is running on accurately implements the respective \gls{isa} - as long as the design of that \gls{isa} is flawed in the sense that it has security holes baked into it, i.e. into the \gls{api} that is used by the \gls{os} to give instructions to the hardware, there is no hope for secure systems\footnote{%
+    Also research verifying hardware against higher-level properties has been discussed in section \ref{sec:microarchs}.
+    Without going into details on this research, the approach of this thesis still is an important addition to this research as it is more general, i.e. implementation independent whereas hardware verification by its very nature is implementation dependent.
+}.
+
+% TODO:
+In this threat model, timing channels are excluded.
 
 \subsection{Model Checking}
 
