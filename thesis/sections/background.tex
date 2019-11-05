@@ -850,6 +850,7 @@ In this case, we'd have skipped the whole step of abstracting from some computat
 Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing \gls{spin}.
 
 \subsubsection{\muZ{} \& \gls{spacer}}
+\label{sec:spacer}
 
 \muZ{} is a \gls{datalog}-engine that provides querying fixed points with constraints and has been proposed in \cite{Hoder11}.
 According to \textit{An Introduction to Database Systems} \cite[p.790ff]{Date00}, \gls{datalog} is a descriptive and querying language that originated in the field of database management systems.
@@ -1014,3 +1015,257 @@ In case of a property failing to be verified, no counterexamples are given but \
 For \gls{spacer} or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
 
 \subsubsection{nuXmv}
+
+\gls{nuxmv} \cite{Cavada14} is a symbolic model checker that accepts the \gls{smv} input language and is able to model check invariants, \gls{ltl} and \gls{ctl} formulas.
+Symbolic model checkers have been introduced in \cite{Burch92} and encode the state-space of the system to model check in \glspl{bdd} which work analogously to binary decision trees with the major difference that \glspl{bdd} are not trees but directed, acyclic graphs.
+
+\gls{nuxmv} supports both finite and infinite state transition systems.
+These systems are expressed in the form of \textit{modules} in the \gls{smv} input language.
+At its heart, a module consists of a collection of variables, \smv{INIT} (i.e. initial) constraints and \smv{TRANS} (i.e. transition) constraints.
+There are more syntactical constructs, e.g. macros or constants, but these do not add to the functionality of \gls{nuxmv} but either serve as syntactic sugar or enhance on performance if used.
+A module in \gls{nuxmv} induces a set of state transition systems.
+The state space of such a system is given by the variables of the module, i.e. an assignment to all variables is a state of the system, the initial state must model the \smv{INIT} constraints the transition relation must model the \smv{TRANS} constraints.
+Whenever \gls{nuxmv} checks a property $ P $ for a module $ M $ it is checked if every state transition system $ S $ which is induced by $ M $ models $ P $.
+
+\gls{smv} is a strongly typed language.
+Variables can be of type boolean, integer range, a custom enumeration, bit-vectors or arrays in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
+\smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit-vectors, arrays, etc., such as basic arithmetic, array indexing, standard boolean operators on both bit-vector and boolean level, but also case and if-then-else expressions.
+\smv{TRANS} constraints also are forumlas of propositional logic but additionally support use of the \smv{next(...)} operator which references to the value in the next state of some expression.
+
+\begin{example}
+    Consider the following example module depicted in snippet \ref{snpt:nuxmv} modeling a pair of traffic lights; one for pedestrians crossing the street, the other for cars driving on the street.
+
+    \begin{figure}
+        \begin{lstlisting}[
+            language=smv,
+            caption={An example of the \gls{smv} input language},
+            label={snpt:nuxmv}
+        ]
+            MODULE main
+                IVAR
+                    ped_button : boolean;
+                VAR
+                    ped_waiting : boolean;
+                    traffic_lights : { r, g };
+                    ped_lights : { r, g };
+
+                INIT traffic_lights != ped_lights;
+                ASSIGN
+                    init(ped_waiting) := FALSE;
+                    next(ped_waiting) :=
+                        (ped_lights = g ? FALSE : ped_waiting | ped_button);
+                    next(ped_lights) :=
+                        (ped_waiting ? g : r);
+                    next(traffic_lights) :=
+                        (next(ped_lights) = g ? r : g);
+        \end{lstlisting}
+    \end{figure}
+
+    This module uses an \smv{IVAR} - \textit{input variable} - declaration; a language construct that hasn't yet been introduced.
+    Input variables are a type of variables in \gls{nuxmv} with the characteristic that they are \enquote{read-only}.
+    Technically, every variable is read-only since they can not be assigned directly but only constrained.
+    \smv{INPUT} variables, however, are \enquote{read-only} because they cannot be used in \smv{INIT} constraints or inside \smv{next(...)} expressions.
+    In other words, the transition of input variables is completely random.
+    In this case, the input variable to the module signals whether a pedestrian just pressed the button indicating the desire to cross the road.
+
+    Furthermore, the module comprises three ordinary variables: the boolean variable \smv{ped_waiting} which indicates whether a pedestrian is waiting to cross the road as well as \smv{traffic_lights} and \smv{ped_lights} modelling the traffic or pedestrian lights and both are of an enum type that contains the symbols \smv{r} for red and \smv{g} for green.
+
+    Then, there is one \smv{INIT} constraint asserting that one of the traffic lights is green and the other is red at startup.
+    All other constraints are expressed in the \smv{ASSIGN} statement which is syntactic sugar for a group of \smv{INIT} or \smv{TRANS} statements.
+    Its semantics should be clear immediately.
+    \smv{ped_waiting} is initialized to \smv{FALSE} and becomes false after the traffic lights switched to green; otherwise it can become \smv{TRUE} whenever the input variable \smv{ped_button} happens to be \smv{TRUE}.
+    The pedestrian lights switch to green whenever some pedestrian is waiting and otherwise switch to red, the traffic lights are coupled to the pedestrian lights and become red whenever the pedestrian lights are green and become green otherwise.
+\end{example}
+
+\gls{nuxmv} supports four types of specifications: invariants, \gls{ltl} or \gls{ctl} formulas, and \gls{psl} expressions.
+Here, an introduction into \gls{psl} will be skipped since \gls{psl} is directly aimed at hardware verification (cf. \cite{Foster05}).
+
+Invariants are the simplest form of specification and can also be expressed in both, \gls{ltl} and \gls{ctl}.
+In the context of \gls{nuxmv}, an invariant is formally given by a next-expression, i.e. an expression that can contain the use of the \smv{next} function.
+Invariants specify that something (i.e. the respective next-expression) must be true in all reachable states of a model.
+
+On the other hand, \gls{ltl} is a temporal logic and as such supports the specification of properties over time.
+Both, \gls{ltl} and \gls{ctl}, will be introduced semi-formally here as presented in the \citetitle{nuXmv} \cite{nuXmv}.
+Interpretations and models of an \gls{ltl} formula are infinite execution paths of a system, or in the context of \gls{nuxmv}.
+Let $ T = (t_1, t_2, \dots) $ be such an execution path.
+The most simple form of an \gls{ltl} formula again is a next-expression \smv{p}.
+$ T $ models \smv{p} in \gls{ltl} if \smv{p} is true in $ t_1 $.
+Furthermore, there are five main temporal operators.
+\gls{ltl} formulas are defined syntactically and semantically in the usual, recursive way:
+% TODO: truly inductive definition
+\begin{description}
+    \item[Next] \lstinline[language=smv,mathescape=true]{$ \varphi := $ X p}: $ T $ models $ \varphi $ if \smv{p} is true in $ t_2 $.
+    \item[Globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ G p}: $ T $ models $ \varphi $ if \smv{p} is true for \textit{all} $ t_i $, $ 1 \leq i $.
+    \item[Finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ F p}: $ T $ models $ \varphi $ if \smv{p} is true for \textit{some} $ t_i $, $ 1 \leq i $.
+    \item[Until] \lstinline[language=smv,mathescape=true]{$ \varphi := $ p U p'}: $ T $ models $ \varphi $ if \smv{p} is true in $ t_1 $ to $ t_i $, $ 1 \leq i $ and at $ t_{i + 1} $, \smv{p'} is true.
+    \item[Releases] \lstinline[language=smv,mathescape=true]{$ \varphi := $ p V p'}: $ T $ models $ \varphi $ if \smv{p'} holds in $ t_1 $ to $ t_i $, $ 1 \leq i $ and in $ t_i $ also \smv{p} is true.
+    Alternatively, $ i $ might not be bounded, i.e. \smv{p} then is never and \smv{p'} globally true.
+\end{description}
+
+When an \gls{ltl} specification \smv{p} is checked by \gls{nuxmv}, it is verified that \smv{p} is true for \textit{all} infinitely long execution paths.
+Consequently, an invariant \smv{p} can also be expressed as the \gls{ltl} formula \smv{G p}.
+
+Additionally, there are analogous operators for the past.
+\smv{Y p} and \smv{Z p} are the past-version of \smv{X} with the distinction that \smv{Y} is false at $ t_1 $ and \smv{Z} is true at $ t_1 $.
+The \enquote{Historically} operator \smv{H p} is the counterpart to \smv{G} and the \enquote{Once} operator \smv{O p} is the counterpart to \smv{F}.
+
+% TODO: Grafik für LTL
+
+\gls{ctl} formulas share much of the idea of \gls{ltl} formulas but they differ in the interpretations and models for formulas.
+Whereas in \gls{ltl} an interpretation of a formula is a infinitely long execution path of a transition system, in \gls{ctl} an interpretation of a formula is a transition system itself or more specifically: the unwinded transition relation of a transition system as a tree (hence the name computation \textit{tree} logic).
+Therefore, it is straightforward how \gls{ctl} formulas are checked by \gls{nuxmv}: it is checked whether all transition systems induced by the module model the formula.
+Again, the most simple form of a \gls{ctl} formula is a next-expression \smv{p}.
+To illustrate the models-relation for \gls{ctl}, consider the example tree depicted in figure \ref{fig:ctl-int}.
+Such a tree $ T $ models \smv{p} is \smv{p} is true in state $ x_0 $.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[
+        level/.style={sibling distance=30mm/#1,level distance=10mm},
+        vertex/.style={draw=black,circle,minimum height=2mm,minimum width=2mm},
+    ]
+        \node[vertex] {$ x_0 $}
+        child {
+            node[vertex] {$ x_1 $}
+            child {
+                node[vertex] {$ x_3 $}
+                child {node {\vdots}}
+            }
+            child {
+                node[vertex] {$ x_4 $}
+                child {node {\vdots}}
+            }
+        }
+        child {
+            node[vertex] {$ x_2 $}
+            child {
+                node[vertex] {$ x_5 $}
+                child {node {\vdots}}
+            }
+            child {
+                node[vertex] {$ x_6 $}
+                child {node {\vdots}}
+            }
+        };
+    \end{tikzpicture}
+    \caption{\gls{ctl} Interpretation Example}
+    \label{fig:ctl-int}
+\end{figure}
+
+% TODO: truly inductive definition
+The temporal operators supported by \gls{ctl} are the following:
+\begin{description}
+    \item[Exists globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EG p}: $ T $ models $ \varphi $ if there exists an infinite path $ (x_0, \dots) $ in $ T $ such that \smv{p} is true for all $ x_i $ on the path.
+    \item[Exists next state] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EX p}: $ T $ models $ \varphi $ if there exists a next state $ x_i $ to $ x_0 $ such that \smv{p} is true in $ x_i $.
+    \item[Exists finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EF p}: $ T $ models $ \varphi $ if \smv{p} is true in some $ x_i $
+    \item[For all globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AG p}: $ T $ models $ \varphi $ if for all infinite paths $ (x_0, \dots) $ in $ T $, \smv{p} is true in $ x_i $.
+    \item[For all next state] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AX p}: $ T $ models $ \varphi $ if for all successor states $ x_i $ of $ x_0 $, \smv{p} is true in $ x_i $.
+    \item[For all finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AF p}: $ T $ models $ \varphi $ if for all infinite paths $ (x_0, \dots) $ there is any $ x_i $ such that \smv{p} is true in $ x_i $.
+\end{description}
+
+It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and \smv{F} are adopted to \gls{ctl} by existentially and universally quantifying each.
+
+\begin{example}
+    To illustrate the relation of \gls{ltl} and \gls{ctl} consider some module $ M $ and its transition tree $ T $ as well as the set of all execution paths $ P $.
+    Now let \smv{p} be some next expression.
+    One has:
+    \begin{itemize}
+        \item $ T $ models \smv{AG p} iff for all $ p \in P $, $ p $ models \smv{G p}
+        \item $ T $ models \smv{EG} iff there exists a $ p \in P $ such that $ p $ models \smv{G p}
+    \end{itemize}
+    The same applies to \smv{X} and \smv{F} respectively.
+    However, in general, \gls{ltl} and \gls{ctl} do not share the same expressive power and neither is more expressive than the other.
+\end{example}
+
+\begin{example}
+    Consider the example invariant, \gls{ltl} and \gls{ctl} specifications depicted in snippet \ref{snpt:nuxmv-spec}.
+    These specify some properties about the traffic lights example in snippet \ref{snpt:nuxmv}.
+
+    \begin{figure}
+        \begin{lstlisting}[
+            language=smv,
+            caption={An example of the \gls{smv} specification language},
+            label={snpt:nuxmv-spec}
+        ]
+            INVARSPEC traffic_lights != ped_lights;
+            LTLSPEC G (ped_button -> F ped_lights = g);
+            CTLSPEC (AF traffic_lights = g) & (AF ped_lights = g);
+        \end{lstlisting}
+    \end{figure}
+
+
+    In \gls{nuxmv}, specifications are introduced by one of \smv{INVARSPEC}, \smv{LTLSPEC} or \smv{LTLSPEC} and optionally may be preceded by a name which is omitted in this example.
+    The invariant in the example states that at no point can the traffic and the pedestrian lights show green or red simultaneously.
+    The \gls{ltl} formula specifies that whenever the button for the pedestrians is pressed, at some point the pedestrian lights must show green.
+    The \gls{ctl} formula specifies that in unwindings of the transition relation, at some point the traffic lights must show green and at some point the pedestrian lights must show green.
+
+    In this example, both the invariant and the \gls{ltl} specification are met by the model.
+    The \gls{ctl} specification though is false.
+    \gls{nuxmv} gives the following counter-example:
+
+    \begin{lstlisting}
+        -- specification (AF traffic_lights = g & AF ped_lights = g)  is false
+        -- as demonstrated by the following execution sequence
+        Trace Description: CTL Counterexample
+        Trace Type: Counterexample
+        -> State: 1.1 <-
+        ped_waiting = FALSE
+        traffic_lights = g
+        ped_lights = r
+    \end{lstlisting}
+
+    Counter-examples in \gls{nuxmv} always show a finite fraction of an infinite execution path.
+    Only one state being depicted here indicates that the computation tree with the initial state given above and in which no variable ever changes violates the \gls{ctl} formula at hand.
+    This tree illustrates a world in which the button for pedestrians is never pressed and in this world, the pedestrian lights will correctly never show green.
+
+    While it is not explicitly mentioned in the user manual how input variables relate to the states in the unwinding of the transition relation for the interpretation of a \gls{ctl} formula, it is assumed here that the input variables are not part of the state space; otherwise the counter example given above would not apply since the state where \smv{ped_button} becomes true trivially is reachable.
+    This assumption is supported by the fact that in \gls{nuxmv}, \gls{ctl} formulas must not reference input variables.
+\end{example}
+
+Whereas \gls{spin} was problematic because its input language didn't match the needs of this thesis, and \gls{spacer} or \muZ{} were problematic because there output does not match the needs of this thesis, \gls{nuxmv} delivers in both aspects.
+The traces generated as counter-examples serve as illustration what specifically went wrong on a property, i.e. how information flowed through the architecture.
+The input language supports models that are very conservative with the regards to the model of computation that is taken as a basis.
+Having variables and transition allows to implement pretty much any sequential system.
+Therefore the decision was made to use \gls{nuxmv} as a verification engine.
+
+The idea for the implementation is straight-forward:
+\begin{itemize}
+    \item Use input variables to model instructions to the architecture
+    \item Use variables to model the architectural state, i.e. registers, etc.
+    \item Use transition constraints to implement the behavior of each instruction
+\end{itemize}
+
+For reasons that at this point can not be discussed meaningfully but will become clear in section \ref{sec:checking}, it was furthermore decided to express the information flow control of the architecture in \gls{ltl}.
+\gls{nuxmv} supports a plethora of techniques to check specifications, e.g. the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
+% TODO: \gls{ifc}
+In the practical work for this thesis, after the decision to implement the information flow control in \gls{ltl} has been made, a couple of these techniques which apply to \gls{ltl}-checking were tested out.
+In this informal evaluation it was found that the K-Liveness algorithm proposed in \cite{Claessen12} delivered best results and terminated quickly whenever the model met the specification.
+Whenever this was not the case, i.e. the specification was not met by the model which was usually indicated by a long runtime of the K-Liveness algorithm, a \gls{bmc} approach computed counter-examples very efficiently.
+
+The technique of \gls{bmc} has already been introduced in section \ref{sec:spacer}.
+Now, the key idea behind the K-Liveness algorithm by \citeauthor{Claessen12} shall be investigated.
+
+In \gls{ltl} two types of properties can be distinguished: \textit{safety} and \textit{liveness} properties.
+Safety properties are formulas for which every counter example has finite length.
+Liveness properties on the other hand can\footnote{%
+    Especially, one has that every safety property is also a liveness property but not vice versa.
+} have counter-examples which are infinite and cannot be made finite.
+The background of the K-Liveness algorithm is that techniques for efficiently solving safety properties already exist, i.e. the IC3 algorithm proposed in \cite{Bradley11}.
+\citeauthor{Claessen12} take this algorithm and present a decision procedure for model checking liveness properties on finite state transition systems, i.e. a general algorithm for checking \gls{ltl} formulas on such systems.
+The algorithm works on \gls{ltl} formulas of the canonical form: \smv{F G q} where \smv{q} is some \gls{ltl} formula.
+For such properties, \citeauthor{Claessen12} present the following lemma:
+\begin{lemma}[\cite{Claessen12}]
+    If a state transition system models \smv{F G q}, then there exists some integer $ k $ such that for any trace $ T $, \smv{q} is false at most $ k $ times in $ T $.
+\end{lemma}
+This leads to a straightforward algorithm that is sound and complete on positive instance of \gls{ltl} formulas:
+\begin{enumerate}
+    \item Let $ k := 0 $.
+    \item Construct a formula \smv{q_new} that encodes: \smv{q} is false at most $ k $ times. \label{itm:k-live-loop}
+    This obviously is a safety property.
+    \item Consult the IC3 algorithm and check whether \smv{q_new} is true; if it is return that \smv{F G q} is true.
+    \item Otherwise; set $ k := k + 1 $ and go to step \ref{itm:k-live-loop}.
+\end{enumerate}
+
+To have this algorithm terminate also for negative instances, i.e. where the property at hand is not modelled by the state transition system, the authors complement the basic K-Liveness algorithm with methods dedicated to finding counter-examples.
+Such an algorithm needs to construct bounded counter-examples for \smv{q_new}-like properties and look for repeated states in which \smv{q} is false.
+If a trace is found where such a state appears at least twice, there also is a trace in which this state occurs infinitely often thus disproving \smv{q} since no $ k $ in accordance to the lemma can be found.

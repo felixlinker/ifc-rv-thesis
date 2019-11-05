@@ -452,3 +452,53 @@
     pages={301--316},
     isbn={978-3-540-32030-2}
 }
+
+@article{Burch92,
+    title = {Symbolic model checking: $10^{20}$ States and beyond},
+    journal = {Information and Computation},
+    volume = {98},
+    number = {2},
+    pages = {142 - 170},
+    year = {1992},
+    issn = {0890-5401},
+    doi = {https://doi.org/10.1016/0890-5401(92)90017-A},
+    url = {http://www.sciencedirect.com/science/article/pii/089054019290017A},
+    author = {Burch, J. R. and Clarke, E. M. and McMillan, K. L. and Dill, D. L. and Hwang, L. J.},
+    abstract = {Many different methods have been devised for automatically verifying finite state systems by examining state-graph models of system behavior. These methods all depend on decision procedures that explicitly represent the state space using a list or a table that grows in proportion to the number of states. We describe a general method that represents the state space symbolically instead of explicitly. The generality of our method comes from using a dialect of the Mu-Calculus as the primary specification language. We describe a model checking algorithm for Mu-Calculus formulas that uses Bryant's Binary Decision Diagrans (Bryant, R. E., 1986, IEEE Trans. Comput.C-35) to represent relations and formulas. We then show how our new Mu-Calculus model checking algorithm can be used to derive efficient decision procedures for CTL model checking, satisfiability of linear-time temporal logic formulas, strong and weak observational equivalence of finite transition systems, and language containment for finite ω-automata. The fixed point computations for each decision procedure are sometimes complex, but can be concisely expressed in the Mu-Calculus. We illustrate the practicality of our approach to symbolic model checking by discussing how it can be used to verify a simple synchronous pipeline circuit.}
+}
+
+@article{Foster05,
+    author = {Foster, Harry and Marschner, Erich and Wolfsthal, Yaron},
+    year = {2005},
+    title = {IEEE 1850 PSL: The next generation}
+}
+
+@manual{nuXmv,
+    title = {nuXmv User Manual},
+    version = {1.1.1},
+    author = {Bozzano, Marco and Cavada, Roberto and Cimatti, Allesandro and Dorigatti, Michele and Griggio, Alberto and Mariotti, Allessando and Micheli, Andrea and Mover, Sergio and Roveri, Marco and Tonetta, Stefano},
+    organization = {Fondazione Bruno Kessler},
+    year = {2016}
+}
+
+@INPROCEEDINGS{Claessen12,
+    author = {Claessen, K. and Sörensson, N.},
+    booktitle = {2012 Formal Methods in Computer-Aided Design (FMCAD)},
+    title = {A liveness checking algorithm that counts},
+    year = {2012},
+    pages = {52-59},
+    month = {October},
+}
+
+@InProceedings{Bradley11,
+    author = {Bradley, Aaron R.},
+    editor = {Jhala, Ranjit and Schmidt, David},
+    title = {SAT-Based Model Checking without Unrolling},
+    booktitle = {Verification, Model Checking, and Abstract Interpretation},
+    year = {2011},
+    publisher = {Springer Berlin Heidelberg},
+    address = {Berlin, Heidelberg},
+    pages = {70--87},
+    abstract = {A new form of SAT-based symbolic model checking is described. Instead of unrolling the transition relation, it incrementally generates clauses that are inductive relative to (and augment) stepwise approximate reachability information. In this way, the algorithm gradually refines the property, eventually producing either an inductive strengthening of the property or a counterexample trace. Our experimental studies show that induction is a powerful tool for generalizing the unreachability of given error states: it can refine away many states at once, and it is effective at focusing the proof search on aspects of the transition system relevant to the property. Furthermore, the incremental structure of the algorithm lends itself to a parallel implementation.},
+    isbn = {978-3-642-18275-4}
+}
