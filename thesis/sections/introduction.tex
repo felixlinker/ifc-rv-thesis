@@ -4,29 +4,66 @@
 \label{sec:introduction}
 
 This thesis falls in the realm of formal verification, i.e. the attempt to verify a system by the use of \textit{formal methods} such as SAT solvers, interactive theorem provers and model checkers.
-Here, the approaches of two papers are combined:
+With these tools, formal verification engineers strive to prove the correctness of \textit{systems} such as general computer programs, \glspl{os}, compilers or hardware designs.
+Often times, for a system to be correct means that it complies with a specification.
+Formal verification of a system then is the attempt to prove that some system is free of errors, i.e. meets all properties imposed by some specification.
+Whereas one might think that \enquote{specification} here references to large documents specifying standards of the industry, it might also refer to more abstract properties like the absence of memory leaks or race conditions in parallel programming.
+Thus, formal verification complements testing.
+The relation between these two approaches often is illustrated by a famous quote of Edsger Dijkstra:
+\begin{displaycquote}[p.6]{Dijkstra72}
+    Program testing can be used to show the presence of bugs, but never to show their absence!
+\end{displaycquote}
 
-\citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} stressed the need of verifying specifications themselves as opposed to simply verifying implementations against specifications.
+Whereas testing is a quick and efficient way of finding bugs in the development process of some system, formal verification is a more complex but complete process of proving the absence of bugs.
+
+In \citetitle{Reid17} \cite{Reid17}, \citeauthor{Reid17} stressed the need of verifying specifications themselves as opposed to simply verifying implementations against specifications.
 To tackle this, he proposed to verify specifications against higher level properties and used this methodology to verify the specification of the \gls{arm} M-class specification.
 In this thesis, two lines of his research will be continued: \begin{enumerate*}[label=\alph*)]
     \item the main contribution of this thesis also is to propose an approach for verifying specifications against higher level properties and
     \item this methodology will be applied to an \gls{isa} specification as well.
 \end{enumerate*}
 
-The idea behind the higher level properties an \gls{isa} will be verified against mainly stems from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
-As the title indicates, their work also falls into the domain of verification; the authors propose a new way of verifying \gls{hdl} code implementations of \glspl{isa}.
-The core idea behind this is to enhance the type system of the existing \gls{hdl} language \gls{secverilog}.
-The types available to this type system serve as security annotation of information.
+The higher level properties an \gls{isa} will be verified against mainly stem from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
+As the title indicates, their work also falls into the domain of verification; the authors propose a new way of verifying \gls{hdl} implementations of \glspl{isa}.
+The core idea here is to use a a type system in which types serve as security annotation of information.
 By applying typing rules to expressions in the \gls{hdl} code, new labels are generated and thus information is tracked through the code.
 Certain type conversions are, however, prohibited and mark a security vulnerability.
 Thus, their approach can be summarized as tracking and controlling information flow in \gls{hdl} code.
-They evaluate their approach by applying it to the implementation of the \gls{trustzone} extension.
+The authors evaluate their approach by applying it to the implementation of the \gls{trustzone} extension.
 In this thesis, the idea of tracking and controlling information flow as proposed in \cite{Ferraiuolo17} will be lifted to the level of the \gls{isa} specification thus following the line of research as proposed in \cite{Reid17}.
 
-This approach will be implemented using a model checker.
-This allows for enhancing on the approach proposed by \citeauthor{Reid17} \cite{Reid17} in a key aspect:
-In his work, \citeauthor{Reid17} focused on higher lever properties to verify the \gls{arm} \gls{isa} against that were limited to making specifications about a single transition of the processor only, i.e. that only take the pre- and post-state of a single cycle of the processor into account.
-By using a model checker, it is possible to consider sequences of instructions, i.e. sequences of processor-transitions, of unbounded length.
+In this thesis, we propose a new approach to verifying specifications against higher level properties using information flow control.
+Thus, the work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} is combined.
+We claim that this approach is
+\begin{itemize}
+    \item viable, i.e. the hardware requirements are low and the work can be reproduced with limited time investment,
+    \item relevant, i.e. the approach successfully uncovers issues in architectures, and
+    \item supplemental, i.e. it enhances on related work such as \cite{Reid17}.
+\end{itemize}
 
-% TODO: Add motivation and goal of the thesis
-% TODO: Introduce structure of thesis
+This new approach will be applied to the \gls{riscv} architecture using the formal verification tool \gls{nuxmv}.
+\Gls{riscv} is a modern and open-source \gls{isa} that has first been published in 2011 \citeauthor{RiscVISA-org}.
+A basic architecture that orientates itself by the \gls{riscv} architecture will be modelled in \gls{nuxmv}.
+\gls{nuxmv} is a general purpose model checker that supports different specification languages and verification algorithms.
+Using \gls{nuxmv} allows for enhancing on the approach proposed by \citeauthor{Reid17} in a key aspect:
+In his work, \citeauthor{Reid17} focused on higher lever properties to verify the \gls{arm} \gls{isa} against that were limited to making specifications about a single transition of the processor only, i.e. that only take the pre- and post-state of a single cycle of the processor into account.
+\gls{nuxmv} on the other hand allows to consider infinite sequences of instructions, i.e. sequences of processor-transitions, of unbounded length.
+
+This thesis is structured as follows:
+In section \ref{sec:background}, the background of this thesis will be introduced.
+This includes both key papers of \citeauthor{Reid17} and \citeauthor{Ferraiuolo17} as well as \glspl{isa} and model checkers.
+At the end of this section, the methodology of this thesis will be discussed in more detail.
+
+In section \ref{sec:arch}, the \gls{riscv} architecture and a new, minimal, \gls{riscv}-inspired architecture called MINRV8 will be introduced.
+Following up on this, it will be described how the MINRV8 architecture was implemented in \gls{nuxmv}.
+
+Section \ref{sec:ifc} details what an information flow tracking means for an \gls{isa}, how specifically it can be applied to the MINRV8 and how it was implemented in \gls{nuxmv}, i.e. it will be discussed how we applied the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to \glspl{isa}.
+
+Section \ref{sec:checking} then defines the higher level properties that implement the information flow control on the MINRV8 architecture.
+Furthermore it will be discussed, how \gls{nuxmv} was used to verify these properties.
+
+The evaluation of our approach is given in section \ref{sec:results}-\ref{sec:conclusion}.
+First, the results of the verification process will be presented in section \ref{sec:results}.
+These results will then be discussed in section \ref{sec:discussion}.
+In section \ref{sec:related-work} the results and the approach in general will be compared to related work and in section \ref{sec:conclusion}, a final conclusion will be given.
+
