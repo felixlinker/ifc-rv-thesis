@@ -1,7 +1,26 @@
 %!TEX root = ../thesis.tex
 
 \section{Background}
+\label{sec:background}
 
+In the introduction, the core motivation of this thesis was given.
+However, the methodology of this thesis has not been made clear.
+At this point, it is not tractable to introduce this in detail.
+Instead, the background of this thesis will be set up in this section.
+
+The first two sections \ref{sec:verify-spec} and \ref{sec:ifc} will introduce the foundational work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}
+Recall that this thesis is about formally verifying instruction set architectures by model checking information flow control policies.
+
+Following up on this, the actual subject of verification, \glspl{isa}, and the technical details of the verification process will be outlined.
+There will be not only an introduction to common \glspl{isa}, especially \gls{riscv}, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a precise threat-model (section \ref{sec:ecosystem}).
+Then, a general explanation of what model checking is will be given concluding with the description of the \gls{nuxmv} model checker that will be used as part of this thesis (section \ref{sec:model-checking}).
+
+In each of these subsections , a collection of \glspl{isa} or model checkers respectively will be touched to \begin{enumerate*}[label=\alph*)]
+    \item give a better feel for the field as a whole and
+    \item meaningfully argue for one of the presented options to be worked with in this thesis.
+\end{enumerate*}
+
+As a final part of the background, in section \ref{sec:sum-background}, a summary of all aforementioned sections will be given which will finally allow for a outline of this thesis's methodology.
 
 \subsection{Formal Verification of Specifications}
 \label{sec:verify-spec}
@@ -633,6 +652,7 @@ Even if it could be assumed that the hardware your computer is running on accura
 In this threat model, timing channels are excluded.
 
 \subsection{Model Checking}
+\label{sec:model-checking}
 
 Model checking is a technique that falls into the domain of formal verification.
 It is one way to prove that a given system complies with a given specification.
@@ -1269,3 +1289,34 @@ This leads to a straightforward algorithm that is sound and complete on positive
 To have this algorithm terminate also for negative instances, i.e. where the property at hand is not modelled by the state transition system, the authors complement the basic K-Liveness algorithm with methods dedicated to finding counter-examples.
 Such an algorithm needs to construct bounded counter-examples for \smv{q_new}-like properties and look for repeated states in which \smv{q} is false.
 If a trace is found where such a state appears at least twice, there also is a trace in which this state occurs infinitely often thus disproving \smv{q} since no $ k $ in accordance to the lemma can be found.
+
+\subsection{Summary \& Methodology}
+\label{sec:sum-background}
+
+% TODO: \gls{minrv8}
+The goal of this thesis is to verify a simplified version of the \gls{riscv} \gls{isa}, MINRV8, via higher level information flow control properties.
+This combines the work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
+We adopt the requirements to these properties from \cite{Reid17}, i.e. these properties should:
+\begin{displaycquote}[pp.88:2-3]{Reid17}
+    \begin{itemize}
+        \item express the major guarantees that programmers depend on;
+        \item \textelp{be} concise so that architects can easily review and remember the entire set of properties;
+        \item \textelp{be} stable so that architectural extensions don't invalidate large numbers of rules;
+        \item \textelp{} describe the architecture differently from existing specification to reduce the risk of common-mode failure.
+    \end{itemize}
+\end{displaycquote}
+
+To achieve this, we will investigate the \gls{riscv} architecture in more detail and define as well as implement the MINRV8 architecture in section \ref{sec:arch}.
+This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load-store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
+A model of this instruction set architecture will be implemented in \gls{nuxmv}.
+
+As a next step, the two terms of information flow control \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
+As a first step in section \ref{sec:checking}, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in \gls{nuxmv}.
+By using \gls{nuxmv} as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
+When this has been dealt with, the actual information flow control will be expressed as \gls{ltl} properties.
+These properties will assume the user-mode of the system to be compromised and express that insecure flows of information between machine- and user-mode are impossible.
+
+The results of this verification process will be discussed in section \ref{sec:results}.
+There, it will be of subject to identify either weaknesses of and respective mitigations for the MINRV8 architecture or to state rules that \gls{os} or compiler engineers must obey in order to write programs that are safe in regard to aforementioned information flow properties.
+
+From section \ref{sec:discussion} onwards, these results will be discussed, put into context and summarized.
