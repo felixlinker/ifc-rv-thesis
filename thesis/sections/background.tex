@@ -325,6 +325,16 @@ To achieve this, it must be tackled how such an information flow policy as propo
 \subsection{RISC-Architectures}
 \label{sec:riscs}
 
+The book \citetitle{Patterson13} defines the term \gls{isa} as follows:
+\begin{displaycquote}[p.22]{Patterson13}
+    One of the most important abstractions \textins{in computer design} is the interface between the hardware and the lowest-level software.
+    Because of its importance, it is given a special name: the instruction set architecture, or simply architecture, of a computer.
+    The instruction set architecture includes anything programmers need to know to make a binary machine language program work correctly, including instructions, I/O devices, and so on.
+    Typically, the operating system will encapsulate the details of doing I/O, allocating memory, and other low-level system functions so that application programmers do not need to worry about such details.
+\end{displaycquote}
+
+Modern architectures include instructions that fall in at least these categories: instructions for general computation, i.e. bit-vector arithmetic, load-store instructions and platform management instructions.
+
 As a target of verification, this thesis will work with \gls{risc} architectures.
 In \citetitle{Hennessy12}, \gls{risc} architectures are defined by three main concepts \cite[p.C-4]{Hennessy12}:
 \begin{itemize}
