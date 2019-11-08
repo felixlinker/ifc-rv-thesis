@@ -483,6 +483,20 @@ MODULE main
         $endfor
     $endfor
 
+    $macro(CSR_INTEGRITY)
+        (
+            priv & op in { CSRRS, CSRRC }
+            -> regs_integrity[rs2] = 0h_FF
+        )
+    $endmacro
+
+    $macro(MEMORY_OP_INTEGRITY)
+        (
+            priv & op in { LOAD, STORE }
+            -> (regs_integrity[rs1] & 0h_03) = 0h_03
+        )
+    $endmacro
+
     $macro(assumptions)
         $if(CLR_ON_RET)
             G (
@@ -493,7 +507,13 @@ MODULE main
             ) &
         $endif
         $if(SAN_ON_CALL)
-            G (!priv & X priv -> X op = SAN) &
+            G (!priv & X priv
+                -> X ((op != STORE & $CSR_INTEGRITY() & $MEMORY_OP_INTEGRITY()) U (
+                    regs_integrity[0] = 0h_FF
+                    & regs_integrity[1] = 0h_FF
+                    & regs_integrity[2] = 0h_FF
+                    & regs_integrity[3] = 0h_FF))
+            ) &
         $endif
         $if(SAN_PUBLIC_READS)
             G (priv & op = LOAD & (
@@ -589,13 +609,7 @@ MODULE main
     -- Control and status registers are only written with machine-mode
     -- controlled values
     LTLSPEC NAME CSR_INTEGRITY :=
-        $assumptions() -> G (
-            priv & op in { CSRRS, CSRRC }
-            -> regs_integrity[rs2] = 0h_FF
-        );
+        $assumptions() -> G $CSR_INTEGRITY();
 
     LTLSPEC NAME MEMORY_OP_INTEGRITY :=
-        $assumptions() -> G (
-            priv & op in { LOAD, STORE }
-            -> (regs_integrity[rs1] & 0h_03) = 0h_03
-        );
+        $assumptions() -> G $MEMORY_OP_INTEGRITY();
