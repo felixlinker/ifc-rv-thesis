@@ -92,8 +92,8 @@
 }
 \renewcommand{\lstlistingname}{Snippet}
 \renewcommand{\lstlistlistingname}{Snippets}
-\newcommand{\asl}[1]{\lstinline[language=ASL]{#1}}
-\newcommand{\smt}[1]{\lstinline[language=SMT2]{#1}}
-\newcommand{\rv}[1]{\lstinline[language=rv]{#1}}
-\newcommand{\minrv}[1]{\lstinline[language=minrv8]{#1}}
-\newcommand{\smv}[1]{\lstinline[language=SMV]{#1}}
+\newcommand{\asl}[1]{\lstinline[language=ASL,postbreak={}]{#1}}
+\newcommand{\smt}[1]{\lstinline[language=SMT2,postbreak={}]{#1}}
+\newcommand{\rv}[1]{\lstinline[language=rv,postbreak={}]{#1}}
+\newcommand{\minrv}[1]{\lstinline[language=minrv8,postbreak={}]{#1}}
+\newcommand{\smv}[1]{\lstinline[language=SMV,postbreak={}]{#1}}
