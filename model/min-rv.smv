@@ -562,7 +562,7 @@ MODULE main
                 ? !pmpcfg0.write & !pmpcfg0.read
                 : !pmpcfg1.write & !pmpcfg1.read)) &
         $endif
-        $if(SP_SAFETY)
+        $if(SP_SAFETY and SP_ENABLE)
             $if(not SP_AUTOBANK)
                 G (priv & op = SPSEL -> MIE = 0b_0) &
             $endif
