@@ -253,10 +253,19 @@ MODULE main
     INIT
         !pmpcfg1.write & $REGION0_SIZE <= cache.addr & cache.valid
         -> cache.integrity = 0h_FF;
-    $if(SP_ENABLE)
+    $if(SP_ENABLE and not SP_AUTOBANK)
         INIT priv -> (sp[sp_sel] < $REGION0_SIZE
             ? !pmpcfg0.write & !pmpcfg0.read
             : !pmpcfg1.write & !pmpcfg1.read);
+    $endif
+    $if(SP_ENABLE and SP_AUTOBANK)
+        INIT sp[0] < $REGION0_SIZE
+            ? pmpcfg0.write & pmpcfg0.read
+            : pmpcfg1.write & pmpcfg1.read;
+        INIT sp[1] < $REGION0_SIZE
+            ? !pmpcfg0.write & !pmpcfg0.read
+            : !pmpcfg1.write & !pmpcfg1.read;
+        INIT priv <-> sp_sel = 1;
     $endif
 
     IVAR
@@ -294,14 +303,14 @@ MODULE main
 
     $if(SP_ENABLE)
         TRANS next(sp_sel) = case
-            do_trap | !priv: sp_sel;
             $if(SP_AUTOBANK)
                 next(!priv): 0;
                 next(priv): 1;
             $else
+                do_trap | !priv: sp_sel;
                 op = SPSEL: rs1 mod 2;
+                TRUE: sp_sel;
             $endif
-            TRUE: sp_sel;
         esac;
 
         $for(i in range(0, 2))
@@ -504,13 +513,13 @@ MODULE main
             ) &
         $endif
         $if(SAN_ON_CALL)
-            G (!priv & X priv
-                -> X ((op != STORE & $CSR_INTEGRITY() & $MEMORY_OP_INTEGRITY()) U (
-                    regs_integrity[0] = 0h_FF
+            G (!priv & X priv -> X (
+                (priv -> !(op in { LOAD, STORE, CSRRS, CSRRC $if(SP_ENABLE), PUSH $endif }))
+                U (regs_integrity[0] = 0h_FF
                     & regs_integrity[1] = 0h_FF
                     & regs_integrity[2] = 0h_FF
-                    & regs_integrity[3] = 0h_FF))
-            ) &
+                    & regs_integrity[3] = 0h_FF)
+            )) &
         $endif
         $if(NO_PUBLIC_READS)
             G (priv & op = LOAD -> (
@@ -551,28 +560,40 @@ MODULE main
                 -> cache.integrity = 0h_FF) &
         $endif
         $if(SP_BANK and SP_ENABLE)
-            $if(not SP_AUTOBANK)
-                G (!priv & X priv -> X X (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+            -- Switch SP on call
+            G (!priv & X priv -> X (
+                (priv -> !(op in { PUSH, POP }))
+                U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE
                     ? !pmpcfg0.write & !pmpcfg0.read
-                    : !pmpcfg1.write & !pmpcfg1.read))) &
-                G (op = MRET -> Y (op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
-                    ? pmpcfg0.read & pmpcfg0.write
-                    : pmpcfg1.read & pmpcfg1.write))) &
-                G (priv & op = SPSEL -> (X op = MRET) | (sp[rs1 mod 2] < $REGION0_SIZE
-                    ? !pmpcfg0.write & !pmpcfg0.read
-                    : !pmpcfg1.write & !pmpcfg1.read)) &
-            $endif
-            G (priv & op = SPSET -> (mem_addr < $REGION0_SIZE
-                ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read)) &
+                    : !pmpcfg1.write & !pmpcfg1.read)
+            )) &
+            -- Switch SP on return
+            G (op = MRET -> (sp[sp_sel] < $REGION0_SIZE
+                ? pmpcfg0.read & pmpcfg0.write
+                : pmpcfg1.read & pmpcfg1.write)) &
+            -- Don't use bad SP (I)
+            G (priv & op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE
+                    ? pmpcfg0.write | pmpcfg0.read
+                    : pmpcfg1.write | pmpcfg1.read)
+                -> X (
+                    (priv -> !(op in { PUSH, POP }))
+                    U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE
+                        ? !pmpcfg0.write & !pmpcfg0.read
+                        : !pmpcfg1.write & !pmpcfg1.read)
+                )) &
+            -- Don't use bad SP (II)
+            G (priv & op = SPSET & (mem_addr < $REGION0_SIZE
+                    ? pmpcfg0.write | pmpcfg0.read
+                    : pmpcfg1.write | pmpcfg1.read)
+                -> X (
+                    (priv -> !(op in { PUSH, POP }))
+                    U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE
+                        ? !pmpcfg0.write & !pmpcfg0.read
+                        : !pmpcfg1.write & !pmpcfg1.read)
+                )) &
         $endif
         $if(SP_SAFETY and SP_ENABLE)
-            $if(not SP_AUTOBANK)
-                G (priv & op = SPSEL -> MIE = 0b_0) &
-            $endif
-            G (priv -> X (sp[sp_sel] < $REGION0_SIZE
-                ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read)) &
+            G (priv & op = MRET & MPP = 0b_0 -> MIE = 0b_0) &
         $endif
         TRUE
     $endmacro
