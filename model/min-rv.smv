@@ -259,12 +259,6 @@ MODULE main
             : !pmpcfg1.write & !pmpcfg1.read);
     $endif
     $if(SP_ENABLE and SP_AUTOBANK)
-        INIT sp[0] < $REGION0_SIZE
-            ? pmpcfg0.write & pmpcfg0.read
-            : pmpcfg1.write & pmpcfg1.read;
-        INIT sp[1] < $REGION0_SIZE
-            ? !pmpcfg0.write & !pmpcfg0.read
-            : !pmpcfg1.write & !pmpcfg1.read;
         INIT priv <-> sp_sel = 1;
     $endif
 
@@ -594,6 +588,14 @@ MODULE main
         $endif
         $if(SP_SAFETY and SP_ENABLE)
             G (priv & op = MRET & MPP = 0b_0 -> MIE = 0b_0) &
+        $endif
+        $if(SP_AUTOBANK)
+            G (op != SPSET & (sp[0] < $REGION0_SIZE
+                    ? pmpcfg0.write & pmpcfg0.read
+                    : pmpcfg1.write & pmpcfg1.read)
+                & (sp[1] < $REGION0_SIZE
+                    ? !pmpcfg0.write & !pmpcfg0.read
+                    : !pmpcfg1.write & !pmpcfg1.read)) &
         $endif
         TRUE
     $endmacro
