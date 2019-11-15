@@ -652,20 +652,7 @@ By translating the system into a model and the specification into a formal prope
 
 \begin{figure}
     \centering
-    \begin{tikzpicture}
-        \tikzstyle{box}=[draw,rectangle,minimum width=2cm,minimum height=1cm,text width=2cm,align=center]
-        \node[box] (system) {System};
-        \node[box] (specification) [right=3cm of system] {Specification}
-            edge[draw=none] node[midway] (comply) {complies with?} (system);
-
-        \node[box] (model) [below=of system] {Model}
-            edge[<-] (system);
-        \node[box] (properties) [below=of specification] {Formal Property}
-            edge[draw=none] node[midway] (models) {$ \models $?} (model)
-            edge[<-] (specification);
-
-        \draw[->] (comply) to (models);
-    \end{tikzpicture}
+    \includegraphics[width=0.7\textwidth]{figures/model-checking.png}
     \caption{Overview on Model Checking}
     \label{fig:model-checking}
 \end{figure}
