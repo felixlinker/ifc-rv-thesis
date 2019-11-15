@@ -85,11 +85,11 @@ This stresses that \enquote{$ \text{assumptions} \Leftrightarrow \text{propertie
 \end{table}
 
 \paragraph{Mode-boundary crossing related assumptions}
-The first assumption to be introduced is called \smv{SAN_ON_CALL} and mandates from machine-mode to clear the registers from any untrusted data before continuing to use their contents when entering machine-mode from user-mode.
-% TODO: Explain why we had to add this instruction
-To allow this, an abstract instruction was added to the model: \minrv{San}, which stands for \textit{sanitize}.
-When this instruction is executed, the integrity labels of all registers are set to trusted, i.e. \minrv{1}.
-The formal implementation of \smv{SAN_ON_CALL} can be found in snippet \ref{snpt:san-on-call}.
+As could be seen in table \ref{tbl:assumptions-overview}, there are two properties related to mode-boundary crossing.
+The first of these is called \smv{SAN_ON_CALL} and mandates from machine-mode to not use \textit{dangerous} instructions before having cleared the registers from any untrusted data when entering machine-mode from user-mode.
+Dangerous instructions here are \minrv{Load}, \minrv{Store}, \minrv{Csrrs} and \minrv{Csrrc} and directly stem from the properties \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}).
+The next assumption to be introduced is called \smv{CLR_ON_RET}; it states: Whenever machine-mode hands back control to user-mode, the registers must be cleared of any confidential information.
+The implementations of \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} can be found in snippet \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -97,7 +97,13 @@ The formal implementation of \smv{SAN_ON_CALL} can be found in snippet \ref{snpt
         caption={Assumption \lstinline{SAN_ON_CALL}},
         label={snpt:san-on-call}
     ]
-        G (!priv & X priv -> X op = SAN)
+        G (!priv & X priv -> X (
+            (priv -> !(op in { LOAD, STORE, CSRRS, CSRRC }))
+            U (regs_integrity[0] = 0h_FF
+                & regs_integrity[1] = 0h_FF
+                & regs_integrity[2] = 0h_FF
+                & regs_integrity[3] = 0h_FF)
+        ))
     \end{lstlisting}
 
     \begin{lstlisting}[
@@ -114,49 +120,63 @@ The formal implementation of \smv{SAN_ON_CALL} can be found in snippet \ref{snpt
     \end{lstlisting}
 \end{figure}
 
+Both assumptions \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} are similar to each other.
+Both were introduced under the label of being \textit{mode-boundary crossing related}, which means that both assumptions are about information flow tracking labels when changing privilege mode - more precisely: both are about the labels of register contents.
+The relation of these two assumptions, however, also characterizes a pattern that can also be recognized for subsequent groups of assumptions.
+It turned out that for every integrity related assumption, such as \smv{SAN_ON_CALL}, there was a similar confidentiality related assumption such as \smv{CLR_ON_RET}.
+This can be easily seen in table \ref{tbl:assumptions-overview}.
+In alternating rows, two groups of assumptions can be distinguished: those which are relevant to the properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} and those which are relevant to the property \smv{NO_LEAK}.
+Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
+Whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
+
+\subparagraph{Counter-examples}
+
 Without assuming \smv{SAN_ON_CALL} nuXmv manages to find two counter-examples.
 One for property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and one for \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}).
 The traces for both counter-examples are depicted in tables \ref{tbl:cex-mem-i-soc} and \ref{tbl:cex-csr-i-soc} respectively.
+Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example for the \smv{NO_LEAK} (\ref{itm:prop-no-leak}) property when not assuming \smv{CLR_ON_RET}.
 
-The format of these tables will be used frequently throughout this thesis to illustrate counter-examples.
-To introduce it, table \ref{tbl:cex-mem-i-soc} will be explained in detail now.
-Each row of the table represents an instruction being executed and the changes in result of this instruction with the exception of the first row which depicts the processor's initial state.
-Whenever a cell is empty, the value represented by it did not change as a result of execution the respective instruction.
-Furthermore, the table is separated in three main columns: The first column shows the instructions being executed.
-In case of table \ref{tbl:cex-mem-i-soc}, three instructions were executed: \minrv{Ecall}, \minrv{Load} and \minrv{Store}.
+\begin{example}
+    The format of these tables illustrating counter-example traces will be used frequently throughout this thesis to illustrate counter-examples.
+    To introduce it, table \ref{tbl:cex-mem-i-soc} will be explained in detail now.
+    Each row of the table represents an instruction being executed and the changes in result of this instruction with the exception of the first row which depicts the processor's initial state.
+    Whenever a cell is empty, the value represented by it did not change as a result of execution the respective instruction.
+    Furthermore, the table is separated in three main columns: The first column shows the instructions being executed.
+    In case of table \ref{tbl:cex-mem-i-soc}, three instructions were executed: \minrv{Ecall}, \minrv{Load} and \minrv{Store}.
 
-The second group of columns hold the information flow labels for the registers and memory on a per-word basis.
-During the verification process it was found that no counter-example required information flow labels of a per-bit granularity.
-Therefore, for the sake of simplicity, the information flow labels of machine-words in memory or registers were combined to a single label.
-The two inner rows in the cells of the second major column denote the labels of the registers (\minrv{r}) and memory (\minrv{m}) respectively whereas the inner columns mark the index of the labels, e.g. in table \ref{tbl:cex-mem-i-soc} all registers and the cells of memory region zero are labelled with \PU{}, i.e. public and untrusted, whereas the cells of memory region one are labelled with \PT{}, i.e. public and trusted, in the initial state.
+    The second group of columns hold the information flow labels for the registers and memory on a per-word basis.
+    During the verification process it was found that no counter-example required information flow labels of a per-bit granularity.
+    Therefore, for the sake of simplicity, the information flow labels of machine-words in memory or registers were combined to a single label.
+    The two inner rows in the cells of the second major column denote the labels of the registers (\minrv{r}) and memory (\minrv{m}) respectively whereas the inner columns mark the index of the labels, e.g. in table \ref{tbl:cex-mem-i-soc} all registers and the cells of memory region zero are labelled with \PU{}, i.e. public and untrusted, whereas the cells of memory region one are labelled with \PT{}, i.e. public and trusted, in the initial state.
 
-The third major column shows the status of the processor.
-This column is separated into five inner columns as well.
-The first (labelled with \minrv{p}) shows the privilege mode of execution where \minrv{U} stands for user-mode and \minrv{M} stands for machine-mode.
-The other four columns show the current memory settings per region.
-Inner columns starting with \minrv{0} give the settings for first memory region and starting with \minrv{1} for the second memory region respectively.
-Inner columns ending with \minrv{c} hold the cacheability settings.
-Here, \minrv{UN} stands for uncacheable, \minrv{WB} for write-back-cacheable, \minrv{WT} for write-through-cacheable and \minrv{WP} for write-protected-cacheable (cf. section \ref{sec:minrv8}).
-Inner columns ending with \minrv{p} hold the memory privilege settings for the respective region.
-Memory privilege settings are indicated by a string of the form:
-\begin{grammar}
-    <privelege-string> ::= (`-' | `L') (`-' | `R') (`-' | `W')
-\end{grammar}
+    The third major column shows the status of the processor.
+    This column is separated into five inner columns as well.
+    The first (labelled with \minrv{p}) shows the privilege mode of execution where \minrv{U} stands for user-mode and \minrv{M} stands for machine-mode.
+    The other four columns show the current memory settings per region.
+    Inner columns starting with \minrv{0} give the settings for first memory region and starting with \minrv{1} for the second memory region respectively.
+    Inner columns ending with \minrv{c} hold the cacheability settings.
+    Here, \minrv{UN} stands for uncacheable, \minrv{WB} for write-back-cacheable, \minrv{WT} for write-through-cacheable and \minrv{WP} for write-protected-cacheable (cf. section \ref{sec:minrv8}).
+    Inner columns ending with \minrv{p} hold the memory privilege settings for the respective region.
+    Memory privilege settings are indicated by a string of the form:
+    \begin{grammar}
+        <privelege-string> ::= (`-' | `L') (`-' | `R') (`-' | `W')
+    \end{grammar}
 
-The first letter in the privilege string denotes whether the region is locked (\minrv{L}) or not (\minrv{-}), the second whether user-mode can read the region (\minrv{R}) or not (\minrv{-}) and the third whether user mode can write to the region (\minrv{W}) or not (\minrv{-}).
-In table \ref{tbl:cex-mem-i-soc}, none of the regions is locked or cacheable and user mode can write to region zero only and has not further permissions.
+    The first letter in the privilege string denotes whether the region is locked (\minrv{L}) or not (\minrv{-}), the second whether user-mode can read the region (\minrv{R}) or not (\minrv{-}) and the third whether user mode can write to the region (\minrv{W}) or not (\minrv{-}).
+    In table \ref{tbl:cex-mem-i-soc}, none of the regions is locked or cacheable and user mode can write to region zero only and has not further permissions.
 
-Traces generated by nuXmv are infinitely long but finitely representable by including a loop.
-In this setting, counter-examples generated by nuXmv always violated the property at hand after having executed the second last instruction whereas the last instruction introduced the loop and led to a fixpoint in the state-space.
-For the sake of completeness, the last instruction of counter-example traces will be included nonetheless.
+    Traces generated by nuXmv are infinitely long but finitely representable by including a loop.
+    In this setting, counter-examples generated by nuXmv always violated the property at hand after having executed the second last instruction whereas the last instruction introduced the loop and led to a fixpoint in the state-space.
+    For the sake of completeness, the last instruction of counter-example traces will be included nonetheless.
+\end{example}
 
 Note that the traces for property \smv{MEMORY_OP_INTEGRITY} in table \ref{tbl:cex-mem-i-soc} and for property \smv{CSR_INTEGRITY} in table \ref{tbl:cex-csr-i-soc} are very similar.
 In both traces, the processor starts in user-mode with some untrusted data in the registers.
 User-mode then calls machine-mode which decides to use the contents of the registers without sanitization to either write a \gls{csr} or to memory.
-
-The next assumption to be introduced is similar to \smv{SAN_ON_CALL} and is called \smv{CLR_ON_RET}; it says: Whenever machine-mode hands back control to user-mode, the registers must be cleared of any confidential information.
-The formal implementation of \smv{CLR_ON_RET} is given in snippet \ref{snpt:clr-on-ret}.
-Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example for the \smv{NO_LEAK} (\ref{itm:prop-no-leak}) property when not assuming \smv{CLR_ON_RET} since machine-mode directly hands over confidential data to user-mode by returning control to user-mode without clearing its registers.
+The violation of property \smv{NO_LEAK} (\ref{itm:prop-no-leak}) depicted in table \ref{tbl:cex-no-leak-cor} when not assuming \smv{CLR_ON_RET} is analogously simple.
+Since machine-mode directly hands over confidential data to user-mode by returning control to user-mode without clearing its registers, user-mode trivially gains access to secrets.
+It is obvious that such flows of information are no fault of the architecture but must be fought in programming, i.e. in compilers or \gls{os} programming.
+As such, we express sufficient techniques to combat vulnerabilities of this kind in aforementioned assumptions.
 
 \begin{table}
     \begin{subtable}{\textwidth}
@@ -181,14 +201,6 @@ Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example for the \smv{NO_LE
     \end{subtable}
     \caption{Counter-examples for \smv{SAN_ON_CALL} and \smv{CLR_ON_RET}}
 \end{table}
-
-It has already been touched that both assumptions \smv{SAN_ON_CALL} (cf. snippet \ref{snpt:san-on-call}) and \smv{CLR_ON_RET} (cf. snippet \ref{snpt:clr-on-ret}) are similar to each other.
-Both were introduced under the label of being \textit{mode-boundary crossing related}, which means that both assumptions are about information flow tracking labels when changing privilege mode - more precisely both are about the labels of register contents.
-The relation of these two assumptions, however, also characterizes a pattern that can be recognized for other groups of assumptions as well.
-It turned out that for every integrity related assumption such as \smv{SAN_ON_CALL}, there was a similar confidentiality related assumption such as \smv{CLR_ON_RET}.
-This can be easily seen in table \ref{tbl:assumptions-overview} where in alternating rows, two groups of assumptions can be distinguished those which are relevant to the properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} and those which are relevant to the property \smv{NO_LEAK}.
-Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
-Whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
 
 \paragraph{Memory related assumptions}
 Two assumptions about memory reads and writes join the ranks of these groups, namely \smv{NO_PUBLIC_READS} and \smv{NO_PUBLIC_WRITES} which are formally given in snippet \ref{snpt:no-public-reads} and \ref{snpt:no-public-writes} respectively.
