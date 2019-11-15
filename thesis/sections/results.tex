@@ -557,13 +557,17 @@ This, as usual, ensures that the information flow properties are not violated by
 With the extension to the architecture also comes an assumption that tries to emulate all the major steps that software vulnerable to the SYSRET attack already followed but which didn't suffice to implement a secure system.
 This assumption is called \smv{SP_BANK} and is depicted in snippet \ref{snpt:sp-bank}.
 It comprises four parts.
-Firstly, it is assumed that the first action after having sanitized the registers on a transition from user- to machine-mode is to select a stack-pointer that points to a memory region which is safe for machine-mode.
-This also implicitly assumes that there always must be such a safe region.
-Secondly, whenever machine-mode hands control back to user-mode the prior instruction must have selected a stack-pointer that is user-mode controllable.
-Obviously, this assumption is the most critical to the SYSRET vulnerability.
-Thirdly, machine-mode is only allowed to select the stack-pointer as described latterly, when it then attempts to give back control to user-mode.
+Firstly, in lines \ref{ln:sp-call-start}-\ref{ln:sp-call-end}, it is assumed that machine-mode must not use the \minrv{Push} or \minrv{Pop} instructions before the stack points to a safe memory region.
+Alternatively, machine-mode also might not use these instructions at all.
+In this case, the requirements to machine-mode are dropped as soon as it returns control back to user-mode.
+Secondly, in lines \ref{ln:sp-return-start}-\ref{ln:sp-return-end}, whenever machine-mode hands control back to user-mode the prior instruction must have selected a stack-pointer that is user-mode controllable.
+This assumption is the most critical to the SYSRET vulnerability.
+These two assumptions closely resemble the assumptions \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} as shown in section \ref{sec:assumptions}, snippets \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
+
+Thirdly, in lines \ref{ln:sp-sel-start}-\ref{ln:sp-sel-end}, machine-mode is also not allowed to use the \minrv{Push} or \minrv{Pop} instructions when it \textit{selects} a stack-pointer pointing to a user-mode-controlled region.
 This ensures that machine-mode not deliberately decides to use a bad stack-pointer.
-And lastly, for the same reasons it is also assumed that machine-mode does not set its stack-pointer to a memory region controllable by user-mode.
+And lastly, in lines \ref{ln:sp-set-start}-\ref{ln:sp-set-end}, for the same reasons it is also assumed that machine-mode does not \textit{set} its stack-pointer to point to a memory region controlled by user-mode.
+These two parts follow the same structure as the first part of the \smv{SP_BANK} assumption but trigger on different conditions.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -571,24 +575,33 @@ And lastly, for the same reasons it is also assumed that machine-mode does not s
         caption={Assumption \lstinline{SP_BANK}},
         label={snpt:sp-bank}
     ]
-        G (!priv & X priv -> X X (
-            op = SPSEL
-            & (sp[rs1 mod 2] < $REGION0_SIZE
+        G (!priv & X priv -> X ( (*\label{ln:sp-call-start}*)
+            (priv -> !(op in { PUSH, POP }))
+            U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE
                 ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read)))
-        & G (op = MRET -> Y (
-            op = SPSEL
-            & (sp[rs1 mod 2] < $REGION0_SIZE
-                ? pmpcfg0.read & pmpcfg0.write
-                : pmpcfg1.read & pmpcfg1.write)))
-        & G (priv & op = SPSEL ->
-            (X op = MRET)
-            | (sp[rs1 mod 2] < $REGION0_SIZE
-                ? !pmpcfg0.write & !pmpcfg0.read
-                : !pmpcfg1.write & !pmpcfg1.read))
-        & G (priv & op = SPSET -> (mem_addr < $REGION0_SIZE
-            ? !pmpcfg0.write & !pmpcfg0.read
-            : !pmpcfg1.write & !pmpcfg1.read))
+                : !pmpcfg1.write & !pmpcfg1.read)
+        )) & (*\label{ln:sp-call-end}*)
+        G (op = MRET -> (sp[sp_sel] < $REGION0_SIZE (*\label{ln:sp-return-start}*)
+            ? pmpcfg0.read & pmpcfg0.write
+            : pmpcfg1.read & pmpcfg1.write)) & (*\label{ln:sp-return-end}*)
+        G (priv & op = SPSEL & (sp[rs1 mod 2] < $REGION0_SIZE (*\label{ln:sp-sel-start}*)
+                ? pmpcfg0.write | pmpcfg0.read
+                : pmpcfg1.write | pmpcfg1.read)
+            -> X (
+                (priv -> !(op in { PUSH, POP }))
+                U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE
+                    ? !pmpcfg0.write & !pmpcfg0.read
+                    : !pmpcfg1.write & !pmpcfg1.read)
+            )) & (*\label{ln:sp-sel-end}*)
+        G (priv & op = SPSET & (mem_addr < $REGION0_SIZE (*\label{ln:sp-set-start}*)
+                ? pmpcfg0.write | pmpcfg0.read
+                : pmpcfg1.write | pmpcfg1.read)
+            -> X (
+                (priv -> !(op in { PUSH, POP }))
+                U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE
+                    ? !pmpcfg0.write & !pmpcfg0.read
+                    : !pmpcfg1.write & !pmpcfg1.read)
+            )) & (*\label{ln:sp-set-end}*)
     \end{lstlisting}
 \end{figure}
 
@@ -640,14 +653,7 @@ To explore the SYSRET vulnerability in more detail, two approaches to mitigate s
 One approach lies upon the burden of ensuring security on the programs running on the architecture and is expressed in form of an assumption, the other modifies the architecture and does not rely on on programs to implement certain guidelines.
 
 Aforementioned assumption is depicted in snippet \ref{snpt:sp-safety}.
-This assumption is twofold.
-The first part does not introduce a new concept and is similar to the assumptions \smv{CLR_ON_DECLASSIFICATION} and \smv{SAN_ON_CLASSFIFICATION} (cf. section \ref{sec:assumptions}, snippets \ref{snpt:clr-on-declassify}, \ref{snpt:san-on-classify}) in that it also deals with memory privilege settings.
-It was already assumed by \smv{INIT} constraints that the stack-pointer for privileged mode initially points into a memory region that is neither read- nor writable to user-mode.
-The first part of the assumption \smv{SP_SAFETY} now assumes that machine-mode keeps this assumption intact throughout all its execution paths, i.e. it does not make the memory region that is used by its stack-pointer accessible to user-mode.
-This part of the new assumption does not add anything new in context of the SYSRET vulnerability but is required to ensure the security of the architecture nonetheless.
-
-The second part of the assumption starts in line \ref{ln:mie-spsel} and targets the SYSRET vulnerability.
-There it is assumed that machine-mode must ensure for interrupts to be disabled whenever it changes the stack-pointer.
+It states that interrupts must be disabled, whenever machine-mode hands back control to user-mode.
 This rules out any attack vector where an external interrupt aborts the execution of the \minrv{Mret} instruction leaving machine-mode with a user-mode-controlled stack pointer.
 Some pending external interrupt can then only be handled after the \minrv{Mret} instruction has been executed.
 This makes the MINRV8 architecture effectively more similar to AMD's version of the x86 architecture which is not vulnerable to the SYSRET vulnerability \cite{Dunlap19}.
@@ -659,10 +665,7 @@ In AMD's x86 architecture, when setting the \lstinline{RIP} with a bad value the
         caption={Assumption \smv{SP_SAFETY}},
         label={snpt:sp-safety}
     ]
-        G (priv -> X (sp[sp_sel] < $REGION0_SIZE
-            ? !pmpcfg0.write & !pmpcfg0.read
-            : !pmpcfg1.write & !pmpcfg1.read)) &
-        G (priv & op = SPSEL -> MIE = 0b_0) & (*\label{ln:mie-spsel}*)
+        G (priv & op = MRET & MPP = 0b_0 -> MIE = 0b_0) &
     \end{lstlisting}
 \end{figure}
 
@@ -670,7 +673,28 @@ The other mitigation modifies the architecture.
 The stack-pointer extension of the MINRV8 architecture was altered such that the two stack-pointers are assigned to privilege-modes and switched by hardware.
 Whenever the architecture changes into machine-mode, \smv{sp_sel} is set to \smv{1} and whenever it changes into user-mode \smv{sp_sel} is set to \smv{0}.
 Furthermore, the \minrv{Spsel} instruction is disabled.
-Therefore, with this modification to the architecture all \minrv{Spsel} related parts of the \smv{SP_BANK} and \smv{SP_SAFETY} assumptions can be dropped.
+Therefore, with this modification to the architecture the assumptions \smv{SP_BANK} and \smv{SP_SAFETY} can be dropped.
+However, new assumptions and \smv{INIT} constraints must be introduced.
+With the hardware automatically switching stack-pointers, it must be ensured that the memory regions these stack-pointers point to always are assigned with the respective privileges, i.e. user-mode-stack-pointer is user-mode-read- and -writeable, etc.
+This is assumed initially, and made stable by the assumption given in snippet \ref{snpt:sp-autobank-assumption}.
+These assumptions are to some extent unrealistic as it cannot be taken for granted that machine-mode actually is capable of setting up the memory regions correctly and guaranteeing that user-mode does not interfere with these settings.
+However, verifying such mechanisms is out of scope in this thesis.
+We therefore make aforementioned assumptions to show that \textit{given} such mechanisms, the herein proposed hardware mitigation to the SYSRET vulnerability can be verified by our approach.
 
-With both stack-pointer related assumptions, \smv{SP_BANK} and \smv{SP_SAFETY}, nuXmv manages to verify that the architecture does not violate any information flow property.
-The same is true for the modification of the architecture where the stack-pointer is selected automatically by the architecture and \minrv{Spsel} related parts of aforementioned assumptions are dropped.
+\begin{figure}
+    \begin{lstlisting}[
+        language=smv,
+        caption={Additional assumptions for hardware changes},
+        label={snpt:sp-autobank-assumption}
+    ]
+        G (op != SPSET & (sp[0] < $REGION0_SIZE
+                ? pmpcfg0.write & pmpcfg0.read
+                : pmpcfg1.write & pmpcfg1.read)
+            & (sp[1] < $REGION0_SIZE
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)) &
+    \end{lstlisting}
+\end{figure}
+
+With both stack-pointer related assumptions, \smv{SP_BANK} and \smv{SP_SAFETY}, nuXmv manages to verify that the architecture does not violate integrity information flow properties.
+The same is true for the modification of the architecture where the stack-pointer is selected automatically by the architecture and the assumptions \smv{SP_BANK} and \smv{SP_SAFETY} are dropped.
