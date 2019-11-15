@@ -508,56 +508,7 @@ With these boundaries in mind, it must be decided what will be incorporated in t
 
 \begin{figure}
     \centering
-    \begin{tikzpicture}[node distance=1.2cm and 0.2cm,auto]
-        \tikzstyle{block} = [
-            draw=black,
-            rectangle,
-            minimum width=2.4cm,
-            minimum height=0.8cm,
-            fill=white,
-        ]
-        \tikzstyle{vecarrow} = [
-            thick,
-            decoration={
-                markings,
-                mark=at position 1 with {
-                    \arrow[semithick]{open triangle 90}
-                }
-            },
-            double distance=3.5pt,
-            shorten >= 4.5pt,
-            preaction = {decorate},
-            postaction = {
-                draw,
-                line width=3.5pt,
-                white,
-                shorten >= 3.5pt
-            }
-        ]
-
-        \node[block] (hardware) {Hardware};
-        \node[block] (compilers) [above=of hardware] {Compilers};
-        \draw[vecarrow] (compilers) to (hardware);
-
-        \node[block] (os) [above right=of compilers] {OS};
-        \node[block] (programs) [above left=of compilers] {Programs};
-
-        \begin{scope}[on background layer]
-            \draw[vecarrow] (os.center) to (compilers);
-            \draw[vecarrow] (programs.center) to (compilers);
-        \end{scope}
-
-        \coordinate (yMid) at ($(programs)!0.5!(os)$);
-        \coordinate (mid1) at ($(yMid)!0.5!(compilers)$);
-        \coordinate (right1) at (os.east |- mid1);
-        \coordinate (mid2) at ($(compilers)!0.5!(hardware)$);
-        \coordinate (right2) at (os.east |- mid2);
-        \draw[dashed] (programs.west |- mid1) -- (right1);
-        \draw[dashed] (programs.west |- mid2) -- (right2);
-
-        \node[draw=none] (pl) [right=0cm of right1] {PLs};
-        \node[draw=none] (isas) [right=0cm of right2] {ISAs};
-    \end{tikzpicture}
+    \includegraphics[width=0.7\textwidth]{figures/stack.png}
     \caption{The ecosystem of an \gls{isa}}
     \label{fig:ecosystem}
 \end{figure}
