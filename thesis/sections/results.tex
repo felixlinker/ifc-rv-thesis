@@ -4,33 +4,36 @@
 \label{sec:results}
 
 This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
-The main finding was that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if we assume the 8 assumptions that will be introduced in subsequent sections.
+Our main finding was that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if we assume the 8 assumptions that will be introduced in subsequent sections.
 
 Additionally, roughly 22 bug fix patches\footnote{%
     The number of 22 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
 } and some \smv{INIT} constraints were applied to the model.
-Taken together with aforementioned assumptions these changes to the model mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
+Taken together with aforementioned assumptions these patches mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
 
-This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints that have been added to the model during the verification process.
+This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints.
 
 Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the model would behave when deliberate breaking points were introduced to it.
 These breaking points tried to mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
 The results to these tests will finally be presented in section \ref{sec:canaries}.
 
+% TODO: Motivation also was to test, whether these assumptions are too strong/model can actually capture weakpoints
+
 \subsection{Assumptions}
-\label{sec:assumptions}
 
 Technically, \smv{INIT} constraints and assumptions serve the same purpose: They limit the state spaces that will be searched for property violations.
 Conceptually, however, these two concepts should be distinguished.
-In the model, \smv{INIT} constraints are used to only limit the search of the state space to \textit{valid} counter-examples only.
+
+\subsubsection{Initial Constraints}
+
+In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
 Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
 
-The former aspect of validity is guaranteed by constraining the contents of registers to only contain confidential data when the model starts in machine-mode and to only contain malicious data when the model starts in user-mode.
+We guarantee former aspect of validity by constraining the contents of registers to only contain confidential data when the model starts in machine-mode and to only contain malicious data when the model starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
-The aforementioned \smv{INIT} constraints simply ensure that the properties to prove are not false upfront.
 If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv could find a counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register trivially violating the respective property.
 
-The latter aspect of validity is guaranteed by two constraints.
+The latter aspect of validity regarding the initial state of the model complying with the specification is guaranteed by two constraints.
 The first is rather simple and is depicted in the following snippet:
 \begin{lstlisting}[
     language=smv,
@@ -39,21 +42,13 @@ The first is rather simple and is depicted in the following snippet:
     INIT MIE = 0b_1 -> MPP = 0b_0;
 \end{lstlisting}
 This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the \gls{riscv} specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
-No other \smv{INIT} constraints are required to set up the initial state of the model correctly and sensibly.
+No other \smv{INIT} constraints are required to set up the initial state of the model correctly.
 The second constraint sets up caching correctly, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
-The 8 assumptions that have been introduced throughout the verification process can be grouped into three categories:
-\begin{itemize}
-    \item Mode-boundary crossing related assumptions
-    \item Memory related assumptions
-    \item Memory privilege related assumptions
-\end{itemize}
+\subsubsection{Property Assumptions}
+\label{sec:assumptions}
 
-Find an overview of all these assumptions in table \ref{tbl:assumptions-overview}.
-Each row represents one assumption and each column one property.
-A check mark denotes that the respective assumption is critical for the respective property, i.e. there exists a counter-example proving the property to be false if the assumption at hand is not assumed.
-Note that each of the assumptions is critical for at least one property.
-This stresses that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $} as opposed to \enquote{$ \text{assumptions} \Rightarrow \text{properties} $} since \enquote{$ \neg \text{assumptions} \Rightarrow \neg \text{properties} $}.
+% TODO: Pick up point of introduction, i.e. distinction between INIT and other assumptions by concepts
 
 \begin{table}
     \centering
@@ -83,6 +78,19 @@ This stresses that \enquote{$ \text{assumptions} \Leftrightarrow \text{propertie
     \caption{Assumptions Compared to Properties}
     \label{tbl:assumptions-overview}
 \end{table}
+
+The 8 assumptions that have been introduced throughout the verification process can be grouped into three categories:
+\begin{itemize}
+    \item Mode-boundary crossing related assumptions
+    \item Memory related assumptions
+    \item Memory privilege related assumptions
+\end{itemize}
+
+Find an overview of all these assumptions in table \ref{tbl:assumptions-overview}.
+Each row represents one assumption and each column one property.
+A check mark denotes that the respective assumption is critical for the respective property, i.e. there exists a counter-example proving the property to be false if the assumption at hand is not assumed.
+Note that each of the assumptions is critical for at least one property.
+This shows that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $} as opposed to only \enquote{$ \text{assumptions} \Rightarrow \text{properties} $} since \enquote{$ \neg \text{assumptions} \Rightarrow \neg \text{properties} $}.
 
 \paragraph{Mode-boundary crossing related assumptions}
 As could be seen in table \ref{tbl:assumptions-overview}, there are two properties related to mode-boundary crossing.
@@ -129,8 +137,6 @@ In alternating rows, two groups of assumptions can be distinguished: those which
 Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
 Whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
 
-\subparagraph{Counter-examples}
-
 Without assuming \smv{SAN_ON_CALL} nuXmv manages to find two counter-examples.
 One for property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and one for \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}).
 The traces for both counter-examples are depicted in tables \ref{tbl:cex-mem-i-soc} and \ref{tbl:cex-csr-i-soc} respectively.
@@ -139,14 +145,17 @@ Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example for the \smv{NO_LE
 \begin{example}
     The format of these tables illustrating counter-example traces will be used frequently throughout this thesis to illustrate counter-examples.
     To introduce it, table \ref{tbl:cex-mem-i-soc} will be explained in detail now.
-    Each row of the table represents an instruction being executed and the changes in result of this instruction with the exception of the first row which depicts the processor's initial state.
-    Whenever a cell is empty, the value represented by it did not change as a result of execution the respective instruction.
+    The first row of the table gives the processor's initial state.
+    Each subsequent row of the table represents an instruction being executed and shows the values that have changed in result of this instruction.
+    Whenever a cell is empty, the value represented by it did not change.
     Furthermore, the table is separated in three main columns: The first column shows the instructions being executed.
     In case of table \ref{tbl:cex-mem-i-soc}, three instructions were executed: \minrv{Ecall}, \minrv{Load} and \minrv{Store}.
 
     The second group of columns hold the information flow labels for the registers and memory on a per-word basis.
     During the verification process it was found that no counter-example required information flow labels of a per-bit granularity.
-    Therefore, for the sake of simplicity, the information flow labels of machine-words in memory or registers were combined to a single label.
+    Therefore, for the sake of simplicity, the information flow labels of machine-words in memory or registers were combined to a single label\footnote{
+        The labels have been combined by using the $ \sqcup $ operator, i.e. for a label $ w $, the combined label is $ \bigsqcup_{i} w_i $.
+    }.
     The two inner rows in the cells of the second major column denote the labels of the registers (\minrv{r}) and memory (\minrv{m}) respectively whereas the inner columns mark the index of the labels, e.g. in table \ref{tbl:cex-mem-i-soc} all registers and the cells of memory region zero are labelled with \PU{}, i.e. public and untrusted, whereas the cells of memory region one are labelled with \PT{}, i.e. public and trusted, in the initial state.
 
     The third major column shows the status of the processor.
@@ -430,17 +439,18 @@ The attack comprises the following steps and requires administrator privileges o
     Since the region is marked as write-back-cacheable, the writes will not be propagated to the memory controller which would drop these accesses but will be cached.
     \item \label{itm:cache-pois-smi}
     Trigger an System Management Interrupt to transfer control to System Management Mode.
-    Depending on the specific addresses written System Management Mode will now execute code written with administrator privileges.
+    Depending on the specific addresses written System Management Mode will now execute code written with administrator privileges in step \ref{itm:cache-pois-mem}.
 \end{enumerate}
 
-Steps \ref{itm:cache-pois-mem} and \ref{itm:cache-pois-smi} can also be swapped.
-If instead of a write access the cache is read in this case, this attack vector can then be utilized to read SMM memory.
+Steps \ref{itm:cache-pois-mem} and \ref{itm:cache-pois-smi} can also be swapped to read from SMM memory.
+Then, SMM memory will first read by SMM mode executing the interrupt handler which will leave result in some parts of the handler being cached.
+After SMM returned from handling the interrupt, administrator mode can read these words from cache.
 
-This attack does not fully apply to the MINRV8 architecture since it does not support as fine grained privilege modes.
-However, the basic idea can still be implemented if the following changes are made to the model:
+This attack does not fully apply to the MINRV8 architecture since it does not support as fine grained privilege modes as the x86 architecture.
+However, the basic idea can still be implemented by following changes to the model:
 \begin{itemize}
-    \item For all cache transition relations, do not check whether current privilege mode suffices for the memory operation at hand
-    \item For load accesses to memory, do not check whether current privilege mode suffices for the memory read if the address is being cached
+    \item For all cache transition relations, do not check whether current privilege mode suffices for the memory operation at hand, i.e. user-mode can write to cache of memory regions not set as writable to it.
+    \item For load accesses to memory, do not check whether current privilege mode suffices for the memory read if the address is being cached, i.e. user-mode can read cached memory regions even if they're not set as readable to it.
 \end{itemize}
 
 These changes manage to introduce a vulnerability to the MINRV8 architecture.
@@ -549,12 +559,12 @@ There are no stack-pointers dedicated to specific privilege-modes.
 Consequently, stack-pointers are not automatically switched by hardware on privilege-mode changes.
 However, when pushing to or popping from the stack, the stack-pointer automatically is in- or decremented.
 Additionally, when the stack-pointer after being pushed to or popped from crosses the boundary of the memory as a whole or of single memory regions, the architecture also ensures that it wraps around inside its memory region.
-This might render certain stack-pointer related vulnerabilities impossible; it might be a real threat to some architectures that the stack-pointer might move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out.
+It might be a threat to some architectures having the stack-pointer move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out.
 
-Furthermore, an \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither readable nor writable to user-mode.
+Furthermore, an \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither read- nor writable to user-mode.
 This, as usual, ensures that the information flow properties are not violated by some obvious initial condition.
 
-With the extension to the architecture also comes an assumption that tries to emulate all the major steps that software vulnerable to the SYSRET attack already followed but which didn't suffice to implement a secure system.
+With the extension to the architecture also comes an assumption that tries to emulate all the major steps that software vulnerable to the SYSRET attack already follows but which do not suffice to implement a secure system.
 This assumption is called \smv{SP_BANK} and is depicted in snippet \ref{snpt:sp-bank}.
 It comprises four parts.
 Firstly, in lines \ref{ln:sp-call-start}-\ref{ln:sp-call-end}, it is assumed that machine-mode must not use the \minrv{Push} or \minrv{Pop} instructions before the stack points to a safe memory region.
@@ -605,9 +615,9 @@ These two parts follow the same structure as the first part of the \smv{SP_BANK}
     \end{lstlisting}
 \end{figure}
 
-All these assumptions, however, do not ensure that the architecture does not violate any information flow property.
+All these assumptions, however, do not ensure that the architecture models all information flow properties.
 Similar to the SYSRET vulnerability, there is a stream of instructions that violates each of these properties.
-Here, only the -related properties shall be covered as only these are relevant to the SYSRET vulnerability.
+Here, only the integrity-related properties shall be covered as only these are relevant to the SYSRET vulnerability.
 The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.
 The tables that can be found there use a new feature to visualize the two stack-pointers.
 It has already been mentioned that the architecture supports two stack-pointers being indexed by \minrv{0} and \minrv{1}.
