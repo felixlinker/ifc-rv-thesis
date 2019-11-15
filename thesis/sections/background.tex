@@ -1052,6 +1052,35 @@ Invariants are the simplest form of specification and can also be expressed in b
 In the context of \gls{nuxmv}, an invariant is formally given by a next-expression, i.e. an expression that can contain the use of the \smv{next} function.
 Invariants specify that something (i.e. the respective next-expression) must be true in all reachable states of a model.
 
+\begin{figure}
+    \def\subfigw{0.5\textwidth}
+    \def\figscale{0.4}
+    \begin{subfigure}[b]{\subfigw}
+        \centering
+        \includegraphics[scale=\figscale]{figures/module.png}
+        \caption{\gls{nuxmv} module}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigw}
+        \centering
+        \includegraphics[scale=\figscale]{figures/transition-system.png}
+        \caption{Transition system}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigw}
+        \centering
+        \includegraphics[scale=\figscale]{figures/ctl-interpretation.png}
+        \caption{\gls{ctl} interpretation}
+        \label{fig:ctl-int}
+    \end{subfigure}
+    \begin{subfigure}[b]{\subfigw}
+        \centering
+        \includegraphics[scale=\figscale]{figures/ltl-interpretation.png}
+        \caption{\gls{ltl} interpretation}
+    \end{subfigure}
+    \caption{\gls{nuxmv} modules illustrated}
+\end{figure}
+
+% TODO: Reference whole figure
+
 On the other hand, \gls{ltl} is a temporal logic and as such supports the specification of properties over time.
 Both, \gls{ltl} and \gls{ctl}, will be introduced semi-formally here as presented in the \citetitle{nuXmv} \cite{nuXmv}.
 Interpretations and models of an \gls{ltl} formula are infinite execution paths of a system, or in the context of \gls{nuxmv}.
@@ -1085,40 +1114,6 @@ Therefore, it is straightforward how \gls{ctl} formulas are checked by \gls{nuxm
 Again, the most simple form of a \gls{ctl} formula is a next-expression \smv{p}.
 To illustrate the models-relation for \gls{ctl}, consider the example tree depicted in figure \ref{fig:ctl-int}.
 Such a tree $ T $ models \smv{p} is \smv{p} is true in state $ x_0 $.
-
-\begin{figure}
-    \centering
-    \begin{tikzpicture}[
-        level/.style={sibling distance=30mm/#1,level distance=10mm},
-        vertex/.style={draw=black,circle,minimum height=2mm,minimum width=2mm},
-    ]
-        \node[vertex] {$ x_0 $}
-        child {
-            node[vertex] {$ x_1 $}
-            child {
-                node[vertex] {$ x_3 $}
-                child {node {\vdots}}
-            }
-            child {
-                node[vertex] {$ x_4 $}
-                child {node {\vdots}}
-            }
-        }
-        child {
-            node[vertex] {$ x_2 $}
-            child {
-                node[vertex] {$ x_5 $}
-                child {node {\vdots}}
-            }
-            child {
-                node[vertex] {$ x_6 $}
-                child {node {\vdots}}
-            }
-        };
-    \end{tikzpicture}
-    \caption{\gls{ctl} Interpretation Example}
-    \label{fig:ctl-int}
-\end{figure}
 
 % TODO: truly inductive definition
 The temporal operators supported by \gls{ctl} are the following:
