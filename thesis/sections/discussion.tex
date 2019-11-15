@@ -178,6 +178,93 @@ This leaves us with good reasons to assume that programs considered by \gls{nuxm
 
 \subsubsection{Assumptions}
 
+% TODO: Mention these goals in introduction/background
+
+The goal we had in mind when phrasing the assumptions which ultimately established the correctness of the information flow properties was for them to be realistic.
+This goal includes:
+\begin{enumerate}
+    \item \label{itm:assumptions-non-trivial}
+    The assumptions must be non-trivial, i.e. they must not be contradictory and must not trivially entail the information flow properties to be verified,
+    \item \label{itm:assumptions-machine-mode}
+    the assumptions must only constrain machine-mode,
+    \item \label{itm:assumptions-verifiable}
+    the assumptions must be decidable and verifiable.
+\end{enumerate}
+
+The reasoning behind point \ref{itm:assumptions-non-trivial} is straight-forward:
+Trying to prove \enquote{$ \text{false} \Rightarrow \text{properties} $} or \enquote{$ \text{properties} \Rightarrow \text{properties} $} is pointless.
+Although we can't give formal proofs that neither is the case, we have good reasons to believe it.
+Recall that we were able to prove that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $}.
+In this case, the assumptions can only be contradictory if the properties are as well which we think, they are obviously not.
+On the other hand, recall that in section \ref{sec:canaries} we were able to make changes to the architecture such that \enquote{$ \neg(\text{assumptions} \Rightarrow \text{properties}) $} held.
+This indicates clearly that the assumption actually express something meaningful and do not trivially entail the information flow properties.
+
+Point \ref{itm:assumptions-machine-mode} also is met by the assumptions introduced in section \ref{sec:assumptions}.
+Whenever it is said that certain instructions must not be executed under certain circumstances, these formulas are guarded by the antecedent \smv{priv ->}.
+Additionally, all other assumptions only constrain state transitions that are under control of machine-mode only, such as changes to \glspl{csr} or state before machine-mode hands back control to user-mode.
+All in all, this point does not need to be discussed extensively.
+However, it was raised nonetheless because it is important to note that the assumptions introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
+Recall, that in context of this thesis it is assumed that user-mode is adversarial to machine-mode and compromised completely.
+Constraining user-mode in the assumptions therefore would have contradicted this threat model.
+
+Lastly, the most critical point is point \ref{itm:assumptions-verifiable}.
+Ideally, the assumptions established in context of this thesis would serve as a verification target for \glspl{os} or compilers.
+If one was to write a collection of interrupt handlers for an \gls{os}, one might want to check that all 8 assumptions are implemented by these.
+This would grant the absence of information flow related bugs in context of the information flow properties as proposed in section \ref{sec:checking}.
+This, however, presupposes that it is actually possible to verify programs against these properties.
+As part of this thesis, we cannot give guarantees on the feasibility of this undertaking.
+Yet, we tried to allow for it.
+Meeting point \ref{itm:assumptions-machine-mode} is one step in the right direction.
+However, how these simplified properties might be transferred to real-world system is an open question.
+The problems behind this are illustrated by the \smv{SP_BANK} assumption introduced parallel to the SYSRET vulnerability in section \ref{sec:sysret}.
+There are two aspects of the first part of this assumption which are noteworthy.
+The relevant part of the \smv{SP_BANK} assumption is given in snippet \ref{snpt:sp-bank-p1}.
+
+\begin{figure}
+    \begin{lstlisting}[
+        language=smv,
+        caption={First part of the assumption \lstinline{SP_BANK}},
+        label={snpt:sp-bank-p1}
+    ]
+        G (!priv & X priv -> X ( (*\label{ln:sp-call-priv}*)
+            (priv -> !(op in { PUSH, POP }))
+            U ((op = MRET & MPP = 0b_0) | sp[sp_sel] < $REGION0_SIZE (*\label{ln:sp-call-mret}*)
+                ? !pmpcfg0.write & !pmpcfg0.read
+                : !pmpcfg1.write & !pmpcfg1.read)
+        )) &
+    \end{lstlisting}
+\end{figure}
+
+Whilst working on this assumption, we found that the specific implementation of two \textit{ideas} was critical to the presence of the SYSRET vulnerability, both:
+\begin{enumerate}
+    \item \label{itm:no-sysret-priv}
+    replacing the expression \smv{!priv & X priv} in line \ref{ln:sp-call-priv} by \smv{(op = ECALL) | (bool(MIE) & bool(MEIP))} which is the actual condition under which a trap is taken and
+    \item \label{itm:no-sysret-mret}
+    omitting the expression \smv{(op = MRET & MPP = 0b_0)} in line \ref{ln:sp-call-mret}
+\end{enumerate}
+led to \gls{nuxmv} not finding the SYSRET vulnerability.
+Why is that?
+
+The first part of the \smv{SP_BANK} assumption states: \enquote{Whenever there is a switch from user- to machine-mode, latter can only use the \minrv{Push} or \minrv{Pop} instructions after having returned to user-mode or having ensured that the stack-pointer is safe}.
+If the antecedent of this assumption would have been replaced by: \enquote{Whenever a trap is taken, \dots}, i.e. by \smv{(op = ECALL) | (bool(MIE) & bool(MEIP))}, the consequent would also have applied to cases where a trap was taken from machine-mode to machine-mode\footnote{
+    Furthermore, it is noteworthy that the antecedent in the original assumption resembles a more result-driven approach to phrasing properties, i.e. talk about \textit{what} is happening, whereas the alternative disucssed here resembles a more architecture-driven approach, i.e. talk about \textit{when} things are happening.
+    The discussion, which of these approaches should be preferred is a topic on its own.
+    In this thesis, we used both approaches but tried to stick to the result-driven approach whenever possible to keep the assumptions concise.
+    In certain situations, however, it was more practical to go for the architecture-driven approach.
+}.
+Such a trap is necessary to interrupt machine-mode from properly returning to user-mode while already having set the stack-pointer back to user-mode.
+The consequent also applying to traps from machine- to machine-mode in context of the MINRV8 architecture boils down to machine-mode ensuring that the proper stack-pointer is setup correctly on \textit{all} traps rendering the SYSRET vulnerability impossible.
+For example, the \glspl{os} being affected by the SYSRET vulnerability clearly did not set the stack-pointer on \textit{all} execution paths of the trap handler for the general protection fault.
+
+The condition \smv{(op = MRET & MPP = 0b_0)} on the right-hand side of the \smv{U}-expression in line \ref{ln:sp-call-mret} equals telling machine-mode: \enquote{You can forget about not using the \minrv{Push} and \minrv{Pop} instructions after you have \textit{attempted} to return control to user-mode}.
+For the same reasons as stated above, this part is critical.
+Leaving this expression out would equal machine-mode having state persistent over user-mode-calls and -returns to and from machine-mode, by which machine-mode memorizes whether it has set the stack-pointer to user-mode or to machine-mode.
+With such a mechanism in place, machine-mode could not be fooled into using the user-mode stack-pointer on any trap handler since it would first check this state.
+
+These two examples stress that the precise phrasing of the assumptions is highly critical for both how realistic the assumptions are and how well they might be suited to serve as target for verification of actual code-bases.
+While it would be sufficient to find a stronger precondition for these assumptions in existing code-bases, it is non-trivial whether such preconditions are easy to find or whether the assumptions might be rephrased such that they still grant the absence of information flow related bugs but are easier to verify in programs.
+This topic, though, can't be handled as part of this thesis leading to future work.
+
 \subsection{Generalizability}
 
 \subsection{Trustworthiness}
