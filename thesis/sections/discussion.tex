@@ -266,6 +266,63 @@ This topic, though, can't be handled as part of this thesis leading to future wo
 
 \subsection{Trustworthiness}
 
-\subsubsection{Model}
+Verification processes must not be arbitrary.
+The core of verification is to enhance the trust in a given system.
+For trust to arise, it is mandatory for the process itself to be trustworthy.
+
+But what does \textit{trustworthy} mean?
+Here, we will skip the aspect of technical soundness of this thesis, i.e. the question of whether the work presented in this thesis is without errors.
+In consequence, the degree of trustworthiness is determined by whether the results of the verification process actually enhance the confidence in the correctness of the MINRV8 architecture, i.e. rather than asking whether we did what we did right, we ask: did we do the \textit{right} thing?
+\citeauthor{Piano} expressed this sense of trustworthiness in his blog post \citetitle{Piano} as:
+\textcquote{Piano}{\textins{I}t is extremely difficult to argue convincingly that a verification result is correct. By \enquote{correct} I mean not only \enquote{mathematically sound} but also \enquote{the result is faithful to the intent of the verification effort.}}
+
+A possible issue with verification is to make circular arguments (an example for this will be given in section \ref{sec:related-work}).
+Verification engineers do not start their work out of nowhere.
+They usually have a feel for what they attempt to verify and have some vulnerabilities in mind they try to tackle.
+If the actual work of modeling a prototype and implementing a verification procedure is influenced by this too strongly, one might object:
+\enquote{You were able to find vulnerability \textit{X} only because you knew that it was there. Your procedure is nothing but an abstracted simulation of known issues.}
+
+This also leads to another concern:
+As with most programming, the verification process will tackle what is aimed for in some more general sense, i.e. when aiming to verify systems against certain bugs these are usually generalized to classes of related vulnerabilities.
+But with such an approach, one can never be sure that there is no other class of vulnerabilities that was missed.
+In other words: Does the verification procedure have blind spots?
+
+It shall now be subject to investigate whether our work is touched by aforementioned two issues.
+
+First, we will investigate whether our thesis has made a circular argument.
+Recall the steps that have been taken to verify the MINRV8 architecture against the information flow properties:
+% TODO: Cite respective sections
+\begin{enumerate}
+    \item \label{itm:step-minrv}
+    Specify the MINRV8 architecture based on \gls{riscv}
+    \item \label{itm:step-semantics}
+    Define information flow semantics for the instructions available on MINRV8
+    \item \label{itm:step-properties}
+    Use fields not being propagated in the information flow semantics and some intuition to state information flow properties
+    \item \label{itm:step-loop}
+    Enter a proof-refine-loop until a fixpoint has been reached
+    \item \label{itm:step-canaries}
+    Test the model by subjecting it to vulnerabilities
+\end{enumerate}
+
+We find that steps \ref{itm:step-semantics} to \ref{itm:step-loop} are well founded by both theory and intuition and do obviously not face the risk of making a circular argument.
+This, however, is less obvious for steps \ref{itm:step-minrv} and \ref{itm:step-canaries}.
+In both cases, the selection of \gls{riscv} features and instruction to include or vulnerabilities to test respectively can be doubted.
+
+The work on this thesis was indeed influenced by the canaries the model was ultimately tested against and vice versa: the selection of vulnerabilities to test the model against was based on the features implemented in it.
+Despite the ciruclar character of these two steps, we find that this is not an issue.
+Steps \ref{itm:step-minrv} and \ref{itm:step-canaries} must be understood as the setup for a benchmark of a verification procedure proposed in this thesis which is given by steps \ref{itm:step-semantics} to \ref{itm:step-loop}.
+Having the setup to test these steps in being derived via a methodology that is circular to some degree does not make the procedure itself circular.
+The opposite is the case:
+We find that the definition of information flow semantic, information flow control properties and the proof-refine-loop are all well founded and comprehensible, i.e. follow some intuition which could make one have more trust in the given system.
+
+On the other hand, we must admit that it is unknown whether there are blind spots to the verification procedure or more precisely: to the information flow control properties.
+We managed to show that these properties are not meaningless since they are able to detect both the SYSRET and the cache poisoning vulnerability.
+But it is unclear
+\begin{enumerate*}[label=\alph*)]
+    \item which class of bugs or vulnerabilities can be detected by this procedure and
+    \item whether this class covers \textit{all} vulnerabilities in the sense of \citeauthor{Piano}, i.e. \textcquote{Piano}{the result is faithful to the intent of the verification effort.}
+\end{enumerate*}
+We mark this problem as future work.
 
 \subsubsection{Verification Process}
