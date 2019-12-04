@@ -31,6 +31,7 @@ We will cover three aspects of our work:
 \label{sec:scope}
 
 \subsubsection{Architecture}
+\label{sec:discuss-arch}
 
 MINRV8 is meant to be a reasonable abstraction of a real-world \gls{riscv} architecture from a security standpoint.
 However, up to this point nothing has been said about the limits of this abstraction.
@@ -325,4 +326,48 @@ But it is unclear
 \end{enumerate*}
 We mark this problem as future work.
 
-\subsubsection{Verification Process}
+\subsection{General Observations}
+
+\subsubsection{Abstract Model}
+
+You as a reader might have wondered, why we decided to concretely model all flow of information through the model of the MINRV8 architecture and indeed: In the very scope of this thesis, the actual content of registers is not mandatory.
+It does play a role when memory is indexed, but one could probably get away with non-deterministically choosing a memory location to be targeted by loads and stores.
+
+There are two reasons for why this decision was made.
+Firstly, since the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} was adopted more or less directly where the authors did rely on precise values to track\footnote{%
+    This is due to the fact that \gls{hdl} code is annotated.
+    Or in other words: the authors did not have a chance to not track precise values.
+} and performance of \gls{nuxmv} did not mandate to shrink the model, it initially was decided to model values in the MINRV8 architecture.
+
+However, secondly, working with concrete values has two benefits which might become important in future work.
+\begin{enumerate}
+    \item If the model ever was to be extended by jumps and branches, deterministic addresses are needed to model static code in executable memory.
+    If not only loads and stores but also jumps and branches would use non-deterministic mechanisms to determine target addresses, modelling executable memory (cf. sec. \ref{sec:discuss-arch}) and for example interrupt handlers located in this very memory would be pointless to begin with.
+    \item Deterministic values lead to counter-examples being easier to interpret.
+\end{enumerate}
+
+With these two reasons at hand and the overall goal of this thesis to be a \enquote{benchmark} for a methodology to verify \glspl{isa}, we find that having used concrete values improves on the significance of our results.
+
+\subsubsection{Per-Bit Information Flow Tracking}
+
+Another issue, a reader might have stumbled upon is that in section \ref{sec:results} it was mentioned that counter-examples never involved spurious flows of information where the bit-wise labels of values in the architecture was mandatory.
+In other words: for this thesis, tracking only one bit for confidentiality and one bit for integrity for each register and memory address would suffice.
+Initially, it was decided to track labels bit-wise because \begin{enumerate*}[label=\alph*)]
+    \item we followed the approach of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} which tracked information flow bit-wise as well,
+    \item again, performance was sufficient to allow for it, and
+    \item we couldn't have been sure prima facie non-bit-wise tracking of information would suffice.
+\end{enumerate*}
+
+Additionally, it can also be seen that computational instructions never played a major role in any counter-example.
+These results suggest that in future work, if the model ever was to be expanded to a more accurate model of \gls{riscv} and/or to a higher machine-word width and performance problems then are encountered, one could abstract the information flow tracking labels from bit- to word-wise labels or one could remove instructions that only alter data but do not add \enquote{new} ways for information to flow.
+E.g. the \minrv{Add} instruction - from a pure standpoint of \textit{where} information flows - adds nothing in comparison to the \minrv{Mov} instruction.
+The former option only shrinks the state space by a linear factor whereas a register-width increases it exponentially - nevertheless this might matter.
+
+The gist of these findings is:
+Whereas in the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} tracking of each and every bit for a given system was crucial because the authors \textit{could not choose where bugs occur}, it seems that in our more-high level approach for every bug \enquote{imaginable}, there is a very simple trace illustrating it: \gls{nuxmv} is able to choose where a bug occurs since it quantifies over programs as opposed to the work of \citeauthor{Ferraiuolo17} where the program of interest is fixed.
+
+It must be part of future work to investigate whether reducing the instruction set to instructions such as \minrv{Mov}, \minrv{Load}, \minrv{Store} also is possible when executable memory is modelled (cf. sec. \ref{sec:discuss-arch}).
+In this case, an attacker might need to rely on crafting specific payloads to trigger a vulnerability in some static code in executable memory\footnote{%
+    It also is imaginable that the attacker would not need to rely on crafting specific payloads because for every scenario where such a payload would be needed, there also is a scenario in which a more simple payload does suffice since \gls{nuxmv} still quantifies over the static parts of the code.
+    However, we don't find that a decision regarding this question can be made here.
+}.
