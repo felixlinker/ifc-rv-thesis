@@ -20,10 +20,9 @@ Nothing definite can be said in answer to this question.
 However, the canaries these properties have been tested against in section \ref{sec:canaries}, exemplify the class of vulnerabilities that are covered by these properties.
 
 Assessing the results of the approach to formally verify higher level properties of the MINRV8 architecture shall be subject of this section.
-We will cover four aspects of our work:
+We will cover three aspects of our work:
 \begin{itemize}
     \item Scope, i.e. what are the limits of our results,
-    \item Generalizability, i.e. how the proposed approach to verifying \glspl{isa} could be applied in other scenarios,
     \item Trustworthiness, i.e. whether our results are sound, and
     \item General observations.
 \end{itemize}
@@ -264,8 +263,6 @@ With such a mechanism in place, machine-mode could not be fooled into using the 
 These two examples stress that the precise phrasing of the assumptions is highly critical for both how realistic the assumptions are and how well they might be suited to serve as target for verification of actual code-bases.
 While it would be sufficient to find a stronger precondition for these assumptions in existing code-bases, it is non-trivial whether such preconditions are easy to find or whether the assumptions might be rephrased such that they still grant the absence of information flow related bugs but are easier to verify in programs.
 This topic, though, can't be handled as part of this thesis leading to future work.
-
-\subsection{Generalizability}
 
 \subsection{Trustworthiness}
 
