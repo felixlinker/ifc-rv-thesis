@@ -127,6 +127,16 @@ In contrast, regarding the first issue, in our work we not only proposed more ge
 Regarding the second issue of verifying the x86 architecture to not meet the specification, in our work we took a more moderate approach of verifying mitigations to the SYSRET vulnerability.
 Instead of proving the absence of the SYSRET vulnerability, we opted to prove that the mitigation of disabling interrupts when executing the SYSRET instruction is effective (cf. snippet \ref{snpt:sp-safety}, sec. \ref{sec:sysret}).
 
+\subsection{Summary}
+
+We considered seven papers as related work.
+Find an overview of all papers in table \ref{tbl:related-work}.
+Each column classifies related work in regard to the categories introduced at the beginning of this section: the subject of verification is software/hardware and an implementation/specification, verification is performed live/statically and information flow properties are expressed directly or as non-interference properties (if at all).
+
+The work coming closest to our methodology of verification via information flow control considered software and was \cite{GordonKPGNR15,SuhLZD04}.
+The work coming closest to our goal of verifying specifications against higher level properties was \cite{Fox02,KhakpourSD13,BradfieldS16}.
+Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our model by an implementation of an MMU to prove isolation properties on user-process level.
+
 \begin{table}
     \centering
     \begin{tabular}{| r | c c | c c | c c | c c |}
@@ -148,4 +158,6 @@ Instead of proving the absence of the SYSRET vulnerability, we opted to prove th
         \cite{BradfieldS16} & & \checkmark & & \checkmark & & \checkmark & \multicolumn{2}{c |}{N/A} \\
         \hline
     \end{tabular}
+    \caption{An overview of related work}
+    \label{tbl:related-work}
 \end{table}
