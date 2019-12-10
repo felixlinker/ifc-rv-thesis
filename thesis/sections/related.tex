@@ -92,6 +92,41 @@ These capabilities allow processes to perform given actions on a given range of 
 The development of CHERI was accompanied by formal methods and proofs to enhance the trust in this system.
 The CHERI architecture is an attempt to equip an architecture with strong mechanisms of controlling information flow such that the trust in it is very high from the beginning, supported by formal proofs that certain desirable properties hold for this architecture.
 
+\subsection{Model Checking Instruction Set Architectures}
+
+The work of \citeauthor{BradfieldS16} in \citetitle{BradfieldS16} \cite{BradfieldS16} comes closest to what has been attempted in this thesis.
+On the high level, \citeauthor{BradfieldS16} also attempt to verify an \gls{isa} and also use model checking to do so.
+However, they do not use higher level properties or information flow tracking to achieve this.
+Coincidentally, the authors focus on the SYSRET vulnerability to the x86 architecture.
+Their goal is to prove the absence of SYSRET-like vulnerabilities which is expressed as the property: never can the processor be in privileged mode when at the same time the stack pointer, base pointer or instruction pointer are controlled by user-mode.
+
+In their methodology, the authors first identify a group of vulnerable instructions which might lead to such a state by being interrupted.
+They then modelled these instructions alongside with all state touched by these instructions.
+By sparsely constraining the initial state of the model they finally prove: for all initial states, there is no direct successor state where a general protection fault has been thrown and one of the stack, base or instruction pointers is controlled by user-mode.
+The authors claim that by the constraints chosen for the initial states of the model, these states actually embody an over-approximation of all reachable states of the x86 architecture.
+With this methodology, the authors managed to find that Intel's version of the x86 architecture is vulnerable to the SYSRET vulnerability while AMD's version is not.
+
+On the one hand, we find it to be unfair to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} clearly does not have the same scope as ours.
+On the other hand, we find that the work in \cite{BradfieldS16} is lacking in two, key aspects.
+First and foremost, the problem of a circular argument in verification as discussed in section \ref{sec:trustworthiness} fully applies to this work.
+The authors actually didn't use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restricted their model to instructions of which they knew these were relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
+    With the property's encoding, the authors miss the original intent of the work: to verify the absence of SYSRET-\textit{like} vulnerabilities.
+    By only considering general protection fault, a potentially huge class of other vulnerabilities is ruled out by assumption.
+}.
+
+This poses a big problem for a generalization of this work.
+Whilst it might be an adequate showcase for instances of problems where model checking might be helpful, their work only shows how to check that an architecture is \textit{specifically} not susceptible to the SYSRET vulnerability.
+
+Secondly, the property proposed by \citeauthor{BradfieldS16} is not in line with Intel's x86 specification (cf. \cite{Dunlap19}).
+The purpose of the SYSENTER and SYSEXIT instructions \textit{is} to execute privileged code with the stack pointer being controlled by user-mode to reduce the overhead of the mode transition.
+This means, that taking a general protection fault while handling a call to machine-mode via SYSENTER, leaving the general protection fault handler with a stack pointer controlled by user-mode is intended behavior.
+This might be badly designed behavior - but it works as specified.
+In practice, operating systems opted to ensure that no general protection fault could occur when executing the SYSRET instruction but to verify Intel's x86 architecture to not be susceptible to the SYSRET vulnerability asks from it to violate the specification.
+
+In contrast, regarding the first issue, in our work we not only proposed more general properties that were not rooted in specific vulnerabilities but in a structured model of information flow and also would apply to other architectures with few adjustments required, we also took clear and justifiable steps when minimizing the \gls{riscv} architecture such that it would be feasible to verify it in scope of this thesis.
+Regarding the second issue of verifying the x86 architecture to not meet the specification, in our work we took a more moderate approach of verifying mitigations to the SYSRET vulnerability.
+Instead of proving the absence of the SYSRET vulnerability, we opted to prove that the mitigation of disabling interrupts when executing the SYSRET instruction is effective (cf. snippet \ref{snpt:sp-safety}, sec. \ref{sec:sysret}).
+
 \begin{table}
     \centering
     \begin{tabular}{| r | c c | c c | c c | c c |}
