@@ -60,9 +60,9 @@ They analyzed \gls{hdl} implementations of such integrated circuits searching fo
 The techniques employed in this work do not come close to what has been used in this thesis.
 However, one can view the detection of (mostly) unused parts of a design and information flow tracking as two sides of the same coin: whereas here, we strived for finding out where information can flow, the authors in \cite{Zhang15} aim for finding out where information (mostly) does not flow.
 
-\citeauthor{Fox02} formally verified the \gls{arm} architecture by redundancy in \citetitle{Fox02} \cite{Fox02}.
-He implemented a formal model of the \gls{arm} architecture in the theorem prover HOL, using general first order logic for verification.
-In this implementation, \citeauthor{Fox02} modelled two views on the \gls{arm} architecture: the \gls{isa} itself and the micro-architecture implementing this \gls{isa}.
+\citeauthor{Fox02} formally verified the ARM architecture by redundancy in \citetitle{Fox02} \cite{Fox02}.
+He implemented a formal model of the ARM architecture in the theorem prover HOL, using general first order logic for verification.
+In this implementation, \citeauthor{Fox02} modelled two views on the ARM architecture: the \gls{isa} itself and the micro-architecture implementing this \gls{isa}.
 \citeauthor{Fox02} used theorems expressing that there always must be some correspondence between runs of the \gls{isa}-world and runs of the micro-architecture-world.
 If for a given list of instructions or a giving list of steps in the micro-architecture, no corresponding run of the opposite world can be found, the architecture itself must be flawed.
 This work was picked up by \citeauthor{KhakpourSD13} in \citetitle{KhakpourSD13} \cite{KhakpourSD13}.
@@ -80,7 +80,7 @@ In our work, we only considered the scenario of user-mode attacking machine-mode
 It would be an interesting line of research to add an \gls{mmu} to the model and extend the information flow properties accordingly.
 
 On the other hand, \citeauthor{KhakpourSD13} do not give any sense for what these properties actually achieve when it comes to security.
-It is not clear what kind of bugs concretely might be tackled by their properties; whilst they are intuitive and certainly should be met by the \gls{arm} architecture, it is unclear whether they actually guarantee any desirable characteristics of the architecture.
+It is not clear what kind of bugs concretely might be tackled by their properties; whilst they are intuitive and certainly should be met by the ARM architecture, it is unclear whether they actually guarantee any desirable characteristics of the architecture.
 To some extent, these properties fall out of nowhere.
 Whilst this critique to some extent also applies to our work, we think that the methodology of deriving the information flow properties as presented in section \ref{sec:checking} gives some sense of completeness to our properties which is missing from the work of \citeauthor{KhakpourSD13}.
 
@@ -123,7 +123,7 @@ This means, that taking a general protection fault while handling a call to mach
 This might be badly designed behavior - but it works as specified.
 In practice, operating systems opted to ensure that no general protection fault could occur when executing the SYSRET instruction but to verify Intel's x86 architecture to not be susceptible to the SYSRET vulnerability asks from it to violate the specification.
 
-In contrast, regarding the first issue, in our work we not only proposed more general properties that were not rooted in specific vulnerabilities but in a structured model of information flow and also would apply to other architectures with few adjustments required, we also took clear and justifiable steps when minimizing the \gls{riscv} architecture such that it would be feasible to verify it in scope of this thesis.
+In contrast, regarding the first issue, in our work we not only proposed more general properties that were not rooted in specific vulnerabilities but in a structured model of information flow and also would apply to other architectures with few adjustments required, we also took clear and justifiable steps when minimizing the RISC-V architecture such that it would be feasible to verify it in scope of this thesis.
 Regarding the second issue of verifying the x86 architecture to not meet the specification, in our work we took a more moderate approach of verifying mitigations to the SYSRET vulnerability.
 Instead of proving the absence of the SYSRET vulnerability, we opted to prove that the mitigation of disabling interrupts when executing the SYSRET instruction is effective (cf. snippet \ref{snpt:sp-safety}, sec. \ref{sec:sysret}).
 

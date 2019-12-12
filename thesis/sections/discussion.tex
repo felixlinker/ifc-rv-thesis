@@ -33,7 +33,7 @@ We will cover three aspects of our work:
 \subsubsection{Architecture}
 \label{sec:discuss-arch}
 
-MINRV8 is meant to be a reasonable abstraction of a real-world \gls{riscv} architecture from a security standpoint.
+MINRV8 is meant to be a reasonable abstraction of a real-world RISC-V architecture from a security standpoint.
 However, up to this point nothing has been said about the limits of this abstraction.
 With every abstraction, there is a small chance that it perfectly matches the concept that has been abstracted in regard to the purpose of the abstraction but in most cases, some corners are cut.
 In this section, we will reflect on the limits of the MINRV8 architecture and its implementation.
@@ -56,7 +56,7 @@ A reader, experienced in the field of microcontrollers or computer-architecture 
 \end{enumerate}
 
 The reason for both of these points lies in the implementation of the model.
-In the introduction of the MINRV8 architecture in section \ref{sec:minrv8} we mentioned that the idea of the architecture was tightly coupled to its implementation in \gls{nuxmv}.
+In the introduction of the MINRV8 architecture in section \ref{sec:minrv8} we mentioned that the idea of the architecture was tightly coupled to its implementation in nuXmv.
 The design of the model had to answer the question: How can a stream of instructions be implemented?
 nuXmv allows to think of the following options:
 \begin{enumerate}
@@ -80,7 +80,7 @@ The decision towards using input variables as a model of the stream of instructi
     \item in the prototyping phase of the model, it was quickly found out that using input variables led to significant boosts in performance, and
     \item using input variable simplified the implementation significantly.
 \end{enumerate*}
-Having used purely either frozen variables or variables would have increased the size of the state space to be traversed by \gls{nuxmv} and would have introduced the necessity to implement instruction decoding increasing the complexity of the transition relation.
+Having used purely either frozen variables or variables would have increased the size of the state space to be traversed by nuXmv and would have introduced the necessity to implement instruction decoding increasing the complexity of the transition relation.
 Furthermore, it would not have allowed for unbounded model checking of the architecture since the size of programs to be taken into consideration would have been bounded by the size of executable memory.
 
 Yet, using input variables also has some downsides.
@@ -98,7 +98,7 @@ In a nutshell, the use of input variables over (frozen) variables introduces a c
     \label{fig:interrupt-flow}
 \end{figure}
 
-Consider an example memory layout for the \gls{riscv} architecture as depicted in figure \ref{fig:interrupt-flow} where code is executed from left to right starting with an \minrv{Ecall} instruction.
+Consider an example memory layout for the RISC-V architecture as depicted in figure \ref{fig:interrupt-flow} where code is executed from left to right starting with an \minrv{Ecall} instruction.
 Executing this instruction triggers a shift in control to machine-mode which jumps to address \minrv{X} pointed to by the \gls{mtvec} register.
 Then, the instructions at addresses \minrv{X} to \minrv{Z} and subsequent ones are executed until finally, a \minrv{Mret} instruction is read an executed which triggers a jump to address \minrv{A}.
 Two instructions later, another \minrv{Ecall} instruction is executed, etc.
@@ -112,7 +112,7 @@ We would expect the order of instructions to be executed to look like:
 \end{enumerate}
 Where \minrv{Load, Add, Store} are the instructions located at addresses \minrv{X} to \minrv{Z} and \minrv{Load, Mov, Slt} the instructions located at addresses \minrv{A}, \minrv{B} and \minrv{C} respectively.
 
-As input variables can not be constrained in \gls{nuxmv}, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
+As input variables can not be constrained in nuXmv, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
 \begin{enumerate}
     \item First environment call: \lstinline[language=minrv8,mathescape=true]{Ecall, Load, Add, Store, $\dots$, Mret}
     \item Return: \lstinline[language=minrv8,mathescape=true]{Load, Mov}
@@ -139,13 +139,13 @@ It does not matter whether the critical code is executed without the interventio
 The concept of jumps being influenced by some malicious program is, however, captured in approach: both properties \ref{itm:prop-mem-i} and \ref{itm:prop-csr-i}, i.e. the integrity of memory- and \gls{csr}- related instruction, ensure that certain instructions may not be influenced by user-mode.
 There is no reason to assume that user-mode would control jumps and branches by fundamentally different flows of information than memory- and \gls{csr}-related instructions, i.e. jump related vulnerabilities are covered in principle.
 
-Additionally, our implementation might not be able to model programs including jumps and branches but the set of programs considered by \gls{nuxmv} does include those where jumps have been linearized\footnote{%
+Additionally, our implementation might not be able to model programs including jumps and branches but the set of programs considered by nuXmv does include those where jumps have been linearized\footnote{%
     This is similar to function inlining supported by many compilers.
 }.
 Consider figure \ref{fig:jump-inlining} where in the upper half depicts an ordinary program, being executed from left to right and including jump instructions.
 Jump linearization here means that for any such program there also exists another (potentially infinite) program where no jumps occur but the same instructions besides jumps are being executed.
 The respective counterpart to the program in the upper half is depicted in the lower half of figure \ref{fig:jump-inlining}.
-The sequence of states generated by the linearized programs is equal to the sequence of states of the non-linearized program modulo \gls{pc} values - which is not modelled in \gls{nuxmv} anyways.
+The sequence of states generated by the linearized programs is equal to the sequence of states of the non-linearized program modulo \gls{pc} values - which is not modelled in nuXmv anyways.
 
 \begin{figure}
     \centering
@@ -159,23 +159,23 @@ The sequence of states generated by the linearized programs is equal to the sequ
 % TODO: My implementation of the stream of instructions is an over-abstraction
 
 Starting with the premise of this thesis, it was always clear that the MINRV8 architecture is a simplification.
-This, though, is not a problem since by focusing on the very core, security related instructions allowed us to implement a tractable and small model in \gls{nuxmv}.
-If one would add jump and branch instructions to the MINRV8 architecture, it'd be comparable to actual \gls{riscv} architectures.
-From this point of view, it is not a problem to apply the results of the verification process, i.e. the set of assumptions, to the \gls{riscv} architecture.
+This, though, is not a problem since by focusing on the very core, security related instructions allowed us to implement a tractable and small model in nuXmv.
+If one would add jump and branch instructions to the MINRV8 architecture, it'd be comparable to actual RISC-V architectures.
+From this point of view, it is not a problem to apply the results of the verification process, i.e. the set of assumptions, to the RISC-V architecture.
 
 The implementation of the MINRV8 architecture abstracted from real-world architectures in two main points:
 \begin{enumerate}
-    \item \gls{nuxmv} does not guarantee stable behavior on \minrv{Ecall} instructions; this introduces a sense of non-determinism for which there are more programs considered by \gls{nuxmv} than could actually be run on the MINRV8 architecture.
-    This is not problematic because overabstracting the space of all programs $ P $ still leaves \gls{nuxmv} considering all programs in $ P $.
+    \item nuXmv does not guarantee stable behavior on \minrv{Ecall} instructions; this introduces a sense of non-determinism for which there are more programs considered by nuXmv than could actually be run on the MINRV8 architecture.
+    This is not problematic because overabstracting the space of all programs $ P $ still leaves nuXmv considering all programs in $ P $.
     \item The implementation does not support jump or branch instructions.
     This is not problematic because
     \begin{enumerate*}[label=\alph*)]
         \item flows of information relevant to jump and branch instructions are still covered by the integrity properties \ref{itm:prop-mem-i} and \ref{itm:prop-csr-i} and
-        \item programs including jumps can be linearized; such programs \textit{are} considered by \gls{nuxmv}.
+        \item programs including jumps can be linearized; such programs \textit{are} considered by nuXmv.
     \end{enumerate*}
 \end{enumerate}
 
-This leaves us with good reasons to assume that programs considered by \gls{nuxmv}, i.e. the set of programs quantified over when running proofs, is sufficiently close to the set of \enquote{real} programs of the MINRV8 architecture including jumps and branches.
+This leaves us with good reasons to assume that programs considered by nuXmv, i.e. the set of programs quantified over when running proofs, is sufficiently close to the set of \enquote{real} programs of the MINRV8 architecture including jumps and branches.
 % TODO: Future work?
 
 \subsubsection{Assumptions}
@@ -244,7 +244,7 @@ Whilst working on this assumption, we found that the specific implementation of 
     \item \label{itm:no-sysret-mret}
     omitting the expression \smv{(op = MRET & MPP = 0b_0)} in line \ref{ln:sp-call-mret}
 \end{enumerate}
-led to \gls{nuxmv} not finding the SYSRET vulnerability.
+led to nuXmv not finding the SYSRET vulnerability.
 Why is that?
 
 The first part of the \smv{SP_BANK} assumption states: \enquote{Whenever there is a switch from user- to machine-mode, latter can only use the \minrv{Push} or \minrv{Pop} instructions after having returned to user-mode or having ensured that the stack-pointer is safe}.
@@ -298,7 +298,7 @@ Recall the steps that have been taken to verify the MINRV8 architecture against 
 % TODO: Cite respective sections
 \begin{enumerate}
     \item \label{itm:step-minrv}
-    Specify the MINRV8 architecture based on \gls{riscv}
+    Specify the MINRV8 architecture based on RISC-V
     \item \label{itm:step-semantics}
     Define information flow semantics for the instructions available on MINRV8
     \item \label{itm:step-properties}
@@ -311,7 +311,7 @@ Recall the steps that have been taken to verify the MINRV8 architecture against 
 
 We find that steps \ref{itm:step-semantics} to \ref{itm:step-loop} are well founded by both theory and intuition and do obviously not face the risk of making a circular argument.
 This, however, is less obvious for steps \ref{itm:step-minrv} and \ref{itm:step-canaries}.
-In both cases, the selection of \gls{riscv} features and instruction to include or vulnerabilities to test respectively can be doubted.
+In both cases, the selection of RISC-V features and instruction to include or vulnerabilities to test respectively can be doubted.
 
 The work on this thesis was indeed influenced by the canaries the model was ultimately tested against and vice versa: the selection of vulnerabilities to test the model against was based on the features implemented in it.
 Despite the ciruclar character of these two steps, we find that this is not an issue.
@@ -341,7 +341,7 @@ There are two reasons for why this decision was made.
 Firstly, since the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} was adopted more or less directly where the authors did rely on precise values to track\footnote{%
     This is due to the fact that \gls{hdl} code is annotated.
     Or in other words: the authors did not have a chance to not track precise values.
-} and performance of \gls{nuxmv} did not mandate to shrink the model, it initially was decided to model values in the MINRV8 architecture.
+} and performance of nuXmv did not mandate to shrink the model, it initially was decided to model values in the MINRV8 architecture.
 
 However, secondly, working with concrete values has two benefits which might become important in future work.
 \begin{enumerate}
@@ -363,15 +363,15 @@ Initially, it was decided to track labels bit-wise because \begin{enumerate*}[la
 \end{enumerate*}
 
 Additionally, it can also be seen that computational instructions never played a major role in any counter-example.
-These results suggest that in future work, if the model ever was to be expanded to a more accurate model of \gls{riscv} and/or to a higher machine-word width and performance problems then are encountered, one could abstract the information flow tracking labels from bit- to word-wise labels or one could remove instructions that only alter data but do not add \enquote{new} ways for information to flow.
+These results suggest that in future work, if the model ever was to be expanded to a more accurate model of RISC-V and/or to a higher machine-word width and performance problems then are encountered, one could abstract the information flow tracking labels from bit- to word-wise labels or one could remove instructions that only alter data but do not add \enquote{new} ways for information to flow.
 E.g. the \minrv{Add} instruction - from a pure standpoint of \textit{where} information flows - adds nothing in comparison to the \minrv{Mov} instruction.
 The former option only shrinks the state space by a linear factor whereas a register-width increases it exponentially - nevertheless this might matter.
 
 The gist of these findings is:
-Whereas in the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} tracking of each and every bit for a given system was crucial because the authors \textit{could not choose where bugs occur}, it seems that in our more-high level approach for every bug \enquote{imaginable}, there is a very simple trace illustrating it: \gls{nuxmv} is able to choose where a bug occurs since it quantifies over programs as opposed to the work of \citeauthor{Ferraiuolo17} where the program of interest is fixed.
+Whereas in the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} tracking of each and every bit for a given system was crucial because the authors \textit{could not choose where bugs occur}, it seems that in our more-high level approach for every bug \enquote{imaginable}, there is a very simple trace illustrating it: nuXmv is able to choose where a bug occurs since it quantifies over programs as opposed to the work of \citeauthor{Ferraiuolo17} where the program of interest is fixed.
 
 It must be part of future work to investigate whether reducing the instruction set to instructions such as \minrv{Mov}, \minrv{Load}, \minrv{Store} also is possible when executable memory is modelled (cf. sec. \ref{sec:discuss-arch}).
 In this case, an attacker might need to rely on crafting specific payloads to trigger a vulnerability in some static code in executable memory\footnote{%
-    It also is imaginable that the attacker would not need to rely on crafting specific payloads because for every scenario where such a payload would be needed, there also is a scenario in which a more simple payload does suffice since \gls{nuxmv} still quantifies over the static parts of the code.
+    It also is imaginable that the attacker would not need to rely on crafting specific payloads because for every scenario where such a payload would be needed, there also is a scenario in which a more simple payload does suffice since nuXmv still quantifies over the static parts of the code.
     However, we don't find that a decision regarding this question can be made here.
 }.

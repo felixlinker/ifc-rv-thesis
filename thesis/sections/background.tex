@@ -12,8 +12,8 @@ The first two sections \ref{sec:verify-spec} and \ref{sec:ifc} will introduce th
 Recall that this thesis is about formally verifying instruction set architectures by model checking information flow control policies.
 
 Following up on this, the actual subject of verification, \glspl{isa}, and the technical details of the verification process will be outlined.
-There will be not only an introduction to common \glspl{isa}, especially \gls{riscv}, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a precise threat-model (section \ref{sec:ecosystem}).
-Then, a general explanation of what model checking is will be given concluding with the description of the \gls{nuxmv} model checker that will be used as part of this thesis (section \ref{sec:model-checking}).
+There will be not only an introduction to common \glspl{isa}, especially RISC-V, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a precise threat-model (section \ref{sec:ecosystem}).
+Then, a general explanation of what model checking is will be given concluding with the description of the nuXmv model checker that will be used as part of this thesis (section \ref{sec:model-checking}).
 
 In each of these subsections , a collection of \glspl{isa} or model checkers respectively will be touched to \begin{enumerate*}[label=\alph*)]
     \item give a better feel for the field as a whole and
@@ -59,13 +59,13 @@ Lastly, the requirement aimed at reducing the \enquote{risk of common-mode failu
 These approaches, however, all face the risk of issues with the specification being undetected because the implementation and specification both are affected by the same issue, i.e. the risk of issues being undetected because of common-mode failure.
 This risk can be mitigated if the properties the specification will be verified against actually expresses something \textit{new}.
 
-\citeauthor{Reid17} applies his approach to the \gls{mclass} architecture for which not only a natural language but also a machine-readable specification is available.
-The machine-readable specification of the \gls{mclass} architecture implements the function \asl{TopLevel} which implements the transition of the architecture from one state to another, i.e. a cycle of the processor.
+\citeauthor{Reid17} applies his approach to the ARM M-Class architecture for which not only a natural language but also a machine-readable specification is available.
+The machine-readable specification of the ARM M-Class architecture implements the function \asl{TopLevel} which implements the transition of the architecture from one state to another, i.e. a cycle of the processor.
 The natural language specification on the other hand mainly consists of rules that constrain the behavior of the architecture in different situations, i.e. that constrain the transition relation between architectural states that implicitly is given by the \asl{TopLevel} function.
 
 In principle, these two forms of specification also face the risk of common-mode failures.
 In practice, however, it turned out that the natural language specification included several rules that described the behavior of the architecture on a very high-level thus meeting aforementioned requirements.
-Using these rules as high-level cross-cutting properties, \citeauthor{Reid17} was able to find 12 bugs in the \gls{mclass} specification that despite prior testing had been undiscovered up to this point.
+Using these rules as high-level cross-cutting properties, \citeauthor{Reid17} was able to find 12 bugs in the ARM M-Class specification that despite prior testing had been undiscovered up to this point.
 
 In summary, the aspects of \cite{Reid17} that are relevant for this thesis are:
 \begin{enumerate}[label=\alph*)]
@@ -73,7 +73,7 @@ In summary, the aspects of \cite{Reid17} that are relevant for this thesis are:
     \item the paper proposes clear requirements for properties to verify an \gls{isa} against.
 \end{enumerate}
 
-Additionally, the paper successfully implements this approach by partially verifying the \gls{mclass} architecture.
+Additionally, the paper successfully implements this approach by partially verifying the ARM M-Class architecture.
 A downside of this work, however, is that it is limited to verifying single processor transactions only.
 This lies in the nature of the properties taken from the natural language specification which only constrain single transitions of the processor.
 
@@ -83,8 +83,8 @@ The work in this thesis therefore also is subject to the same requirements that 
 \subsection{Information Flow Control}
 \label{sec:ifc}
 
-In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors formally verify an implementation of the \gls{trustzone} architecture by statically type-checking an information flow policy.
-To achieve this, they enhance on the already existing \gls{hdl} language \gls{secverilog}, extending its type system to allow more fine grained modelling of information flow policies.
+In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors formally verify an implementation of the ARM TrustZone architecture by statically type-checking an information flow policy.
+To achieve this, they enhance on the already existing \gls{hdl} language SecVerilog, extending its type system to allow more fine grained modelling of information flow policies.
 Therefore, the authors verify an implementation against higher level properties as opposed verifying a specification as done by \citeauthor{Reid17} in \cite{Reid17}.
 This thesis takes this general approach and lifts it to be applied to specifications rather than implementations.
 
@@ -96,7 +96,7 @@ In context of this thesis, think of an \gls{hdl} as a programming language with 
 Intuitively speaking, information labelled with $ a \in M $ is allowed to flow to a sink labelled with $ b \in M $ iff $ a \sqsubseteq b $, i.e. information is always allowed to flow up in the lattice but not down.
 
 \begin{example}
-    To verify an \gls{trustzone} implementation, \citeauthor{Ferraiuolo17} introduce four information flow labels $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
+    To verify an ARM TrustZone implementation, \citeauthor{Ferraiuolo17} introduce four information flow labels $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
     These labels form the information flow policy lattice $ (\Sigma, \sqcup, \sqcap) $ which is depicted in figure \ref{fig:sec-lattice} as a hasse diagram.
     As you can see, each of these four labels comprises two tokens from two domains of information flow control.
     The first of these domains is the one of \textit{confidentiality} - each of the labels states that a piece of information is either public (\P{}) or confidential (\C{}).
@@ -117,7 +117,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
                     edge (pu);
             \end{scope}
         \end{tikzpicture}
-        \caption{Security lattice for verifying an \gls{trustzone} implementation \cite{Ferraiuolo17}}
+        \caption{Security lattice for verifying an ARM TrustZone implementation \cite{Ferraiuolo17}}
         \label{fig:sec-lattice}
     \end{figure}
 
@@ -125,16 +125,16 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
     Intuitively, this means that trusted parts of the architecture must only receive trusted data and that confidential data must be handled by confidential parts of the architecture.
 \end{example}
 
-To implement the actual \textit{control} of such an information flow policy, \citeauthor{Ferraiuolo17} introduce the \gls{hdl} language \gls{secverilogbl} that builds upon the \gls{hdl} \gls{secverilog}.
+To implement the actual \textit{control} of such an information flow policy, \citeauthor{Ferraiuolo17} introduce the \gls{hdl} language SecVerilogBL that builds upon the \gls{hdl} SecVerilog.
 The core of both of these languages when it comes to information flow control is a type-system that adds the syntax to the core \gls{hdl} to allow for annotating variables with security labels and enables verifying an information flow control policy by static type-checking.
-In \gls{secverilog}, variables are typed by labels of the respective information flow control policy.
+In SecVerilog, variables are typed by labels of the respective information flow control policy.
 The type of a variable is described either by a label $ l \in M $ directly, by the conjunction $ \sqcap $ or disjunction $ \sqcup $ of two labels or by a type-level function $ f $ that maps some program variable $ v $ to a type.
-\gls{secverilogbl} enhances on this by tracking security labels not only per variable but also per bit and array element and therefore allows for more fine grained annotation of the \gls{hdl} code and also adds the mechanism to downgrade information.
+SecVerilogBL enhances on this by tracking security labels not only per variable but also per bit and array element and therefore allows for more fine grained annotation of the \gls{hdl} code and also adds the mechanism to downgrade information.
 Since information is not allowed to flow \enquote{down} in the lattice, downgrading can be understood best as a typecast that allows such behavior.
 In some \gls{hdl} programs, it might be necessary to allow for insecure flows (in regard to the information flow policy) of information.
 In those cases, a programmer can use \lstinline[mathescape]{downgrade(e, $ \tau $)} to annotate the expression \lstinline{e} as being of type $ \tau $, regardless of any prior annotations.
 
-In total, \gls{secverilogbl} knows seven ways to express:
+In total, SecVerilogBL knows seven ways to express:
 \begin{align*}
     \text{Types } \tau ::= l \mid \tau_1 \sqcup \tau_2 \mid \tau_1 \sqcap \tau_2 \mid x \mapsto \tau \mid f(x) \mid \textit{if $ e^\tau $ $ \tau_t $ $ \tau_f $} \mid \textit{case $ e^\tau $ $ \tau_1 $ \dots $ \tau_n $}
 \end{align*}
@@ -157,7 +157,7 @@ However, when type-checking is performed, types of kind $ l $ are lifted to be o
 % TODO: evaluate their results more strongly and compare them to mine
 
 \begin{example}
-    The following snippet shows the type annotation of parts of a register file definition in \gls{secverilogbl}:
+    The following snippet shows the type annotation of parts of a register file definition in SecVerilogBL:
     \begin{lstlisting}[
         language=SecVerilogBL,
         label={snpt:reg-file},
@@ -179,9 +179,9 @@ However, when type-checking is performed, types of kind $ l $ are lifted to be o
     % TODO: This is not explicitly mentioned; the definition only allows lifting of l not arbitrary kinds k
     Because \lstinline{read} is a register with 32 bits, \lstinline{world(ns)} is lifted to \lstinline{i -> world(ns)}, i.e. each element of \lstinline{read} is of the dependent type \lstinline{world(ns)}, and since \lstinline{reg_ns} is an array of 1024 registers of width 1, \lstinline{PT} is lifted to \lstinline{i -> j -> PT}, i.e. each array element is of type \lstinline{j -> PT}, i.e. each array element's bits are of type \lstinline{PT}.
 
-    In this example, the variable \lstinline{ns} refers to the \textit{security state} of the \gls{trustzone} architecture.
-    The \gls{trustzone} architecture not only knows different privilege but also security states which can either secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
-    The variable \lstinline{ns} in the implementation of the \gls{trustzone} architecture by \citeauthor{Ferraiuolo17} indicates whether the architecture currently is in secure- or non-secure-state.
+    In this example, the variable \lstinline{ns} refers to the \textit{security state} of the ARM TrustZone architecture.
+    The ARM TrustZone architecture not only knows different privilege but also security states which can either secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
+    The variable \lstinline{ns} in the implementation of the ARM TrustZone architecture by \citeauthor{Ferraiuolo17} indicates whether the architecture currently is in secure- or non-secure-state.
 
     Starting in line \ref{ln:assignment}, it can be seen how dependent types work in practice.
     The function \lstinline{world} maps 0 to \lstinline{CT} and 1 to \lstinline{PU}.
@@ -228,7 +228,7 @@ They assume one or two expressions ($ e $ or $ e_1 $ and $ e_2 $) to be typed in
 Then, they create a new type ($ \tau $ or $ \tau' $) and infer a type judgement for a new expression involving $ e $, $ e_1 $ or $ e_2 $ and maybe some constant $ n $.
 This structure of type system rules follows the pattern of an inductive proof or inductive definition of a set where T-Const and T-Var (the typing rule for variables) are the start of induction.
 
-When the \gls{secverilogbl} code is being type-checked, it is checked whether all right side of assignments are $ \sqsubseteq $-greater than the respective left sides taken together with the label of the program counter.
+When the SecVerilogBL code is being type-checked, it is checked whether all right side of assignments are $ \sqsubseteq $-greater than the respective left sides taken together with the label of the program counter.
 This means that information is only considered trusted if also the program counter can be considered to be trusted and data is considered to be confidential if either the data itself or the program counter is confidential.
 
 \begin{figure}
@@ -311,9 +311,9 @@ In summary, the lattice of security labels taken together with the type system b
     \item Type-checking implements information flow control
 \end{itemize}
 
-\citeauthor{Ferraiuolo17} used these three concepts to verify an implementation of the \gls{trustzone} architecture.
+\citeauthor{Ferraiuolo17} used these three concepts to verify an implementation of the ARM TrustZone architecture.
 In doing so, they first implemented the architecture as a prototype and used the information flow policy to ensure that it did not contain bugs.
-After this, they deliberately added bugs to their implementation that have been found in other implementations of the \gls{trustzone} architecture and checked whether they were able to find these bugs.
+After this, they deliberately added bugs to their implementation that have been found in other implementations of the ARM TrustZone architecture and checked whether they were able to find these bugs.
 It turned out that their approach was able to detect all bugs besides those which were related to downgrading, i.e. the approach of type-checking information flow control policies gives a strong security assurances with the exception of bugs that due to downgrading expressions.
 
 In this thesis, the concept of an information flow control policy and information flow tracking will serve to define higher-level properties to verify an \gls{isa} against.
@@ -346,13 +346,13 @@ In \citetitle{Hennessy12}, \gls{risc} architectures are defined by three main co
 
 The latter aspect coined the name \textit{reduced} instruction set computer architecture.
 \gls{risc} architectures are often times understood as the counterparts to \gls{cisc} architectures which describe all architectures that do not implement aforementioned \gls{risc}-properties.
-The most prominent example of a \gls{cisc} architecture is the \gls{x86} architecture which is implemented by most processors manufactured by intel.
+The most prominent example of a \gls{cisc} architecture is the x86 architecture which is implemented by most processors manufactured by intel.
 
-In this section, three \gls{risc} architectures will be introduced: the \gls{arm} architecture, \gls{mips} and \gls{riscv}.
+In this section, three \gls{risc} architectures will be introduced: the ARM architecture, MIPS and RISC-V.
 It will turn out that these architectures can mainly be differentiated by the balance of customizability vs. feature-richness.
-Whereas the \gls{riscv} architecture is most customizable it also supports the fewest features out of the box.
-On the other hand, the \gls{arm} architecture is very feature-rich but not very much customizable.
-The \gls{mips} architecture strikes a middle-ground of these two extremes.
+Whereas the RISC-V architecture is most customizable it also supports the fewest features out of the box.
+On the other hand, the ARM architecture is very feature-rich but not very much customizable.
+The MIPS architecture strikes a middle-ground of these two extremes.
 
 The goal of this section is to illustrate the features and fundamental design that comes with realistic and realistic \gls{risc} architectures.
 It was decided to focus on \gls{risc} architectures as a target of verification because their simpler approach to \glspl{isa} makes them far easier to analyze and model than \gls{cisc} processors.
@@ -362,7 +362,7 @@ Introducing more than one \gls{risc} architectures will allow for choosing parts
 
 \subsubsection{Arm}
 
-The \gls{arm} architecture knows three \textit{profiles}:
+The ARM architecture knows three \textit{profiles}:
 \begin{itemize}
     \item The generic \textit{application profile} Armv8-A,
     \item the \textit{real-time profile} Armv8-R designed for deployment scenarios in which real-time responses from a processor is crucial, e.g. in aviation,
@@ -370,7 +370,7 @@ The \gls{arm} architecture knows three \textit{profiles}:
 \end{itemize}
 
 Here, it will be focused on the Armv8-A profile.
-The \citetitle{Armv8} \cite{Armv8} introduces the \gls{arm} A-class architecture as a \gls{risc} architecture with three key properties:
+The \citetitle{Armv8} \cite{Armv8} introduces the ARM A-class architecture as a \gls{risc} architecture with three key properties:
 \begin{displaycquote}[p.A1-34]{Armv8}
     \begin{itemize}
         \item A large uniform regsiter file.
@@ -380,11 +380,11 @@ The \citetitle{Armv8} \cite{Armv8} introduces the \gls{arm} A-class architecture
 \end{displaycquote}
 
 These properties already meet most of the aspects of \gls{risc} architectures as defined in \cite{Hennessy12}.
-When it comes to the aspect of a homogenous instruction set, the \gls{arm} architecture makes some trade-offs on this aspect to support the three profiles available.
-The \gls{arm} architecture knows three instruction sets: A64, a fixed-length 32-bit encoding instruction set for 64-bit systems, A32, a fixed 32-bit encoding length-instruction set for 32-bit systems, and T32, a variable-length instruction set that uses both 16- and 32-bit encodings to support compressed instructions.
+When it comes to the aspect of a homogenous instruction set, the ARM architecture makes some trade-offs on this aspect to support the three profiles available.
+The ARM architecture knows three instruction sets: A64, a fixed-length 32-bit encoding instruction set for 64-bit systems, A32, a fixed 32-bit encoding length-instruction set for 32-bit systems, and T32, a variable-length instruction set that uses both 16- and 32-bit encodings to support compressed instructions.
 The Armv8-A architecture eases the challenge of correctly decoding these different instruction sets by the concept of \textit{execution states}.
 The Armv8-A supports to of these execution states: AArch64, a 64-bit execution state, and AArch32, a 32-bit execution state.
-An \gls{arm} A-class processor accepts to receive A64 instructions when in the AArch64 execution state and A32 or T32 instructions when in the AArch32 execution state.
+An ARM A-class processor accepts to receive A64 instructions when in the AArch64 execution state and A32 or T32 instructions when in the AArch32 execution state.
 
 The Armv8-A specification by standard defines how the processor interacts with memory which includes the specification of a cache and a memory model covering virtual addresses, memory access order control, memory access synchronization, and application level memory restrictions.
 Furthermore, it is defined how processors work in a multi-processor setup and how debugging of the architecture works.
@@ -400,31 +400,31 @@ Furthermore, there are 32 64- or 128-bit registers for floating point and vector
 
 \subsubsection{MIPS}
 
-As opposed to the \gls{arm} architecture, the \gls{mips} architecture does not only support a smaller range of registers, it also provides fewer features by standard, i.e. without extensions.
+As opposed to the ARM architecture, the MIPS architecture does not only support a smaller range of registers, it also provides fewer features by standard, i.e. without extensions.
 It introduces itself in the introductory document \citetitle{MIPS} \cite{MIPS} as: \textcquote[p.21]{MIPS}{based on a fixed-length, regularly encoded instruction set \textelp{which} uses a load/store data model, in which all operations are performed on operands in processor registers, and main memory is accessed only by load and store instructions}.
-As for the aspect of a large, uniform register file, \gls{mips} supports 32 32- or 64-bit registers the first of which is hardwired to zero, a \gls{pc} and some \glspl{csr}.
-Contrary to the \gls{arm} architecture, there are no dedicated \glspl{lr} or \gls{sp}.
-As indicated by the options in the register width, \gls{mips} supports both a 32- and a 64-bit architecture and instruction sets.
+As for the aspect of a large, uniform register file, MIPS supports 32 32- or 64-bit registers the first of which is hardwired to zero, a \gls{pc} and some \glspl{csr}.
+Contrary to the ARM architecture, there are no dedicated \glspl{lr} or \gls{sp}.
+As indicated by the options in the register width, MIPS supports both a 32- and a 64-bit architecture and instruction sets.
 
-\gls{mips} comes with less features out of the box than the \gls{arm} architecture; the specification only touches memory interaction including memory virtualization and cache, debugging and the interaction with a standard coprocessor that implements floating point arithmetic.
-\gls{mips}, however, is far more customizable than the \gls{arm} architecture.
-Whereas in case of the latter, customizability is only given by choosing different extensions, a processor does not need to implement all features defined in the \gls{mips} specification to be \gls{mips} compliant.
+MIPS comes with less features out of the box than the ARM architecture; the specification only touches memory interaction including memory virtualization and cache, debugging and the interaction with a standard coprocessor that implements floating point arithmetic.
+MIPS, however, is far more customizable than the ARM architecture.
+Whereas in case of the latter, customizability is only given by choosing different extensions, a processor does not need to implement all features defined in the MIPS specification to be MIPS compliant.
 Certain features can be left out which is called \textit{subsetting} of the architecture.
 Additionally to that, there also are extensions to the architecture.
-\gls{mips} allows to extend the architecture by user defined instructions, compressed instructions, enhanced media processing, enhanced geometry processing, smart card or object interaction, signal processing, multi threading, \gls{os} virtualization, vector arithmetic and an extensions aimed specifically at microcontrollers.
+MIPS allows to extend the architecture by user defined instructions, compressed instructions, enhanced media processing, enhanced geometry processing, smart card or object interaction, signal processing, multi threading, \gls{os} virtualization, vector arithmetic and an extensions aimed specifically at microcontrollers.
 
 \subsubsection{RISC-V}
 
-\gls{riscv} was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and has undergone many changes since then.
-\gls{riscv}'s architectural specification is divided into two volumes: volume specifies 1 the base user-level \gls{isa} which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
+RISC-V was originally presented in the technical report \textit{UCB/EECS-2011-62} by the University of California in May 2011 \cite{RiscVISA-org} and has undergone many changes since then.
+RISC-V's architectural specification is divided into two volumes: volume specifies 1 the base user-level \gls{isa} which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but still only is available as a draft.
 The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
 Such groups include for example machine- and supervisor-level \glspl{isa} and the description of a platform level interrupt controller.
 
 % TODO: Add motivation/goals of RISC-V
 
 This thesis works with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
-\gls{riscv} understands itself as a highly customizable architecture.
-Currently, there are four variants of a base integer instruction set - one of which must be implemented by any \gls{riscv} processor - and 13 optional extensions.
+RISC-V understands itself as a highly customizable architecture.
+Currently, there are four variants of a base integer instruction set - one of which must be implemented by any RISC-V processor - and 13 optional extensions.
 The base integer instruction sets include instructions for integer arithmetic, memory operations (loads and stores), control transfer (jumps and branches) and platform management (environment calls and status register operations).
 The base integer instruction sets mainly differ in the word-size and register number.
 To cope with these differences, they also make small adjustments to some functionalities but only slightly change the instruction set itself.
@@ -436,7 +436,7 @@ These four base integer instruction sets are given by:
     \item[RV128I] Base integer instruction set for a 128-bit architecture
 \end{description}
 
-The \gls{riscv} manual differentiates between standard and non-standard extensions but only introduces standard ones.
+The RISC-V manual differentiates between standard and non-standard extensions but only introduces standard ones.
 A standard extension is meant to be compatible with any other standard extension and should be \textcquote{RiscVISA}{generally useful} whilst non-standard extensions might add support for more niche use-cases and do not need to be compatible with all standard extensions.
 
 The set of functionalities offered by standard extensions begins at quite low level with the probably most mundane being the standard extension for integer multiplication and division.
@@ -461,11 +461,11 @@ You can find a list of all standard extensions in table \ref{tbl:rv-exts}.
         \textbf{N} & User-level interrupts \\
         \hline
     \end{tabular}
-    \caption{All \gls{riscv} standard extensions}
+    \caption{All RISC-V standard extensions}
     \label{tbl:rv-exts}
 \end{table}
 
-A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{RiscVISA}{\gls{isa} naming string} which comes in the following form:
+A subset of the RISC-V \gls{isa} is described by a so called \textcquote{RiscVISA}{\gls{isa} naming string} which comes in the following form:
 
 \begin{grammar}
     <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
@@ -474,24 +474,24 @@ A subset of the \gls{riscv} \gls{isa} is described by a so called \textcquote{Ri
 An example for a naming string is the very common \gls{isa}-subset RV64IMAFD which officially is abbreviated by RV64G.
 This subset includes the integer multiplication and division, user-level interrupts, atomic instructions, single-precision and double-precision floating-point arithmetic extensions.
 
-A \gls{riscv} core consists of multiple \glspl{hart}.
+A RISC-V core consists of multiple \glspl{hart}.
 Each \gls{hart} controls its own set of registers including a \gls{pc} and is equipped with its own instruction fetch unit.
 However, multiple \glspl{hart} share the same memory.
 
 A \gls{hart} might either control 16 or 32 general purpose registers which are named from x0 to x31.
 All but one instruction sets support 32 general purpose registers whereas the exception to this is the base instruction set aimed at embedded computing, RV32E, which only supports 16 general purpose registers.
 
-Similarly to the \gls{mips} architecture, the first of these general purpose registers is hardwired to zero and for example can be used as a target register when the result of an instruction is not needed.
+Similarly to the MIPS architecture, the first of these general purpose registers is hardwired to zero and for example can be used as a target register when the result of an instruction is not needed.
 Also, there is no dedicated \gls{lr} or \gls{sp}.
-\gls{riscv} supports up to 4096 \glspl{csr}.
+RISC-V supports up to 4096 \glspl{csr}.
 
 \subsubsection{Summary}
 
-In the last the sections, it was shown that the \gls{arm}, \gls{mips}, and \gls{riscv} architectures implement the three main properties of \cite{Hennessy12} characterizing \gls{risc} architectures: a small and uniformly encoded instruction set, a large and uniform register file and a load/store architecture.
-Whereas the \gls{arm} architecture supported customizability only by a list of extensions and \gls{mips} added user defined instructions and allowed subsetting its core specification, \gls{riscv} took the idea of customizability and made it part of the core idea of the architecture.
-\gls{riscv} supports the most simple yet fully specified processor in form of the RV32E.
-It was this degree of customizability and simplicity that led to the decision to use \gls{riscv} as a target of verification.
-There are no major features \gls{riscv} lacks in that are crucial to the concept of a \gls{risc} architecture.
+In the last the sections, it was shown that the ARM, MIPS, and RISC-V architectures implement the three main properties of \cite{Hennessy12} characterizing \gls{risc} architectures: a small and uniformly encoded instruction set, a large and uniform register file and a load/store architecture.
+Whereas the ARM architecture supported customizability only by a list of extensions and MIPS added user defined instructions and allowed subsetting its core specification, RISC-V took the idea of customizability and made it part of the core idea of the architecture.
+RISC-V supports the most simple yet fully specified processor in form of the RV32E.
+It was this degree of customizability and simplicity that led to the decision to use RISC-V as a target of verification.
+There are no major features RISC-V lacks in that are crucial to the concept of a \gls{risc} architecture.
 
 \subsection{The Ecosystem of an ISA}
 \label{sec:ecosystem}
@@ -554,8 +554,8 @@ Memory is divided into pages with a virtual address being made up of a page inde
 On accessing an address, the page index is translated to a physical memory address which taken together with the page offset results in the respective physical memory address.
 This allows programs to treat their \enquote{personal} address space as continuous whereas in reality it comprises several pages of memory scattered all over physical memory.
 
-Virtual memory usually is part of \glspl{isa}; e.g. the \gls{arm} architecture includes the specification of the \gls{mmu} which translates addresses and is programmed by some \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
-The \gls{riscv} specification also includes a system for managing virtual memory with an address space of 32, 39, or 48 bits (cf. section 4 \cite{RiscVISAP}).
+Virtual memory usually is part of \glspl{isa}; e.g. the ARM architecture includes the specification of the \gls{mmu} which translates addresses and is programmed by some \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
+The RISC-V specification also includes a system for managing virtual memory with an address space of 32, 39, or 48 bits (cf. section 4 \cite{RiscVISAP}).
 Here, the setup of virtual memory also is delegated to an \gls{os} and can be configured by programming system registers.
 
 Again, it is important that hardware modules that handle address translation work functionally correct.
@@ -578,8 +578,8 @@ Now that it has been ruled out to include sub-architectural hardware mechanisms 
 This includes the question of the threat model of the higher level properties to be verified.
 
 A key feature of modern architectures that is used by modern \glspl{os} are different privileges levels.
-For example, the \gls{riscv} architecture supports up to three different privilege levels; from lowest to highest: user-mode, supervisor-mode and machine-mode.
-Higher privilege levels usually give access to more system control registers, specific instructions and often times work hand in hand with specific semantics of system registers, e.g. \gls{riscv} supports physical memory regions which support settings for each privilege level, i.e. certain regions of physical can be set readable to machine- but not user-mode, etc.
+For example, the RISC-V architecture supports up to three different privilege levels; from lowest to highest: user-mode, supervisor-mode and machine-mode.
+Higher privilege levels usually give access to more system control registers, specific instructions and often times work hand in hand with specific semantics of system registers, e.g. RISC-V supports physical memory regions which support settings for each privilege level, i.e. certain regions of physical can be set readable to machine- but not user-mode, etc.
 
 In a sense, privilege modes play a similar role to virtual memory.
 Both concepts are used by \glspl{os} in very fundamental ways and therefore are relevant for the security of a system as a whole.
@@ -594,11 +594,11 @@ Since \glspl{os} heavily rely on correct implementations of privilege levels and
 Privilege levels go hand in hand with interrupt and/or exception handling.
 Interrupts generally are used in \glspl{isa} to transfer control to specific privilege modes and/or programs, e.g. whenever you press a key on your keyboard, a keyboard interrupt is generated that is handled by the appropriate device driver and propagated to the correct application, e.g. your text editor or shell, by the \gls{os}.
 Exceptions usually refer to error conditions that arise during computation.
-For example, coming back to physical memory regions in \gls{riscv}, if user-mode would attempt to read from a region unreadable to it an exception would be generated.
+For example, coming back to physical memory regions in RISC-V, if user-mode would attempt to read from a region unreadable to it an exception would be generated.
 It is the obligation of software running in machine-mode to handle such error conditions - usually such software comes as part of an \gls{os}.
 
 To put the mechanics of transitions between privilege levels to a test, the threat model taken as a basis of the verification process in this thesis is the following\footnote{%
-    Since the decision to work with \gls{riscv} in this thesis has already been made, the threat model will be phrased with this in mind.
+    Since the decision to work with RISC-V in this thesis has already been made, the threat model will be phrased with this in mind.
 }:
 \begin{quote}
     Assume that user-mode has been completely compromised.
@@ -644,7 +644,7 @@ They range from software libraries over hardware designs to embedded controllers
 The same is true for specifications.
 Those can be fully fledged \textit{actual} specifications that describe the requirements to system exhaustively or more higher level properties that generally should apply to systems such as deadlock freeness as mentioned in \cite{Baier08}.
 
-More technically, in model checking some system is taken and transformed into a model using a formal language like \gls{promela} (cf. section \ref{sec:spin}) and a specification is taken and transformed into a property usually expressed in some formal logic, e.g. \gls{ltl}.
+More technically, in model checking some system is taken and transformed into a model using a formal language like PROMELA (cf. section \ref{sec:spin}) and a specification is taken and transformed into a property usually expressed in some formal logic, e.g. \gls{ltl}.
 Then it is checked via a model checker whether the system model models the formal property.
 Note that \enquote{model} in this context is ambiguous.
 One the one hand this term refers to the model of the system as a simplified description.
@@ -665,39 +665,39 @@ By translating the system into a model and the specification into a formal prope
 \subsubsection{SPIN}
 \label{sec:spin}
 
-\gls{spin} (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker which has been originally developed by Bell Labs and has been made freely available since the nineties.
-As its name already suggests, it uses \gls{promela} as input language.
-\textit{The Spin Model Checker: Primer and Reference Manual} which has been used as source for this section, describes \gls{spin} initially as follows:
+SPIN (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker which has been originally developed by Bell Labs and has been made freely available since the nineties.
+As its name already suggests, it uses PROMELA as input language.
+\textit{The Spin Model Checker: Primer and Reference Manual} which has been used as source for this section, describes SPIN initially as follows:
 \begin{displaycquote}[p.1]{SpinManual}
-    \gls{spin} can be used to verify correctness requirements for systems of concurrently executing processes.
+    SPIN can be used to verify correctness requirements for systems of concurrently executing processes.
     The tool works by thoroughly checking either hand-built or mechanically generated models that capture the essential elements of a distributed systems design.
-    If a requirement is not satisfied, \gls{spin} can produce a sample execution of the model to demonstrate this.
+    If a requirement is not satisfied, SPIN can produce a sample execution of the model to demonstrate this.
 \end{displaycquote}
 
-As indicated by the quote, \gls{spin} focusses heavily on the verification of distributed or parallel systems.
+As indicated by the quote, SPIN focusses heavily on the verification of distributed or parallel systems.
 This is reflected not only in its input language but also in the way how properties are expressed about models.
-For an introduction by example to \gls{promela}, cf. snippet \ref{snpt:spin-exm}.
-\gls{promela} relies on describing systems as sets of processes that run in parallel where parallel means that each process can advance its state (generally) independent of other processes\footnote{%
+For an introduction by example to PROMELA, cf. snippet \ref{snpt:spin-exm}.
+PROMELA relies on describing systems as sets of processes that run in parallel where parallel means that each process can advance its state (generally) independent of other processes\footnote{%
     We added the restriction \textit{generally} to the claim because processes can be set up such that they deliberately wait for other processes to send them a message or set some shared state accordingly.
     However, such mechanisms where processes depend on each other always need to be implemented accordingly.
 }.
 
 In snippet \ref{snpt:spin-exm}, two processes of the same type \lstinline{user} are declared in line \ref{ln:proc}.
 The idea of this snippet is to implement and verify an algorithm that grants these two processes mutually exclusive access to the critical region spanning lines \ref{ln:crit-start}-\ref{ln:crit-end}.
-This is ensured by the assertion in line \ref{ln:assert} since variables in \gls{spin} are always initialized to 0 - if two processes had access to the critical region at the same time, \lstinline{cnt} would become 2 at some point.
+This is ensured by the assertion in line \ref{ln:assert} since variables in SPIN are always initialized to 0 - if two processes had access to the critical region at the same time, \lstinline{cnt} would become 2 at some point.
 
 The details of the protocol implemented in lines \ref{ln:excl-start}-\ref{ln:excl-end} the purpose of which is to grant mutual exclusive access to the critical region are not relevant for this thesis.
-However, this part of code gives you an indication for how models written in \gls{promela} look like.
-Besides \lstinline{if} statements and labels similar to those in C (cf. line \ref{ln:label}), \gls{promela} supports \lstinline{do}-loops to control process execution flow.
+However, this part of code gives you an indication for how models written in PROMELA look like.
+Besides \lstinline{if} statements and labels similar to those in C (cf. line \ref{ln:label}), PROMELA supports \lstinline{do}-loops to control process execution flow.
 \lstinline{do}-loops run indefinitely until they are exited manually by a \lstinline{break} statement.
 
-As data types, \gls{promela} knows three categories of them: processes, message channels and data objects.
+As data types, PROMELA knows three categories of them: processes, message channels and data objects.
 Data objects comprise atomic data types such as \lstinline{byte}, \lstinline{bool}, \lstinline{int}, etc. as well as complex data type defined by \lstinline{typedef} that define a complex structures that have fields of data objects.
 Both atomic data types and complex data types are very close to the data types of C.
 
 \begin{figure}
     \begin{lstlisting}[
-        caption={Faulty Mutual Exclusion Algorithm Implemented in \gls{promela} \cite{SpinManual}},
+        caption={Faulty Mutual Exclusion Algorithm Implemented in PROMELA \cite{SpinManual}},
         label={snpt:spin-exm}
     ]
         byte cnt;
@@ -732,7 +732,7 @@ Both atomic data types and complex data types are very close to the data types o
     \end{lstlisting}
 \end{figure}
 
-Snippet \ref{snpt:spin-output} shows the output when verifying snippet \ref{snpt:spin-exm} with \gls{spin} where we assume that latter snippet was written into a file called \lstinline{mutex_flaw.pml}.
+Snippet \ref{snpt:spin-output} shows the output when verifying snippet \ref{snpt:spin-exm} with SPIN where we assume that latter snippet was written into a file called \lstinline{mutex_flaw.pml}.
 The lines of the output are structured as follows: at the beginning of each line, you see a step index indicating the progress of all processes, then \lstinline{proc X (NAME)} indicates the process that has made progress by its ID and name.
 The rest of the line \lstinline{line X ... [CODE]} shows the code executed by the process along with the corresponding line number in the source file\footnote{%
     In this case, line numbers don't fully align with snippet \ref{snpt:spin-exm} but this is not relevant here.
@@ -741,7 +741,7 @@ Notice, how processes 0 and 1 progress completely independent from each other, e
 
 \begin{figure}
     \begin{lstlisting}[
-        caption={\gls{spin} Example Output \cite{SpinManual}},
+        caption={SPIN Example Output \cite{SpinManual}},
         label={snpt:spin-output}
     ]
         1:  proc    1 (user) line   5 ... [x = me]
@@ -773,7 +773,7 @@ Notice, how processes 0 and 1 progress completely independent from each other, e
     \end{lstlisting}
 \end{figure}
 
-Assertions, however, are not the only way to express properties of \gls{promela} models for \gls{spin}.
+Assertions, however, are not the only way to express properties of PROMELA models for SPIN.
 Furthermore, there are:
 \begin{itemize}
     \item Labels
@@ -783,9 +783,9 @@ Furthermore, there are:
 
 Labels have already been introduced informally along with snippet \ref{snpt:spin-exm}.
 To express properties about a model, certain types of labels can be used to give semantics to process state.
-For example, you can label a certain part of process code as and end-state that might look like an idling-state to \gls{spin} by default.
+For example, you can label a certain part of process code as and end-state that might look like an idling-state to SPIN by default.
 % TODO: introduce deadlocks
-Idling- and end-states are important to \gls{spin} when it's checking for deadlock-freeness of systems.
+Idling- and end-states are important to SPIN when it's checking for deadlock-freeness of systems.
 By default, if all processes are in an idling-state and wait for some kind of signal, this state is considered to be a deadlock.
 However, in some situations it might be perfectly fine for some of the processes to idle in a specific state which should not contribute towards deadlocks.
 Labeling parts of code as end-state contributes towards this.
@@ -794,15 +794,15 @@ Never claims are processes themselves.
 % TODO: introduce LTL
 They run like any other process but must not terminate otherwise they're regarded as failure.
 This is the most complex way to express properties and in fact falls together with writing \gls{ltl} properties about a model.
-Therefore \gls{spin} also allows to express such never properties in \gls{ltl} directly via their command line interface.
+Therefore SPIN also allows to express such never properties in \gls{ltl} directly via their command line interface.
 
 The last type of properties, trace assertions, solely deal with message passing and therefore are not relevant to this thesis.
 
-For some, it might be obvious at this point why we decided against using \gls{spin} as the model checker of this thesis.
+For some, it might be obvious at this point why we decided against using SPIN as the model checker of this thesis.
 Its focus on verifying distributed and parallel systems is obvious and would make implementing an \gls{isa} in it very hard.
-In the \textit{Primer and Reference Manual} for \gls{spin} it is written:
+In the \textit{Primer and Reference Manual} for SPIN it is written:
 \begin{displaycquote}[p.33]{SpinManual}
-    \textins{W}e saw that the emphasis in \gls{promela} models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}
+    \textins{W}e saw that the emphasis in PROMELA models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}
     The specification language we use for systems verification is therefore deliberately designed to encourage the user to abstract from the purely computational aspects of a design, and to focus on the specification of process interaction at the system level.
 \end{displaycquote}
 
@@ -812,22 +812,22 @@ However, the \gls{isa} we will attempt to verify
     \item will be verified on a component level, i.e. computationally as well - even in the case where multiple system level components would be given.
 \end{enumerate*}
 
-Furthermore, it is unreasonable to assume that an implementation of instructions of an \gls{isa} could be implemented in a single statement of \gls{promela}.
-Yet, this should be the goal as otherwise as shown in snippet \ref{snpt:spin-output} what is regarded as state by \gls{spin} would not fall together with what is regarded as state in an \gls{isa}.
+Furthermore, it is unreasonable to assume that an implementation of instructions of an \gls{isa} could be implemented in a single statement of PROMELA.
+Yet, this should be the goal as otherwise as shown in snippet \ref{snpt:spin-output} what is regarded as state by SPIN would not fall together with what is regarded as state in an \gls{isa}.
 For an \gls{isa}, you typically would consider the \textit{state} of registers and memory to be the state of the \gls{isa} whilst some instruction advances this state.
-However, for \gls{spin} more complex state transitions would result in us not being able to differentiate architectural states of the \gls{isa} natively since the process implementing the \gls{isa} would change state on each line of code executed.
-This could be circumvented by using the \lstinline{atomic} keyword offered by \gls{promela} which lets you wrap a group of \gls{promela} statements such that they're considered as one atomic statement that advances the process state only by one step.
+However, for SPIN more complex state transitions would result in us not being able to differentiate architectural states of the \gls{isa} natively since the process implementing the \gls{isa} would change state on each line of code executed.
+This could be circumvented by using the \lstinline{atomic} keyword offered by PROMELA which lets you wrap a group of PROMELA statements such that they're considered as one atomic statement that advances the process state only by one step.
 However, this would lead to a model consisting of one process all of its code being wrapped by one \lstinline{atomic} statement.
-This would massively contradict the key idea of \gls{spin} of simple models being \textit{abstracted} from computationally complex code.
+This would massively contradict the key idea of SPIN of simple models being \textit{abstracted} from computationally complex code.
 In this case, we'd have skipped the whole step of abstracting from some computational model that has distributed components running in parallel.
-Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing \gls{spin}.
+Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing SPIN.
 
-\subsubsection{\muZ{} \& \gls{spacer}}
+\subsubsection{\muZ{} \& SPACER}
 \label{sec:spacer}
 
-\muZ{} is a \gls{datalog}-engine that provides querying fixed points with constraints and has been proposed in \cite{Hoder11}.
-According to \textit{An Introduction to Database Systems} \cite[p.790ff]{Date00}, \gls{datalog} is a descriptive and querying language that originated in the field of database management systems.
-At its core, \gls{datalog} programs are sets of \textit{rules} that combine predicates only using variables and constants to Horn-clauses, i.e. disjunctions with one positive literal at maximum.
+\muZ{} is a Datalog-engine that provides querying fixed points with constraints and has been proposed in \cite{Hoder11}.
+According to \textit{An Introduction to Database Systems} \cite[p.790ff]{Date00}, Datalog is a descriptive and querying language that originated in the field of database management systems.
+At its core, Datalog programs are sets of \textit{rules} that combine predicates only using variables and constants to Horn-clauses, i.e. disjunctions with one positive literal at maximum.
 For example, consider the following rule $ \pi_0 $ which expresses the transitivity of a predicate $ P $:
 \begin{equation*}
     \pi_0 := P(a, b) \land P(b, c) \Rightarrow P(a, c)
@@ -838,22 +838,22 @@ To illustrate what this means, we introduce two other rules.
     \pi_1 := & P(0, 1) \Rightarrow \top \\
     \pi_2 := & P(a, b) \Rightarrow P(a + 1, b + 1)
 \end{align*}
-The \gls{datalog}-program $ \Pi := \{ \pi_0, \pi_1, \pi_2 \} $ now induces the relation $ < $ on all natural numbers including $ 0 $.
+The Datalog-program $ \Pi := \{ \pi_0, \pi_1, \pi_2 \} $ now induces the relation $ < $ on all natural numbers including $ 0 $.
 $ \pi_1 $ sets up a start of induction which, stating that $ 0 $ is smaller than $ 1 $ which is generalized for all natural numbers by $ \pi_2 $.
 
-Whether or not this exact \gls{datalog}-program is supported by a given \gls{datalog}-engine depends on the extensions implemented by the respective engine.
+Whether or not this exact Datalog-program is supported by a given Datalog-engine depends on the extensions implemented by the respective engine.
 Our example relies on an extension for scalar operators since we use the $ + $ operator.
 
-As briefly mentioned, \gls{datalog} also supports queries.
-\gls{datalog} queries comprise only one predicate and a special head $ ? $.
+As briefly mentioned, Datalog also supports queries.
+Datalog queries comprise only one predicate and a special head $ ? $.
 \begin{equation*}
     q_0 := P(0, x) \Rightarrow \; ?
 \end{equation*}
 The result to a query is the set of all values for each variable that make the predicate true.
 In this case, the result set would be $ \{ 1, 2, 3, \dots \} $.
-If no variables but only constants are given in the query, \gls{datalog} simply determines whether the given predicate can be derived for the given constants.
+If no variables but only constants are given in the query, Datalog simply determines whether the given predicate can be derived for the given constants.
 
-\muZ{} now is a \gls{datalog}-engine that comes as part of the SMT solver z3 \cite{Moura08} and adds support for expressing Horn-clauses to it.
+\muZ{} now is a Datalog-engine that comes as part of the SMT solver z3 \cite{Moura08} and adds support for expressing Horn-clauses to it.
 For example, consider the implementation of the program $ \Pi $ for \muZ{} as depicted in snippet \ref{snpt:muz-exm}.
 This example yields \smt{sat} as result when executed, meaning, that \smt{goal} can be derived from the rules at hand.
 
@@ -882,8 +882,8 @@ This example yields \smt{sat} as result when executed, meaning, that \smt{goal} 
     \end{lstlisting}
 \end{figure}
 
-\gls{spacer} \cite{Komuravelli13} is an algorithm that combines two widely implemented approaches of currently available formal verification tools: \gls{2bmc} and \gls{cegar}.
-In its implementation, \gls{spacer} uses \muZ{} as a backend.
+SPACER \cite{Komuravelli13} is an algorithm that combines two widely implemented approaches of currently available formal verification tools: \gls{2bmc} and \gls{cegar}.
+In its implementation, SPACER uses \muZ{} as a backend.
 The paper describes those techniques as follows:
 \begin{displaycquote}[p.1f]{Komuravelli13}
     The key idea of \gls{2bmc} is to iteratively construct an under-approximation \textins{(or refinement)} $ U $ of the target program $ P $ by unwinding its transition relation and check whether $ U $ is safe using \gls{bmc}.
@@ -895,7 +895,7 @@ The paper describes those techniques as follows:
     Thea idea of \textins{\gls{cegar}} is to iteratively construct, verify, and refine an abstraction (\textit{i.e.}, an over-approximation) of $ P $ based on abstract counterexamples.
 \end{displaycquote}
 
-The key to understand how \gls{spacer} works is to understand what under- or over-approximation of programs are.
+The key to understand how SPACER works is to understand what under- or over-approximation of programs are.
 For the sake of brevity, consider the program $ P $ as depicted in snippet \ref{snpt:spacer-p}.
 $ P $ performs an integer division with remainder for a natural number \lstinline{n} by a divisor \lstinline{div} storing the results in \lstinline{ratio} and \lstinline{mod}.
 Intuitively speaking, $ \hat{P} $ is an under-approximation (or abstraction) of $ P $ if for every part of $ P $ there is a corresponding part of $ \hat{P} $ whose effects are logically entailed by the original part.
@@ -976,31 +976,31 @@ If a property is checked for the abstraction $ \hat{P} $ of $ P $ and a positive
 However, when a counterexample is given, it is unclear whether it applies to $ P $.
 If the counterexample does not apply to $ P $, the idea of \gls{cegar} \cite{Clark00} is to refine the abstraction at hand in such a way that the counterexample does not apply to it anymore and re-iterate on the verification process.
 
-\gls{spacer} uses both of these techniques to prove safety properties of programs expressed in \gls{datalog} using \muZ{}.
-These safety properties are expressed using custom relations in \gls{datalog} such as \smt{goal} in snippet \ref{snpt:muz-exm}.
-\gls{spacer} then tries to construct a proof why the property at hand cannot be derived from the axioms of the \gls{datalog} program or it gives a counterexample illustrating a possible weakness of the program.
-In theory, \gls{datalog} could be used for the implementation of this thesis.
+SPACER uses both of these techniques to prove safety properties of programs expressed in Datalog using \muZ{}.
+These safety properties are expressed using custom relations in Datalog such as \smt{goal} in snippet \ref{snpt:muz-exm}.
+SPACER then tries to construct a proof why the property at hand cannot be derived from the axioms of the Datalog program or it gives a counterexample illustrating a possible weakness of the program.
+In theory, Datalog could be used for the implementation of this thesis.
 A single predicate could be used to simulate the architectural state of the instruction set architecture at hand whilst each instruction could be modelled via a separate rule.
 
-However, whereas the limiting factor for \gls{spin} was the modelling language, the limiting factor for \gls{spacer} is the output of the tool.
-In case of a property failing to be verified, no counterexamples are given but \gls{spacer} simply outputs there is an trace of the program for which a given property does not hold but without specifying the trace itself.
+However, whereas the limiting factor for SPIN was the modelling language, the limiting factor for SPACER is the output of the tool.
+In case of a property failing to be verified, no counterexamples are given but SPACER simply outputs there is an trace of the program for which a given property does not hold but without specifying the trace itself.
 \muZ{} itself can be configured to give a more detailed result however that would still not include a \textit{trace of derivations}.
-For \gls{spacer} or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
+For SPACER or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
 
 \subsubsection{nuXmv}
 
-\gls{nuxmv} \cite{Cavada14} is a symbolic model checker that accepts the \gls{smv} input language and is able to model check invariants, \gls{ltl} and \gls{ctl} formulas.
+nuXmv \cite{Cavada14} is a symbolic model checker that accepts the SMV input language and is able to model check invariants, \gls{ltl} and \gls{ctl} formulas.
 Symbolic model checkers have been introduced in \cite{Burch92} and encode the state-space of the system to model check in \glspl{bdd} which work analogously to binary decision trees with the major difference that \glspl{bdd} are not trees but directed, acyclic graphs.
 
-\gls{nuxmv} supports both finite and infinite state transition systems.
-These systems are expressed in the form of \textit{modules} in the \gls{smv} input language.
+nuXmv supports both finite and infinite state transition systems.
+These systems are expressed in the form of \textit{modules} in the SMV input language.
 At its heart, a module consists of a collection of variables, \smv{INIT} (i.e. initial) constraints and \smv{TRANS} (i.e. transition) constraints.
-There are more syntactical constructs, e.g. macros or constants, but these do not add to the functionality of \gls{nuxmv} but either serve as syntactic sugar or enhance on performance if used.
-A module in \gls{nuxmv} induces a set of state transition systems.
+There are more syntactical constructs, e.g. macros or constants, but these do not add to the functionality of nuXmv but either serve as syntactic sugar or enhance on performance if used.
+A module in nuXmv induces a set of state transition systems.
 The state space of such a system is given by the variables of the module, i.e. an assignment to all variables is a state of the system, the initial state must model the \smv{INIT} constraints the transition relation must model the \smv{TRANS} constraints.
-Whenever \gls{nuxmv} checks a property $ P $ for a module $ M $ it is checked if every state transition system $ S $ which is induced by $ M $ models $ P $.
+Whenever nuXmv checks a property $ P $ for a module $ M $ it is checked if every state transition system $ S $ which is induced by $ M $ models $ P $.
 
-\gls{smv} is a strongly typed language.
+SMV is a strongly typed language.
 Variables can be of type boolean, integer range, a custom enumeration, bit-vectors or arrays in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
 \smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit-vectors, arrays, etc., such as basic arithmetic, array indexing, standard boolean operators on both bit-vector and boolean level, but also case and if-then-else expressions.
 \smv{TRANS} constraints also are forumlas of propositional logic but additionally support use of the \smv{next(...)} operator which references to the value in the next state of some expression.
@@ -1011,7 +1011,7 @@ Variables can be of type boolean, integer range, a custom enumeration, bit-vecto
     \begin{figure}
         \begin{lstlisting}[
             language=smv,
-            caption={An example of the \gls{smv} input language},
+            caption={An example of the SMV input language},
             label={snpt:nuxmv}
         ]
             MODULE main
@@ -1035,7 +1035,7 @@ Variables can be of type boolean, integer range, a custom enumeration, bit-vecto
     \end{figure}
 
     This module uses an \smv{IVAR} - \textit{input variable} - declaration; a language construct that hasn't yet been introduced.
-    Input variables are a type of variables in \gls{nuxmv} with the characteristic that they are \enquote{read-only}.
+    Input variables are a type of variables in nuXmv with the characteristic that they are \enquote{read-only}.
     Technically, every variable is read-only since they can not be assigned directly but only constrained.
     \smv{INPUT} variables, however, are \enquote{read-only} because they cannot be used in \smv{INIT} constraints or inside \smv{next(...)} expressions.
     In other words, the transition of input variables is completely random.
@@ -1050,11 +1050,11 @@ Variables can be of type boolean, integer range, a custom enumeration, bit-vecto
     The pedestrian lights switch to green whenever some pedestrian is waiting and otherwise switch to red, the traffic lights are coupled to the pedestrian lights and become red whenever the pedestrian lights are green and become green otherwise.
 \end{example}
 
-\gls{nuxmv} supports four types of specifications: invariants, \gls{ltl} or \gls{ctl} formulas, and \gls{psl} expressions.
+nuXmv supports four types of specifications: invariants, \gls{ltl} or \gls{ctl} formulas, and \gls{psl} expressions.
 Here, an introduction into \gls{psl} will be skipped since \gls{psl} is directly aimed at hardware verification (cf. \cite{Foster05}).
 
 Invariants are the simplest form of specification and can also be expressed in both, \gls{ltl} and \gls{ctl}.
-In the context of \gls{nuxmv}, an invariant is formally given by a next-expression, i.e. an expression that can contain the use of the \smv{next} function.
+In the context of nuXmv, an invariant is formally given by a next-expression, i.e. an expression that can contain the use of the \smv{next} function.
 Invariants specify that something (i.e. the respective next-expression) must be true in all reachable states of a model.
 
 \begin{figure}
@@ -1063,7 +1063,7 @@ Invariants specify that something (i.e. the respective next-expression) must be 
     \begin{subfigure}[b]{\subfigw}
         \centering
         \includegraphics[scale=\figscale]{figures/module.png}
-        \caption{\gls{nuxmv} module}
+        \caption{nuXmv module}
     \end{subfigure}
     \begin{subfigure}[b]{\subfigw}
         \centering
@@ -1081,14 +1081,14 @@ Invariants specify that something (i.e. the respective next-expression) must be 
         \includegraphics[scale=\figscale]{figures/ltl-interpretation.png}
         \caption{\gls{ltl} interpretation}
     \end{subfigure}
-    \caption{\gls{nuxmv} modules illustrated}
+    \caption{nuXmv modules illustrated}
 \end{figure}
 
 % TODO: Reference whole figure
 
 On the other hand, \gls{ltl} is a temporal logic and as such supports the specification of properties over time.
 Both, \gls{ltl} and \gls{ctl}, will be introduced semi-formally here as presented in the \citetitle{nuXmv} \cite{nuXmv}.
-Interpretations and models of an \gls{ltl} formula are infinite execution paths of a system, or in the context of \gls{nuxmv}.
+Interpretations and models of an \gls{ltl} formula are infinite execution paths of a system, or in the context of nuXmv.
 Let $ T = (t_1, t_2, \dots) $ be such an execution path.
 The most simple form of an \gls{ltl} formula again is a next-expression \smv{p}.
 $ T $ models \smv{p} in \gls{ltl} if \smv{p} is true in $ t_1 $.
@@ -1104,7 +1104,7 @@ Furthermore, there are five main temporal operators.
     Alternatively, $ i $ might not be bounded, i.e. \smv{p} then is never and \smv{p'} globally true.
 \end{description}
 
-When an \gls{ltl} specification \smv{p} is checked by \gls{nuxmv}, it is verified that \smv{p} is true for \textit{all} infinitely long execution paths.
+When an \gls{ltl} specification \smv{p} is checked by nuXmv, it is verified that \smv{p} is true for \textit{all} infinitely long execution paths.
 Consequently, an invariant \smv{p} can also be expressed as the \gls{ltl} formula \smv{G p}.
 
 Additionally, there are analogous operators for the past.
@@ -1115,7 +1115,7 @@ The \enquote{Historically} operator \smv{H p} is the counterpart to \smv{G} and 
 
 \gls{ctl} formulas share much of the idea of \gls{ltl} formulas but they differ in the interpretations and models for formulas.
 Whereas in \gls{ltl} an interpretation of a formula is a infinitely long execution path of a transition system, in \gls{ctl} an interpretation of a formula is a transition system itself or more specifically: the unwinded transition relation of a transition system as a tree (hence the name computation \textit{tree} logic).
-Therefore, it is straightforward how \gls{ctl} formulas are checked by \gls{nuxmv}: it is checked whether all transition systems induced by the module model the formula.
+Therefore, it is straightforward how \gls{ctl} formulas are checked by nuXmv: it is checked whether all transition systems induced by the module model the formula.
 Again, the most simple form of a \gls{ctl} formula is a next-expression \smv{p}.
 To illustrate the models-relation for \gls{ctl}, consider the example tree depicted in figure \ref{fig:ctl-int}.
 Such a tree $ T $ models \smv{p} is \smv{p} is true in state $ x_0 $.
@@ -1152,7 +1152,7 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
     \begin{figure}
         \begin{lstlisting}[
             language=smv,
-            caption={An example of the \gls{smv} specification language},
+            caption={An example of the SMV specification language},
             label={snpt:nuxmv-spec}
         ]
             INVARSPEC traffic_lights != ped_lights;
@@ -1162,14 +1162,14 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
     \end{figure}
 
 
-    In \gls{nuxmv}, specifications are introduced by one of \smv{INVARSPEC}, \smv{LTLSPEC} or \smv{LTLSPEC} and optionally may be preceded by a name which is omitted in this example.
+    In nuXmv, specifications are introduced by one of \smv{INVARSPEC}, \smv{LTLSPEC} or \smv{LTLSPEC} and optionally may be preceded by a name which is omitted in this example.
     The invariant in the example states that at no point can the traffic and the pedestrian lights show green or red simultaneously.
     The \gls{ltl} formula specifies that whenever the button for the pedestrians is pressed, at some point the pedestrian lights must show green.
     The \gls{ctl} formula specifies that in unwindings of the transition relation, at some point the traffic lights must show green and at some point the pedestrian lights must show green.
 
     In this example, both the invariant and the \gls{ltl} specification are met by the model.
     The \gls{ctl} specification though is false.
-    \gls{nuxmv} gives the following counter-example:
+    nuXmv gives the following counter-example:
 
     \begin{lstlisting}
         -- specification (AF traffic_lights = g & AF ped_lights = g)  is false
@@ -1182,19 +1182,19 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
         ped_lights = r
     \end{lstlisting}
 
-    Counter-examples in \gls{nuxmv} always show a finite fraction of an infinite execution path.
+    Counter-examples in nuXmv always show a finite fraction of an infinite execution path.
     Only one state being depicted here indicates that the computation tree with the initial state given above and in which no variable ever changes violates the \gls{ctl} formula at hand.
     This tree illustrates a world in which the button for pedestrians is never pressed and in this world, the pedestrian lights will correctly never show green.
 
     While it is not explicitly mentioned in the user manual how input variables relate to the states in the unwinding of the transition relation for the interpretation of a \gls{ctl} formula, it is assumed here that the input variables are not part of the state space; otherwise the counter example given above would not apply since the state where \smv{ped_button} becomes true trivially is reachable.
-    This assumption is supported by the fact that in \gls{nuxmv}, \gls{ctl} formulas must not reference input variables.
+    This assumption is supported by the fact that in nuXmv, \gls{ctl} formulas must not reference input variables.
 \end{example}
 
-Whereas \gls{spin} was problematic because its input language didn't match the needs of this thesis, and \gls{spacer} or \muZ{} were problematic because there output does not match the needs of this thesis, \gls{nuxmv} delivers in both aspects.
+Whereas SPIN was problematic because its input language didn't match the needs of this thesis, and SPACER or \muZ{} were problematic because there output does not match the needs of this thesis, nuXmv delivers in both aspects.
 The traces generated as counter-examples serve as illustration what specifically went wrong on a property, i.e. how information flowed through the architecture.
 The input language supports models that are very conservative with the regards to the model of computation that is taken as a basis.
 Having variables and transition allows to implement pretty much any sequential system.
-Therefore the decision was made to use \gls{nuxmv} as a verification engine.
+Therefore the decision was made to use nuXmv as a verification engine.
 
 The idea for the implementation is straight-forward:
 \begin{itemize}
@@ -1204,7 +1204,7 @@ The idea for the implementation is straight-forward:
 \end{itemize}
 
 For reasons that at this point can not be discussed meaningfully but will become clear in section \ref{sec:checking}, it was furthermore decided to express the information flow control of the architecture in \gls{ltl}.
-\gls{nuxmv} supports a plethora of techniques to check specifications, e.g. the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
+nuXmv supports a plethora of techniques to check specifications, e.g. the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
 % TODO: \gls{ifc}
 In the practical work for this thesis, after the decision to implement the information flow control in \gls{ltl} has been made, a couple of these techniques which apply to \gls{ltl}-checking were tested out.
 In this informal evaluation it was found that the K-Liveness algorithm proposed in \cite{Claessen12} delivered best results and terminated quickly whenever the model met the specification.
@@ -1241,8 +1241,7 @@ If a trace is found where such a state appears at least twice, there also is a t
 \subsection{Summary \& Methodology}
 \label{sec:sum-background}
 
-% TODO: \gls{minrv8}
-The goal of this thesis is to verify a simplified version of the \gls{riscv} \gls{isa}, MINRV8, via higher level information flow control properties.
+The goal of this thesis is to verify a simplified version of the RISC-V \gls{isa}, MINRV8, via higher level information flow control properties.
 This combines the work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 We adopt the requirements to these properties from \cite{Reid17}, i.e. these properties should:
 \begin{displaycquote}[pp.88:2-3]{Reid17}
@@ -1254,13 +1253,13 @@ We adopt the requirements to these properties from \cite{Reid17}, i.e. these pro
     \end{itemize}
 \end{displaycquote}
 
-To achieve this, we will investigate the \gls{riscv} architecture in more detail and define as well as implement the MINRV8 architecture in section \ref{sec:arch}.
+To achieve this, we will investigate the RISC-V architecture in more detail and define as well as implement the MINRV8 architecture in section \ref{sec:arch}.
 This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load-store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
-A model of this instruction set architecture will be implemented in \gls{nuxmv}.
+A model of this instruction set architecture will be implemented in nuXmv.
 
 As a next step, the two terms of information flow control \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
-As a first step in section \ref{sec:checking}, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in \gls{nuxmv}.
-By using \gls{nuxmv} as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
+As a first step in section \ref{sec:checking}, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in nuXmv.
+By using nuXmv as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
 When this has been dealt with, the actual information flow control will be expressed as \gls{ltl} properties.
 These properties will assume the user-mode of the system to be compromised and express that insecure flows of information between machine- and user-mode are impossible.
 

@@ -5,7 +5,7 @@
 
 \subsection{An Introduction to RISC-V}
 
-This section will introduce the core of the \gls{riscv} architecture by shedding light on the base integer instruction set in section \ref{sec:rv-base-int-isa} and the mechanisms of the privileged part of the architecture in \ref{sec:rv-priv-arch}.
+This section will introduce the core of the RISC-V architecture by shedding light on the base integer instruction set in section \ref{sec:rv-base-int-isa} and the mechanisms of the privileged part of the architecture in \ref{sec:rv-priv-arch}.
 
 \subsubsection{The Base Integer Instruction Set}
 \label{sec:rv-base-int-isa}
@@ -22,7 +22,7 @@ These basic instructions are all side effect free besides from advancing the pro
 This makes them particularly easy to analyze.
 However, as a side-effect, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
 There also is no special instruction to handle this.
-The authors of the \gls{riscv} manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
+The authors of the RISC-V manual show that in general, overflow checks for addition can be handled with three additional instructions after an add instruction:
 
 \begin{lstlisting}[
     language=rv,
@@ -42,13 +42,13 @@ There are two types of instructions that deal with external memory.
 Firstly, simple load and store instructions that read from or write to memory.
 Secondly, FENCE instructions that synchronize memory access between multiple \glspl{hart}.
 
-Memory in \gls{riscv} is byte-addressable.
-Therefore, load and store operations in \gls{riscv} can read or write words of size 8-, 16-, 32-, 64- or 128-bits, depending on the maximum word length of the base instruction set of choice.
+Memory in RISC-V is byte-addressable.
+Therefore, load and store operations in RISC-V can read or write words of size 8-, 16-, 32-, 64- or 128-bits, depending on the maximum word length of the base instruction set of choice.
 Read- and write-addresses don't have to be aligned by software before using them, however, if they are not, the architecture must first align them before fetching from or storing to them, i.e. reading a 32-bit word from memory at address 0x1 is impossible.
 If this address is given as argument to a respective load instruction it'll be aligned to the address 0x0.
 
 \subparagraph{Control transfer instructions}
-There are two types of instructions that can control program flow in \gls{riscv}: jumps and branches.
+There are two types of instructions that can control program flow in RISC-V: jumps and branches.
 In short, jumps are performed unconditionally and can target a wider range in memory (at least $ \pm 2^{20}\text{bits} $ in case of a 32-bit architecture) whereas branches are performed conditionally, only can target a narrower range in memory ($ \pm 2^{12}\text{bits} $ in case of a 32-bit architecture) and always must branch to \gls{pc}-relative addresses.
 
 In contrast to memory operations, addresses targeted by jumps must be aligned correctly.
@@ -57,22 +57,22 @@ If this is not the case, an exception will be generated.
 Jumps are intended to call routines and functions.
 This is why they store a return address to some general purpose register.
 Branches on the other hand are intended to control the program flow of one such routine or function, e.g. to implement an \textit{if-else} structure or \textit{for}-loops where code won't return from the branched execution.
-\gls{riscv} is agnostic about the details of calling conventions for routines, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
+RISC-V is agnostic about the details of calling conventions for routines, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
 
 \subparagraph{Platform management instructions}
 The last type of instructions to be looked at are platform management instructions.
-The \gls{riscv} manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions that perform operations that potentially need some form of privilege.
+The RISC-V manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions that perform operations that potentially need some form of privilege.
 Examples for the former category are straight forward.
-\gls{riscv} knows instructions to read or write complete \glspl{csr} but also knows operations to modify single bits only.
-For the latter category, \gls{riscv} only knows two instructions at the base instruction set level which are \gls{ecall} and \gls{ebreak} instructions.
+RISC-V knows instructions to read or write complete \glspl{csr} but also knows operations to modify single bits only.
+For the latter category, RISC-V only knows two instructions at the base instruction set level which are \gls{ecall} and \gls{ebreak} instructions.
 We will inspect these instructions in more detail in section \ref{sec:rv-priv-arch}.
 
 \subparagraph{Summary}
-The base integer instruction set of \gls{riscv} gives you everything you need for implementing a comfortable Turing-machine but pretty much nothing more.
+The base integer instruction set of RISC-V gives you everything you need for implementing a comfortable Turing-machine but pretty much nothing more.
 You can perform basic arithmetic with integers or bit vectors of Booleans, load and store results of your calculations and abstract your code by using jumps and branches.
 At this point, there is no state with predefined semantics, i.e. all state available is given by storage that can only influence computation when used by a programmer.
 
-Only the platform management instructions give a hint on the complexity that is offered by the \gls{riscv} architecture to allow abstracting processing done on the core.
+Only the platform management instructions give a hint on the complexity that is offered by the RISC-V architecture to allow abstracting processing done on the core.
 
 \subsubsection{The Privileged Architecture}
 \label{sec:rv-priv-arch}
@@ -94,14 +94,14 @@ In this section, the aforementioned concepts will be introduced subsequently and
 
 \paragraph{Levels of Privilege}
 
-\gls{riscv} knows three privilege levels: user-mode, supervisor-mode and machine-mode\footnote{%
+RISC-V knows three privilege levels: user-mode, supervisor-mode and machine-mode\footnote{%
     In an earlier version, there was a fourth privilege-mode being hypervisor-mode that was more privileged than supervisor- but less privileged than machine-mode.
     However, this mode has been dropped from the specification as of now.
-    Yet, \gls{riscv} still needs to encode mode-relative bit-fields with two bits.
+    Yet, RISC-V still needs to encode mode-relative bit-fields with two bits.
     Usually, 00 stands for user-, 01 for supervisor and 11 for machine-mode.
     10 is reserved in most places and has been used for hypervisor-mode.
 }.
-Each implementation of the \gls{riscv} specification must at least provide machine-mode as a base mode of operation.
+Each implementation of the RISC-V specification must at least provide machine-mode as a base mode of operation.
 Besides this, there are two other choices of privilege levels combinations supported:
 \begin{enumerate}
     \item Machine-mode only (\textcquote{RiscVISA}{simple embedded system})
@@ -167,7 +167,7 @@ Supervisor-mode will be handled wherever it fits in the bigger picture but not o
 \paragraph{Exceptions, traps and interrupts}
 \label{sec:rv-exn}
 
-Volume 1 of the \gls{riscv} specification \cite{RiscVISA} introduces the concept of exceptions, traps and interrupts as follows:
+Volume 1 of the RISC-V specification \cite{RiscVISA} introduces the concept of exceptions, traps and interrupts as follows:
 \begin{displaycquote}{RiscVISA}
     We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
     We use the term \textit{trap} to refer to the synchronous transfer of control to a trap handler caused by an exceptional condition occurring within a RISC-V thread.
@@ -369,7 +369,7 @@ Finally, note that exceptions are handled as soon as they occur.
 This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
 The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
 % Source: https://stackoverflow.com/a/56402079/7194995
-\gls{riscv} knows no concept of settings exceptions pending, this however, isn't necessary.
+RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
 If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
 
 % TODO: Mention what I didn't mention; e.g. specific parts of mstatus
@@ -413,7 +413,7 @@ However, they do not introduce new notions of information flow to the architectu
 It is the case that contents of these registers are confidential as their contents might be used to introduce side-channels to other applications running on the processor.
 However, their core mechanisms are not unique.
 They can be read and written to and might generate interrupts.
-Therefore, dealing with information flow in general is sufficient for our approach and these registers can be safely ignored without loosing major aspects of the \gls{riscv} functionality.
+Therefore, dealing with information flow in general is sufficient for our approach and these registers can be safely ignored without loosing major aspects of the RISC-V functionality.
 
 Besides the interrupts and exceptions that have been introduced in the last few paragraphs, there are two further \textit{exceptional conditions} that can occur in a \gls{hart}.
 
@@ -455,7 +455,7 @@ Other \glspl{csr} are left untouched.
 \subsection{The MINRV8 Architecture}
 \label{sec:minrv8}
 
-The architecture that will be model checked in this thesis is a minimal, \gls{riscv}-inspired 8-bit architecture and shall be named MINRV8 from now on.
+The architecture that will be model checked in this thesis is a minimal, RISC-V-inspired 8-bit architecture and shall be named MINRV8 from now on.
 A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
 
 MINRV8 supports 4 general purpose registers and has two privilege modes: machine- and user-mode.
@@ -648,7 +648,7 @@ Secondly, when the \minrv{Mret} instruction is executed, the \gls{hart} sets \sm
 
 \gls{mstatus} changes under the same conditions which leads to the transitions of \smv{csrs}.
 On a trap, MPP and MPIE are written accordingly while MEIP and MIE are set to zero.
-MEIP can be set to zero although the trap might have been triggered by an \minrv{Ecall} instruction because interrupts have higher priority in \gls{riscv} than synchronous exceptions.
+MEIP can be set to zero although the trap might have been triggered by an \minrv{Ecall} instruction because interrupts have higher priority in RISC-V than synchronous exceptions.
 To understand why this is correct, there are two cases to consider.
 Either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
 On return from machine-mode, i.e. execution of \minrv{Mret}, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.

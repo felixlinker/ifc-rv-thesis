@@ -7,7 +7,7 @@
 In this section, we will give a final summary of our work, draw conclusion in light of the requirements towards verification of specifications against higher level properties that were imposed both by us and \citeauthor{Reid17} in \cite{Reid17} and give an outlook for possible future work.
 
 Find an overview of this thesis as a whole in figure \ref{fig:overview}.
-As a first step we developed the MINRV8 architecture in section \ref{sec:minrv8} that was inspired by the \gls{riscv} architecture and implemented in \gls{nuxmv}.
+As a first step we developed the MINRV8 architecture in section \ref{sec:minrv8} that was inspired by the RISC-V architecture and implemented in nuXmv.
 In section \ref{sec:checking}, we developed information flow semantics and three information flow properties forming an information flow policy in spirit of the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 The information flow semantics were used to augmented the model of the MINRV8 by information flow tracking.
 In section \ref{sec:results} we introduced eight assumptions that, when implemented software running in machine-mode such as \glspl{os}, guarantee the absence of vulnerabilities covered by aforementioned information flow properties.
@@ -80,7 +80,7 @@ Finally, we give an outlook on future work:
     \item[MMU] In light of \cite{KhakpourSD13} a model of an \gls{mmu} could be implemented to make use of information flow tracking on user-mode level.
     This was discussed in section \ref{sec:related-work}.
     \item[Machine-generated model] The model of the architecture that was implemented by hand in this thesis could be generated from existing machine-readable architectural specifications.
-    For example, there are machine-readable versions of the \gls{arm} architecture; both \cite{Reid17,Fox02} either used or developed machine-readable specifications that might be used for this endeavor.
+    For example, there are machine-readable versions of the ARM architecture; both \cite{Reid17,Fox02} either used or developed machine-readable specifications that might be used for this endeavor.
     Not implementing the model by hand would \begin{enumerate*}[label=\alph*)]
         \item possibly enhance the trust in the model itself, depending on the trust in the source and the translation procedure, and
         \item make the approach even more viable and stable towards architectural changes.

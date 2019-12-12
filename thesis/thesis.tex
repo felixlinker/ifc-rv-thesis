@@ -6,7 +6,7 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{syntax}
 \usepackage[euler]{textgreek}
-\usepackage{glossaries}
+\usepackage[acronym,nomain]{glossaries}
 \usepackage{colortbl}
 \usepackage{subcaption}
 \usepackage{multirow}
@@ -43,78 +43,13 @@
 
 \setlist[description]{leftmargin=\parindent,labelindent=\parindent}
 
-\makenoidxglossaries
 \setacronymstyle{long-short}
-
-% TODO: Are these glossary entries even sensible?
-% TODO: descriptions
-\newglossaryentry{riscv}
-{
-    name={\textsc{Risc-V}},
-    % TODO: description
-    description={}
-}
-\newglossaryentry{mips}{
-    name={\textsc{Mips}},
-    description={},
-}
-\newglossaryentry{arm}{
-    name={\textsc{Arm}},
-    description={},
-}
-\newglossaryentry{x86}{
-    name={x86},
-    description={},
-}
-\newglossaryentry{spin}{
-    name={\textsc{Spin}},
-    description={}
-}
-\newglossaryentry{promela}{
-    name={\textsc{Promela}},
-    description={}
-}
-\newglossaryentry{spacer}{
-    name={\textsc{Spacer}},
-    description={}
-}
-\newglossaryentry{datalog}{
-    name={\textsc{Datalog}},
-    description={}
-}
-\newglossaryentry{z3}{
-    name={\textsc{z3}},
-    description={}
-}
-\newglossaryentry{secverilog}{
-    name={\textsc{SecVerilog}},
-    description={},
-}
-\newglossaryentry{secverilogbl}{
-    name={\textsc{SecVerilogBL}},
-    description={},
-}
-\newglossaryentry{trustzone}{
-    name={\gls{arm} \textsc{TrustZone}},
-    description={},
-}
-\newglossaryentry{mclass}{
-    name={\gls{arm} \textsc{M-Class}},
-    description={},
-}
-\newglossaryentry{nuxmv}{
-    name={\textsc{nuXmv}},
-    description={},
-}
-\newglossaryentry{smv}{
-    name={\textsc{Smv}},
-    description={},
-}
+\makenoidxglossaries
 
 \newacronym{risc}{RISC}{reduced instruction set computer}
 \newacronym{cisc}{CISC}{complex instruction set computer}
 \newacronym{isa}{ISA}{instruction set architecture}
-\newacronym{hart}{hart}{\gls{riscv} hardware thread}
+\newacronym{hart}{hart}{RISC-V hardware thread}
 \newacronym{pc}{PC}{program counter register}
 \newacronym{lr}{LR}{link register}
 \newacronym{sp}{SP}{stack pointer register}
@@ -124,7 +59,7 @@
 \newacronym{os}{OS}{operating system}
 \newacronym{sbi}{SBI}{supervisor binary interface}
 \newacronym{see}{SEE}{supervisor execution environment}
-\newacronym{rsa}{\textsc{Rsa}}{Rivest–Shamir–Adleman}
+\newacronym{rsa}{RSA}{Rivest–Shamir–Adleman}
 \newacronym{nmi}{NMI}{non-maskable interrupt}
 \newacronym{alu}{ALU}{arithmetic logic unit}
 \newacronym{pma}{PMA}{phsyical memory attribute}
@@ -140,13 +75,9 @@
 \newacronym{psl}{PSL}{property specification language}
 \newacronym{mmu}{MMU}{memory management unit}
 
-\newacronym{jal}{\rv{Jal}}{jump and link}
-\newacronym{jalr}{\rv{Jalr}}{jump and link register}
-\newacronym{ecall}{\rv{Ecall}}{environment call}
-\newacronym{ebreak}{\rv{Ebreak}}{environment breakpoint}
-\newacronym{mret}{\rv{Mret}}{machine trap return}
-\newacronym{uret}{\rv{Uret}}{user trap return}
-\newacronym{nop}{\rv{Nop}}{no-operation}
+\newacronym{ecall}{ECALL}{environment call}
+\newacronym{ebreak}{EBREAK}{environment breakpoint}
+\newacronym{mret}{MRET}{machine trap return}
 
 % timer and performance counting CSRs
 \newacronym{mtime}{mtime}{machine time}
@@ -221,11 +152,16 @@
 
 \newpage
 
+\pagestyle{empty}
 \tableofcontents
-\thispagestyle{empty}
 
 \newpage
 
+\printnoidxglossary[type=acronym]
+
+\newpage
+
+\pagestyle{plain}
 \setcounter{page}{1}
 
 \input{sections/introduction.tex}

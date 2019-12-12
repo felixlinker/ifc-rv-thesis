@@ -41,7 +41,7 @@ The first is rather simple and is depicted in the following snippet:
 ]
     INIT MIE = 0b_1 -> MPP = 0b_0;
 \end{lstlisting}
-This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the \gls{riscv} specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
+This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the RISC-V specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
 No other \smv{INIT} constraints are required to set up the initial state of the model correctly.
 The second constraint sets up caching correctly, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
@@ -488,7 +488,7 @@ It is not clear, though, how realistic this characteristic of the MINRV8 archite
 Therefore this vulnerability stresses a weakness of the model as implemented in this thesis.
 Since the MINRV8 architecture only knows two privilege modes, the problem of setting potentially \enquote{interesting} regions of memory to be cacheable for an attack does not come into play.
 If, however, three or more privilege modes were given the question would arise which of the non-user-modes should be able to set caching methods for memory regions.
-If for example the supervisor-mode of \gls{riscv} also was part of the MINRV8 architecture and additionally would be allowed to write \gls{pmacfg} registers, a possible attack vector to gain access to machine-mode would be to first gain access to supervisor-mode and then set memory regions of interest to be write-back-cacheable.
+If for example the supervisor-mode of RISC-V also was part of the MINRV8 architecture and additionally would be allowed to write \gls{pmacfg} registers, a possible attack vector to gain access to machine-mode would be to first gain access to supervisor-mode and then set memory regions of interest to be write-back-cacheable.
 
 One possible approach to this would be to extend the MINRV8 architecture by said supervisor-mode and to test how architectural measures could mitigate this vulnerability, if for hardware-reasons, the platform could not check privileges for cache accesses.
 
