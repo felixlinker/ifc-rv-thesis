@@ -554,7 +554,7 @@ Memory is divided into pages with a virtual address being made up of a page inde
 On accessing an address, the page index is translated to a physical memory address which taken together with the page offset results in the respective physical memory address.
 This allows programs to treat their \enquote{personal} address space as continuous whereas in reality it comprises several pages of memory scattered all over physical memory.
 
-Virtual memory usually is part of \glspl{isa}; e.g. the \gls{arm} architecture includes the specification of the Memory Management Unit (MMU) which translates addresses and is programmed by some \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
+Virtual memory usually is part of \glspl{isa}; e.g. the \gls{arm} architecture includes the specification of the \gls{mmu} which translates addresses and is programmed by some \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
 The \gls{riscv} specification also includes a system for managing virtual memory with an address space of 32, 39, or 48 bits (cf. section 4 \cite{RiscVISAP}).
 Here, the setup of virtual memory also is delegated to an \gls{os} and can be configured by programming system registers.
 
@@ -793,8 +793,8 @@ Labeling parts of code as end-state contributes towards this.
 Never claims are processes themselves.
 % TODO: introduce LTL
 They run like any other process but must not terminate otherwise they're regarded as failure.
-This is the most complex way to express properties and in fact falls together with writing LTL properties about a model.
-Therefore \gls{spin} also allows to express such never properties in LTL directly via their command line interface.
+This is the most complex way to express properties and in fact falls together with writing \gls{ltl} properties about a model.
+Therefore \gls{spin} also allows to express such never properties in \gls{ltl} directly via their command line interface.
 
 The last type of properties, trace assertions, solely deal with message passing and therefore are not relevant to this thesis.
 

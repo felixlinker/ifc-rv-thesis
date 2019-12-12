@@ -61,14 +61,13 @@ The techniques employed in this work do not come close to what has been used in 
 However, one can view the detection of (mostly) unused parts of a design and information flow tracking as two sides of the same coin: whereas here, we strived for finding out where information can flow, the authors in \cite{Zhang15} aim for finding out where information (mostly) does not flow.
 
 \citeauthor{Fox02} formally verified the \gls{arm} architecture by redundancy in \citetitle{Fox02} \cite{Fox02}.
-% TODO: \gls{hol}
 He implemented a formal model of the \gls{arm} architecture in the theorem prover HOL, using general first order logic for verification.
 In this implementation, \citeauthor{Fox02} modelled two views on the \gls{arm} architecture: the \gls{isa} itself and the micro-architecture implementing this \gls{isa}.
 \citeauthor{Fox02} used theorems expressing that there always must be some correspondence between runs of the \gls{isa}-world and runs of the micro-architecture-world.
 If for a given list of instructions or a giving list of steps in the micro-architecture, no corresponding run of the opposite world can be found, the architecture itself must be flawed.
 This work was picked up by \citeauthor{KhakpourSD13} in \citetitle{KhakpourSD13} \cite{KhakpourSD13}.
 The authors of this work extended the implementation of \citeauthor{Fox02} proving three isolation properties of user- and machine-mode:
-User-mode processes must only depend on process-accessible-resources, processes must only modify those memory regions they can access by a given MMU configuration and user-mode-processes must only execute code by calling machine-mode through a trap.
+User-mode processes must only depend on process-accessible-resources, processes must only modify those memory regions they can access by a given \gls{mmu} configuration and user-mode-processes must only execute code by calling machine-mode through a trap.
 The first of these is a non-interference property.
 In general, non-interference properties state that a given system (in this case: user-mode-processes) must not be influenced by certain values (in this case: non-user-mode-process accessible resources).
 They are generally stated in the following form: whenever two initial states of the system agree on a list of selected values, the respective final states must also agree on these values.
@@ -78,7 +77,7 @@ As opposed to formalize: \enquote{information from source $ X $ must not flow to
 In contrast to the work of this thesis, \citeauthor{KhakpourSD13} achieve to distinguish between multiple user-mode processes and in this way tackle a more broad problem.
 In our work, we only considered the scenario of user-mode attacking machine-mode and not user-mode attacking different user-mode processes.
 % TODO: mention in future work
-It would be an interesting line of research to add an MMU to the model and extend the information flow properties accordingly.
+It would be an interesting line of research to add an \gls{mmu} to the model and extend the information flow properties accordingly.
 
 On the other hand, \citeauthor{KhakpourSD13} do not give any sense for what these properties actually achieve when it comes to security.
 It is not clear what kind of bugs concretely might be tackled by their properties; whilst they are intuitive and certainly should be met by the \gls{arm} architecture, it is unclear whether they actually guarantee any desirable characteristics of the architecture.
@@ -136,7 +135,7 @@ Each column classifies related work in regard to the categories introduced at th
 
 The work coming closest to our methodology of verification via information flow control considered software and was \cite{GordonKPGNR15,SuhLZD04}.
 The work coming closest to our goal of verifying specifications against higher level properties was \cite{Fox02,KhakpourSD13,BradfieldS16}.
-Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our model by an implementation of an MMU to prove isolation properties on user-process level.
+Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our model by an implementation of an \gls{mmu} to prove isolation properties on user-process level.
 
 \begin{table}
     \centering
