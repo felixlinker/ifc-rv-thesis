@@ -79,17 +79,18 @@ This lies in the nature of the properties taken from the natural language specif
 
 This thesis attempts to fill this gap and proposes a new way of verifying architectural specifications which will apply to multiple processor transitions.
 The work in this thesis therefore also is subject to the same requirements that have been imposed on the high-level properties in \cite{Reid17}.
-% TODO: actually compare my results to these requirements
 
 \subsection{Information Flow Control}
 \label{sec:ifc}
-
-% TODO: introduce what an HDL is
 
 In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors formally verify an implementation of the \gls{trustzone} architecture by statically type-checking an information flow policy.
 To achieve this, they enhance on the already existing \gls{hdl} language \gls{secverilog}, extending its type system to allow more fine grained modelling of information flow policies.
 Therefore, the authors verify an implementation against higher level properties as opposed verifying a specification as done by \citeauthor{Reid17} in \cite{Reid17}.
 This thesis takes this general approach and lifts it to be applied to specifications rather than implementations.
+
+\glspl{hdl} are very much like other, ordinary programming languages only that they are used to specify electronic circuits.
+This use case introduces several novelties to \glspl{hdl} in contrast to normal programming languages, e.g. type systems are not as rich and usually comprise registers (multiple bits) and wires (one bit).
+In context of this thesis, think of an \gls{hdl} as a programming language with a very specific use case.
 
 \citeauthor{Ferraiuolo17} define an \textit{information flow policy} as a lattice of security labels $ (M, \sqcup, \sqcap) $; with $ \sqsubseteq $ being the partial order on $ M $ as induced by the lattice.
 Intuitively speaking, information labelled with $ a \in M $ is allowed to flow to a sink labelled with $ b \in M $ iff $ a \sqsubseteq b $, i.e. information is always allowed to flow up in the lattice but not down.

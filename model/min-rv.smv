@@ -279,9 +279,7 @@ MODULE main
 
     DEFINE
         mem_addr := $read_addr("rs1");
-        -- TODO: Throw on a load without privileges?
         can_load := $can_load("mem_addr");
-        -- TODO: Throw on a write without privileges?
         can_write := $can_write("mem_addr");
         $if(SP_ENABLE)
             can_load_sp := $can_load("sp[sp_sel]");

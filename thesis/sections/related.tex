@@ -86,7 +86,6 @@ To some extent, these properties fall out of nowhere.
 Whilst this critique to some extent also applies to our work, we think that the methodology of deriving the information flow properties as presented in section \ref{sec:checking} gives some sense of completeness to our properties which is missing from the work of \citeauthor{KhakpourSD13}.
 
 Lastly, we consider the work of \citeauthor{Nienhuis19} in \citetitle{Nienhuis19} \cite{Nienhuis19}.
-% TODO: \gls{cheri}
 This work comes from a completely other direction: as opposed to verifying information flow properties in some existing architecture, the authors present a new architecture, CHERI, that guard memory accesses by \textit{capabilities}.
 These capabilities allow processes to perform given actions on a given range of memory, specified per virtual address.
 The development of CHERI was accompanied by formal methods and proofs to enhance the trust in this system.
@@ -102,6 +101,7 @@ Coincidentally, the authors focus on the SYSRET vulnerability to the x86 archite
 Their goal is to prove the absence of SYSRET-like vulnerabilities which is expressed as the property: never can the processor be in privileged mode when at the same time the stack pointer, base pointer or instruction pointer are controlled by user-mode.
 
 In their methodology, the authors first identify a group of vulnerable instructions which might lead to such a state by being interrupted.
+% TODO: mention: only mode transition instructions
 They then modelled these instructions alongside with all state touched by these instructions.
 By sparsely constraining the initial state of the model they finally prove: for all initial states, there is no direct successor state where a general protection fault has been thrown and one of the stack, base or instruction pointers is controlled by user-mode.
 The authors claim that by the constraints chosen for the initial states of the model, these states actually embody an over-approximation of all reachable states of the x86 architecture.

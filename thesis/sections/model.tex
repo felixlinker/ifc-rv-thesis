@@ -185,7 +185,7 @@ The magic function \mbox{csrLabel} that maps \gls{csr}-indices to the correspond
 \end{align*}
 
 Finally, the semantics of \minrv{Loadi} is coupled to the current execution context.
-% TODO: Did we explain the threat model?
+% TODO: Reference to threat-model
 Under the given threat-scenario, it is sensible to assume that constants loaded by machine-mode are always labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
 \begin{equation*}
     \I(\textsc{Loadi}) = c \mapsto \begin{cases}

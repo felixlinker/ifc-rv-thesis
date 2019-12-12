@@ -46,6 +46,8 @@
 \makenoidxglossaries
 \setacronymstyle{long-short}
 
+% TODO: Are these glossary entries even sensible?
+% TODO: descriptions
 \newglossaryentry{riscv}
 {
     name={\textsc{Risc-V}},
@@ -109,13 +111,10 @@
     description={},
 }
 
-% TODO: descriptions
 \newacronym{risc}{RISC}{reduced instruction set computer}
 \newacronym{cisc}{CISC}{complex instruction set computer}
 \newacronym{isa}{ISA}{instruction set architecture}
-\newacronym[
-    description={\gls{riscv} hardware thread}
-]{hart}{hart}{\textsc{Risc-V} hardware thread}
+\newacronym{hart}{hart}{\gls{riscv} hardware thread}
 \newacronym{pc}{PC}{program counter register}
 \newacronym{lr}{LR}{link register}
 \newacronym{sp}{SP}{stack pointer register}
