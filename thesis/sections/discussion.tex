@@ -315,7 +315,7 @@ In both cases, the selection of \gls{riscv} features and instruction to include 
 
 The work on this thesis was indeed influenced by the canaries the model was ultimately tested against and vice versa: the selection of vulnerabilities to test the model against was based on the features implemented in it.
 Despite the ciruclar character of these two steps, we find that this is not an issue.
-Steps \ref{itm:step-minrv} and \ref{itm:step-canaries} must be understood as the setup for a benchmark of a verification procedure proposed in this thesis which is given by steps \ref{itm:step-semantics} to \ref{itm:step-loop}.
+Steps \ref{itm:step-minrv} and \ref{itm:step-canaries} must be understood as a prototype of a verification procedure proposed in this thesis which is given by steps \ref{itm:step-semantics} to \ref{itm:step-loop}.
 Having the setup to test these steps in being derived via a methodology that is circular to some degree does not make the procedure itself circular.
 The opposite is the case:
 We find that the definition of information flow semantic, information flow control properties and the proof-refine-loop are all well founded and comprehensible, i.e. follow some intuition which could make one have more trust in the given system.
@@ -350,7 +350,7 @@ However, secondly, working with concrete values has two benefits which might bec
     \item Deterministic values lead to counter-examples being easier to interpret.
 \end{enumerate}
 
-With these two reasons at hand and the overall goal of this thesis to be a \enquote{benchmark} for a methodology to verify \glspl{isa}, we find that having used concrete values improves on the significance of our results.
+With these two reasons at hand and the overall goal of this thesis to implement a prototype for a methodology to verify \glspl{isa}, we find that having used concrete values improves on the significance of our results.
 
 \subsubsection{Per-Bit Information Flow Tracking}
 
