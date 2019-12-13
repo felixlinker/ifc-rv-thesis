@@ -17,6 +17,7 @@
 \usepackage{pifont}
 \usepackage[backend=biber,style=alphabetic]{biblatex}
 \usepackage{todonotes}
+\usepackage[toc,page]{appendix}
 \usetikzlibrary{positioning,calc,graphs,shapes,arrows,decorations.markings,backgrounds,chains}
 
 \setlength{\grammarindent}{8em}
@@ -176,5 +177,9 @@
 \input{sections/conclusion.tex}
 
 \printbibliography
+
+\begin{appendices}
+    \input{appendix/counter-examples.tex}
+\end{appendices}
 
 \end{document}
