@@ -154,8 +154,8 @@ The \gls{see} runs in machine-mode.
     \label{fig:rv-priv-lvls}
 \end{figure}
 
+\todo{Regarding footnote: But will it?}
 To keep things simple, the focus of this thesis lies on secure embedded systems\footnote{%
-    % TODO: But will it?
     This will be justified in more detail in section \ref{sec:minrv8} where we introduce the architecture that will be verified as part of this thesis.
 }.
 This means that the architecture to be worked with supports two modes: user- and machine-mode.
@@ -270,7 +270,7 @@ Nested interrupts are only supported between privilege modes.
 On a trap to handle an interrupt in mode $ x $, interrupts are disabled for this mode and the value of the interrupt-enable bit is \enquote{stacked onto} a prior-interrupt-enable bit $x\text{PIE} $, i.e. $ x\text{PIE} := x\text{IE} $ and $ x\text{IE} := 0 $.
 Additionally, there is a prior-privilege bit $ x\text{PP} $ that stores the privilege mode before the trap was taken.
 
-% TODO: Maybe exactly one instruction? How does alignment play into this?
+\todo{Maybe exactly one instruction? How does alignment play into this?}
 Note that due to the small offset between vectored interrupt jump destinations, the instructions located there can't perform much more than jumping to the \textit{real} trap handler.
 Furthermore, as exceptions can't be vectored, any differentiation between those must be performed by software.
 
@@ -372,7 +372,7 @@ The only exception to this are other interrupts which are handled before any exc
 RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
 If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
 
-% TODO: Mention what I didn't mention; e.g. specific parts of mstatus
+\todo{Mention what I didn't mention; e.g. specific parts of mstatus}
 
 \paragraph{Memory Attributes}
 \label{sec:memory-attrs}
@@ -387,13 +387,13 @@ If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses ar
 Secondly, there is the MXR field that allows to read executable memory regions.
 If MXR is not set, attempting to read from a memory region marked as executable will fail.
 If MXR is set, such reads can succeed if said region is also marked as readable.
-% TODO: is page-based virtual memory given?
+\todo{is page-based virtual memory given?}
 MXR is only applicable though, if page-based virtual memory is in place.
 
 The last register we will introduce is the \gls{mscratch} register which can be used by machine-mode to be read from and written to for preserving any value the machine-mode would like to see preserved.
 The intended use-case for this register by the specification is that \textcquote{RiscVISAP}{it is used to hold a pointer to a machine-mode \gls{hart}-local context space and swapped with a user register upon entry to a \textins{machine}-mode trap handler}.
 
-% TODO: Introduce pma- and pmpcfg
+\todo{Introduce pma- and pmpcfg}
 
 \paragraph{Other Mechanisms}
 \label{sec:other-mechs}
@@ -448,9 +448,9 @@ For the same reasons given in the paragraph about reset, we will assume that \gl
 On jump to the \gls{nmi} handler address, \gls{mepc} is written with the next address to be read and executed and \gls{mcause} is written with information about the cause of the \gls{nmi}.
 Other \glspl{csr} are left untouched.
 
-% TODO: Summarize
+\todo{Summarize}
 
-% TODO: Add goal of the architecture and in particular, checking it
+\todo{Add goal of the architecture and in particular, checking it}
 
 \subsection{The MINRV8 Architecture}
 \label{sec:minrv8}
@@ -495,9 +495,9 @@ Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits comprising two sta
 
 The \gls{pmacfg} register defines cacheability of the two memory regions.
 Each memory region can either be set as uncacheable, write-back-cacheable, write-through-cacheable or write-protected-cacheable.
-% TODO: Introduce intel architecture
-% TODO: Is it really the x86 architecture?
-% TODO: Introduce caching in detail
+\todo{Introduce intel architecture}
+\todo{Is it really the x86 architecture?}
+\todo{Introduce caching in detail}
 These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the System Programming Guide in the Software Developer's Manual.
 This manual describes these methods of caching as follows:
 \begin{displaycquote}[p.11-7]{IntelSystemProgramming}
@@ -543,14 +543,14 @@ Someone experienced in the field of microcontrollers and processors might find M
 These points were left out or left unspecified deliberately.
 However, a good reasoning for this can not be given at this point.
 The development of the MINRV8 architecture was tightly coupled to its implementation in nuXmv which will presented in section \ref{sec:model-implementation}.
-% TODO: fix ref
+\todo{fix ref}
 In section \ref{sec:model-scope}, the scope of the MINRV8 architecture will be analyzed - both in terms of what it tries to achieve and what it actually is capable of representing, i.e. how close it is to real-life architectures.
 In this section, the aforementioned problems will also be reflected.
 
 \subsection{Implementation of MINRV8 in nuXmv}
 \label{sec:model-implementation}
 
-% TODO: better introduction, i.e. introduce the parts we will talk about and nuXmv in general (this might have already been done in the introduction then)
+\todo{better introduction, i.e. introduce the parts we will talk about and nuXmv in general (this might have already been done in the introduction then)}
 
 \subsubsection{Core Functionality}
 
@@ -585,7 +585,7 @@ When an instruction does not support some or all of the arguments to the instruc
 The variable \smv{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
 There is no input variable for an immediate value which might be needed by the \minrv{Loadi} instruction because otherwise, extra state space would be wasted.
-% TODO: is this understandable?
+\todo{is this understandable?}
 Instead, the content of the destination register in the case of a \minrv{Loadi} instruction being executed is not constrained.
 Thereby, the value written to the destination register by the \minrv{Loadi} instruction is encoded implicitly in the transition relation rather than in the state space.
 
@@ -635,7 +635,7 @@ Therefore - if full control over the transition relation is desired - it often i
     With this implementation, nuXmv fails to find a counter-example for the two \gls{ltl} properties.
 \end{example}
 
-% TODO: What is SMV?
+\todo{What is SMV?}
 In the implementation in SMV of the MINRV8 architecture, \smv{case}-expressions that always close with a default statement were used to ensure that transitions of variables are always fully constrained.
 
 In the following, the \enquote{formal idea} of the variable transitions of the model will be introduced.
@@ -685,7 +685,7 @@ The same is true for read privileges and \smv{regs} on a \minrv{Load}.
 
 \subsubsection{Caching}
 
-% TODO: mention that the cache is its own module accessible via \texttt{cache}
+\todo{mention that the cache is its own module accessible via \texttt{cache}}
 The cache spices up transitions of memory and registers and comprises three variables:
 \begin{itemize}
     \item \smv{addr : 0..3}

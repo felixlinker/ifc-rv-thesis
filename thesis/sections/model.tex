@@ -2,13 +2,13 @@
 
 \section{Information Flow Control}
 
-% TODO: Introduction
+\todo{Introduction}
 
 \subsection{Information Flow Semantics for Instructions}
 \label{sec:ifc-model}
 
-% TODO: reference to introduction of Ferraiuolo17 paper
-% TODO: compare removed parts to introduction
+\todo{reference to introduction of Ferraiuolo17 paper}
+\todo{compare removed parts to introduction}
 
 In order to apply these type system rules to instructions, the idea behind each rule will be investigated next to generate information flow semantics for instructions from those.
 An interpretation function $ \I $ is introduced that maps each instruction to its information flow semantics.
@@ -185,7 +185,7 @@ The magic function \mbox{csrLabel} that maps \gls{csr}-indices to the correspond
 \end{align*}
 
 Finally, the semantics of \minrv{Loadi} is coupled to the current execution context.
-% TODO: Reference to threat-model
+\todo{Reference to threat-model}
 Under the given threat-scenario, it is sensible to assume that constants loaded by machine-mode are always labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
 \begin{equation*}
     \I(\textsc{Loadi}) = c \mapsto \begin{cases}
@@ -194,7 +194,7 @@ Under the given threat-scenario, it is sensible to assume that constants loaded 
     \end{cases}
 \end{equation*}
 
-% TODO: enhance summary
+\todo{enhance summary}
 
 \paragraph{Summary}
 A final overview of all information flow semantics for instructions that have been introduced in this section can be found in figure \ref{fig:ifc-semantics}.
@@ -234,7 +234,7 @@ More on this in section \ref{sec:checking}.
     \label{fig:ifc-semantics}
 \end{figure}
 
-% TODO:
+\todo{rework}
 \subsection{Implementation of Information Flow Tracking}
 \label{sec:ifc-implementation}
 
@@ -303,8 +303,8 @@ Note, that $ \P \preceq \C $ and $ \T \preceq \U $ with $ \preceq $ again being 
 
 This means that labels of the lattice of security labels $ (\Sigma, \sqcup, \sqcap) $ can be tracked by tracking the confidentiality and integrity labels individually.
 Dealing with information flow labels in this way also is much more intuitive:
+\todo{rewrite this}
 \begin{itemize}
-    % TODO: rewrite this
     \item Two sources of information combined are considered to be confidential if \textit{any} of the sources is confidential itself.
     This is sensible as with some result of an operation at least partial information about its confidential source can be inferred if the other public source and the operation are known.
     \item Two sources of information combined are considered to be trustworthy if \textit{both} of the sources are trustworthy themselves.
@@ -353,7 +353,7 @@ For each variable in the model, an confidentiality or integrity tracking counter
 
 These variables transition under the same conditions as their base variable does, e.g. \smv{regs_conf} does a transition if and only if \smv{regs} transitions and \smv{regs_conf} will deduct its content from sources parallel the those of \smv{regs}.
 The values themselves change based on the current instruction and its information flow tracking semantics as described in section \ref{sec:ifc-model}.
-% TODO: explain why this is the case
+\todo{explain why this is the case}
 The only exception to this is the information flow tracking of the variable \smv{csrs} the labels of which do not change at all.
 
 In other words, the \lstinline[language=SMV,mathescape]{$\dots$_conf} and \lstinline[language=SMV,mathescape]{$\dots$_integrity} variables perfectly mirror the architecture implementation as described in section \ref{sec:model-implementation}.

@@ -17,7 +17,7 @@ Since only assumptions and no architectural refinements were introduced to the m
 These breaking points tried to mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
 The results to these tests will finally be presented in section \ref{sec:canaries}.
 
-% TODO: Motivation also was to test, whether these assumptions are too strong/model can actually capture weakpoints
+\todo{Motivation also was to test, whether these assumptions are too strong/model can actually capture weakpoints}
 
 \subsection{Assumptions}
 
@@ -48,7 +48,7 @@ The second constraint sets up caching correctly, i.e. if the cache is valid, it 
 \subsubsection{Property Assumptions}
 \label{sec:assumptions}
 
-% TODO: Pick up point of introduction, i.e. distinction between INIT and other assumptions by concepts
+\todo{Pick up point of introduction, i.e. distinction between INIT and other assumptions by concepts}
 
 \begin{table}
     \centering
@@ -421,7 +421,7 @@ Again, a mysterious confidential word appears in register three which must have 
 \subsection{Canaries}
 \label{sec:canaries}
 
-% TODO: Introduce Intel x86 architecture
+\todo{Introduce Intel x86 architecture}
 In this section, it will be presented how the model of the MINRV8 architecture was altered in order to implement real-world attacks to the Intel x86 architecture.
 By default, the MINRV8 architecture was not vulnerable to these attacks, however, making the architecture vulnerable will put the approach of this thesis to formally verify an instruction set architecture to a test.
 
@@ -710,7 +710,7 @@ We therefore make aforementioned assumptions to show that \textit{given} such me
 With both stack-pointer related assumptions, \smv{SP_BANK} and \smv{SP_SAFETY}, nuXmv manages to verify that the architecture does not violate integrity information flow properties.
 The same is true for the modification of the architecture where the stack-pointer is selected automatically by the architecture and the assumptions \smv{SP_BANK} and \smv{SP_SAFETY} are dropped.
 
-% TODO: Summary
+\todo{Summary}
 
 \begin{figure}
     \centering

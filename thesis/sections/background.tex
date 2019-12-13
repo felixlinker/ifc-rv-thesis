@@ -152,9 +152,9 @@ Any type is of kind $ l $.
 Furthermore, the type $ x \mapsto \tau $ is of kind $ \texttt{int} \rightarrow k $ where $ k $ is the kind of $ \tau $.
 However, when type-checking is performed, types of kind $ l $ are lifted to be of kind $ \texttt{int} \rightarrow l $ such that every type is a partial function from bit indices to information flow labels.
 
-% TODO: Move to end of the section
+\todo{Move to end of the section}
 % They evaluated their approach by successfully finding some known bugs in the Arm architecture.
-% TODO: evaluate their results more strongly and compare them to mine
+\todo{evaluate their results more strongly and compare them to mine}
 
 \begin{example}
     The following snippet shows the type annotation of parts of a register file definition in SecVerilogBL:
@@ -176,7 +176,7 @@ However, when type-checking is performed, types of kind $ l $ are lifted to be o
 
     The variables \lstinline{read} and \lstinline{reg_ns} illustrate the purpose of lifting types to higher kinds.
     Both types \lstinline{world(ns)} and \lstinline{PT} are of kind $ l $, yet they are used to annotate variables that store more than one bit.
-    % TODO: This is not explicitly mentioned; the definition only allows lifting of l not arbitrary kinds k
+    \todo{This is not explicitly mentioned; the definition only allows lifting of l not arbitrary kinds k}
     Because \lstinline{read} is a register with 32 bits, \lstinline{world(ns)} is lifted to \lstinline{i -> world(ns)}, i.e. each element of \lstinline{read} is of the dependent type \lstinline{world(ns)}, and since \lstinline{reg_ns} is an array of 1024 registers of width 1, \lstinline{PT} is lifted to \lstinline{i -> j -> PT}, i.e. each array element is of type \lstinline{j -> PT}, i.e. each array element's bits are of type \lstinline{PT}.
 
     In this example, the variable \lstinline{ns} refers to the \textit{security state} of the ARM TrustZone architecture.
@@ -221,7 +221,7 @@ An overview of some typing rules of \cite{Ferraiuolo17} can be found in figure \
     It will turn out that only these typing rules are relevant in context of this thesis.
 }.
 The most simple type system rule probably is T-Const which types constant expressions $ n $.
-% TODO: reflect on why it is sensible to assume that constants are trusted in their scenario but not in ours
+\todo{reflect on why it is sensible to assume that constants are trusted in their scenario but not in ours}
 These are always of type $ \bot $, i.e. \PT, and of the corresponding width $ w $.
 The other type system rules share a pattern.
 They assume one or two expressions ($ e $ or $ e_1 $ and $ e_2 $) to be typed in $ \Gamma; \W; \Theta $ and ensure that their corresponding types ($ \tau $ or $ \tau_1 $ and $ \tau_2 $) are of the right kind in $ \Theta $.
@@ -321,7 +321,7 @@ To achieve this, it must be tackled how such an information flow policy as propo
     \item the labels can be tracked throughout the architecture by a model checker, and
     \item the policy can be controlled by the model checker.
 \end{enumerate*}, i.e. how can the two concepts of information flow tracking and control be implemented using a model checker?
-% TODO: Do I answer above questions?
+\todo{Do I answer above questions?}
 
 \subsection{RISC-Architectures}
 \label{sec:riscs}
@@ -420,7 +420,7 @@ RISC-V's architectural specification is divided into two volumes: volume specifi
 The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
 Such groups include for example machine- and supervisor-level \glspl{isa} and the description of a platform level interrupt controller.
 
-% TODO: Add motivation/goals of RISC-V
+\todo{Add motivation/goals of RISC-V}
 
 This thesis works with version 2.2 of volume 1 \cite{RiscVISA} and version 1.1 of volume 2 \cite{RiscVISAP}.
 RISC-V understands itself as a highly customizable architecture.
@@ -571,8 +571,8 @@ Addresses will be treated as physical ones.
 \subsubsection{Threat Model}
 \label{sec:threat-model}
 
-% TODO: Es ist anzunehmen, dass information flow zwischen den modes stattfindet; verifiziere nicht, ob das passiert, sondern wie man das verhindern könnte
-% TODO: privelege escalation vulnerabilities
+\todo{Es ist anzunehmen, dass information flow zwischen den modes stattfindet; verifiziere nicht, ob das passiert, sondern wie man das verhindern könnte}
+\todo{privelege escalation vulnerabilities}
 
 Now that it has been ruled out to include sub-architectural hardware mechanisms or virtual memory in the model targeted for verification, the question still is open what \textit{will} be part of the model.
 This includes the question of the threat model of the higher level properties to be verified.
@@ -614,7 +614,7 @@ Even if it could be assumed that the hardware your computer is running on accura
     Without going into details on this research, the approach of this thesis still is an important addition to this research as it is more general, i.e. implementation independent whereas hardware verification by its very nature is implementation dependent.
 }.
 
-% TODO:
+\todo{rework}
 In this threat model, timing channels are excluded.
 
 \subsection{Model Checking}
@@ -784,14 +784,14 @@ Furthermore, there are:
 Labels have already been introduced informally along with snippet \ref{snpt:spin-exm}.
 To express properties about a model, certain types of labels can be used to give semantics to process state.
 For example, you can label a certain part of process code as and end-state that might look like an idling-state to SPIN by default.
-% TODO: introduce deadlocks
+\todo{introduce deadlocks}
 Idling- and end-states are important to SPIN when it's checking for deadlock-freeness of systems.
 By default, if all processes are in an idling-state and wait for some kind of signal, this state is considered to be a deadlock.
 However, in some situations it might be perfectly fine for some of the processes to idle in a specific state which should not contribute towards deadlocks.
 Labeling parts of code as end-state contributes towards this.
 
 Never claims are processes themselves.
-% TODO: introduce LTL
+\todo{introduce LTL}
 They run like any other process but must not terminate otherwise they're regarded as failure.
 This is the most complex way to express properties and in fact falls together with writing \gls{ltl} properties about a model.
 Therefore SPIN also allows to express such never properties in \gls{ltl} directly via their command line interface.
@@ -1084,7 +1084,7 @@ Invariants specify that something (i.e. the respective next-expression) must be 
     \caption{nuXmv modules illustrated}
 \end{figure}
 
-% TODO: Reference whole figure
+\todo{Reference whole figure}
 
 On the other hand, \gls{ltl} is a temporal logic and as such supports the specification of properties over time.
 Both, \gls{ltl} and \gls{ctl}, will be introduced semi-formally here as presented in the \citetitle{nuXmv} \cite{nuXmv}.
@@ -1094,7 +1094,7 @@ The most simple form of an \gls{ltl} formula again is a next-expression \smv{p}.
 $ T $ models \smv{p} in \gls{ltl} if \smv{p} is true in $ t_1 $.
 Furthermore, there are five main temporal operators.
 \gls{ltl} formulas are defined syntactically and semantically in the usual, recursive way:
-% TODO: truly inductive definition
+\todo{truly inductive definition}
 \begin{description}
     \item[Next] \lstinline[language=smv,mathescape=true]{$ \varphi := $ X p}: $ T $ models $ \varphi $ if \smv{p} is true in $ t_2 $.
     \item[Globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ G p}: $ T $ models $ \varphi $ if \smv{p} is true for \textit{all} $ t_i $, $ 1 \leq i $.
@@ -1111,7 +1111,7 @@ Additionally, there are analogous operators for the past.
 \smv{Y p} and \smv{Z p} are the past-version of \smv{X} with the distinction that \smv{Y} is false at $ t_1 $ and \smv{Z} is true at $ t_1 $.
 The \enquote{Historically} operator \smv{H p} is the counterpart to \smv{G} and the \enquote{Once} operator \smv{O p} is the counterpart to \smv{F}.
 
-% TODO: Grafik für LTL
+\todo{Grafik für LTL}
 
 \gls{ctl} formulas share much of the idea of \gls{ltl} formulas but they differ in the interpretations and models for formulas.
 Whereas in \gls{ltl} an interpretation of a formula is a infinitely long execution path of a transition system, in \gls{ctl} an interpretation of a formula is a transition system itself or more specifically: the unwinded transition relation of a transition system as a tree (hence the name computation \textit{tree} logic).
@@ -1120,7 +1120,7 @@ Again, the most simple form of a \gls{ctl} formula is a next-expression \smv{p}.
 To illustrate the models-relation for \gls{ctl}, consider the example tree depicted in figure \ref{fig:ctl-int}.
 Such a tree $ T $ models \smv{p} is \smv{p} is true in state $ x_0 $.
 
-% TODO: truly inductive definition
+\todo{truly inductive definition}
 The temporal operators supported by \gls{ctl} are the following:
 \begin{description}
     \item[Exists globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EG p}: $ T $ models $ \varphi $ if there exists an infinite path $ (x_0, \dots) $ in $ T $ such that \smv{p} is true for all $ x_i $ on the path.
@@ -1205,7 +1205,7 @@ The idea for the implementation is straight-forward:
 
 For reasons that at this point can not be discussed meaningfully but will become clear in section \ref{sec:checking}, it was furthermore decided to express the information flow control of the architecture in \gls{ltl}.
 nuXmv supports a plethora of techniques to check specifications, e.g. the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
-% TODO: \gls{ifc}
+\todo{gls ifc}
 In the practical work for this thesis, after the decision to implement the information flow control in \gls{ltl} has been made, a couple of these techniques which apply to \gls{ltl}-checking were tested out.
 In this informal evaluation it was found that the K-Liveness algorithm proposed in \cite{Claessen12} delivered best results and terminated quickly whenever the model met the specification.
 Whenever this was not the case, i.e. the specification was not met by the model which was usually indicated by a long runtime of the K-Liveness algorithm, a \gls{bmc} approach computed counter-examples very efficiently.
