@@ -42,7 +42,7 @@ The first is rather simple and is depicted in the following snippet:
 ]
     INIT MIE = 0b_1 -> MPP = 0b_0;
 \end{lstlisting}
-This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the RISC-V specification (cf. section \ref{sec:rv-exn} and figure \ref{fig:interrupt-handling}).
+This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the RISC-V specification (cf. section \ref{sec:rv-priv-arch} and figure \ref{fig:interrupt-handling}).
 No other \smv{INIT} constraints are required to set up the initial state of the model correctly.
 The second constraint sets up caching correctly, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
