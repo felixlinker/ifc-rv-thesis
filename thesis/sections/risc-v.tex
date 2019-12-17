@@ -233,7 +233,6 @@ These interrupt-types are associated with indices in the range from $ 0_{10} $ t
     These indices' two least significant bits are $ 10_2 $ which corresponds to the encoding of hypervisor-mode.
     When hypervisor-mode was removed from the specification, these bits were marked as reserved.
 }.
-An overview of all interrupt codes can be found in table \ref{tbl:interrupt-exception-codes}.
 Interrupts can be set pending individually in the \gls{mip} register.
 An interrupt is set pending if the bit of the \gls{mip} corresponding to the interrupts index is set to 1.
 
@@ -277,52 +276,6 @@ Secondly, there is a prior-privilege bit $ x\text{PP} $ that stores the privileg
 
 Note that due to the small offset between vectored interrupt jump destinations, the instructions located there can't perform more than jumping to the \textit{real} trap handler.
 Furthermore, as exceptions can't be vectored, any differentiation between those must be performed by software.
-
-\begin{table}
-    \centering
-    \begin{tabular}{| r | r | l |}
-        \hline
-        Interrupt & Exception Code & Description \\
-        \hline
-        1 & 0 & User software interrupt \\
-        1 & 1 & Supervisor software interrupt \\
-        1 & 2 & \textit{Reserved} \\
-        1 & 3 & Machine software interrupt \\
-        \hline
-        1 & 4 & User timer interrupt \\
-        1 & 5 & Supervisor timer interrupt \\
-        1 & 6 & \textit{Reserved} \\
-        1 & 7 & Machine timer interrupt \\
-        \hline
-        1 & 8 & User external interrupt \\
-        1 & 9 & Supervisor external interrupt \\
-        1 & 10 & \textit{Reserved} \\
-        1 & 11 & Machine external interrupt \\
-        \hline
-        1 & $ \geq $ 12 & \textit{Reserved} \\
-        \hline
-        0 & 0 & Instruction address misaligned \\
-        0 & 1 & Instruction access fault \\
-        0 & 2 & Illegal instruction \\
-        0 & 3 & Breakpoint \\
-        0 & 4 & Load address misaligned \\
-        0 & 5 & Load access fault \\
-        0 & 6 & Store \textelp{} address misaligned \\
-        0 & 7 & Store \textelp{} access fault \\
-        0 & 8 & Environment call from U-mode \\
-        0 & 9 & Environment call from S-mode \\
-        0 & 10 & \textit{Reserved} \\
-        0 & 11 & Environment call from M-mode \\
-        0 & 12 & Instruction page fault \\
-        0 & 13 & Load page fault \\
-        0 & 14 & \textit{Reserved} \\
-        0 & 15 & Store \textelp{} page fault \\
-        0 & $ \geq $ 16 & \textit{Reserved} \\
-        \hline
-    \end{tabular}
-    \caption{Interrupt and exception codes \cite{RiscVISAP}}
-    \label{tbl:interrupt-exception-codes}
-\end{table}
 
 \paragraph{Summary}
 You can find an overview over all registers that are involved in trap handling in table \ref{tbl:trap-csrs}.
