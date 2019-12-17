@@ -14,7 +14,8 @@ $# Available extensions
 $default(
     SP_AUTOBANK=False,
     CACHE_VULN=False,
-    SP_ENABLE=False
+    SP_ENABLE=False,
+    MPRV=False,
 )
 
 $# Available assumptions
@@ -69,6 +70,9 @@ $macro(read_addr, source)
 $endmacro
 $macro(can_load, source)
     (priv
+    $if(MPRV)
+        & MPP = 0b_1
+    $endif
         ? ($source < $REGION0_SIZE
             ? (!pmpcfg0.locked | pmpcfg0.read)
             : (!pmpcfg1.locked | pmpcfg1.read)
@@ -80,6 +84,9 @@ $macro(can_load, source)
 $endmacro
 $macro(can_write, target)
     (priv
+    $if(MPRV)
+        & MPP = 0b_1
+    $endif
         ? ($target < $REGION0_SIZE
             ? (!pmpcfg0.locked | pmpcfg0.write)
             : (!pmpcfg1.locked | pmpcfg1.write)
