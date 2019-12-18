@@ -547,6 +547,7 @@ Additionally, aspects of the functional correctness of an implementation towards
 In \cite{Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher level properties in \cite{Zhang15, Beatty94, Berezin98, Trippel19} or against their actual specifications in form of an \glspl{isa} in \cite{Burch94, Reid16, RISCV-formal}.
 
 \subsubsection{Virtual Memory}
+\label{sec:virtual-memory}
 
 Virtual memory is usually managed by \glspl{os} and mostly serves two purposes: \textcquote[p.428]{Patterson13}{to allow efficient and safe sharing of memory along multiple programs \textelp{} and to remove the programming burdens of small, limited amount of main memory.}
 Virtual memory is a system that replaces physical memory addresses with virtual ones.
@@ -989,6 +990,7 @@ In case of a property failing to be verified, no counterexamples are given but S
 For SPACER or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
 
 \subsubsection{nuXmv}
+\label{sec:nuxmv}
 
 nuXmv \cite{Cavada14} is a symbolic model checker that accepts the SMV input language and is able to model check invariants, \gls{ltl} and \gls{ctl} formulas.
 Symbolic model checkers have been introduced in \cite{Burch92} and encode the state-space of the system to model check in \glspl{bdd} which work analogously to binary decision trees with the major difference that \glspl{bdd} are not trees but directed, acyclic graphs.

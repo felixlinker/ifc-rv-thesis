@@ -3,23 +3,36 @@
 \section{Architecture}
 \label{sec:arch}
 
+In this section, the architecture to be worked with will be developed and implemented.
+It has been mentioned multiple times that the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
+In order to derive a simpler version of the RISC-V architecture, which will be called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
+This introduction will be concluded by a summary that mentions which parts will be adopted and which parts will be left out in the development of the MINRV8 architecture.
+
+Consequently, in section \ref{sec:minrv8}, the MINRV8 architecture will be introduced.
+The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv which is presented in section \ref{sec:model-implementation}.
+Hence, certain design decisions of both the model and the implementation will only make sense once both have been introduced.
+
+To conclude, section \ref{sec:arch-summary} will give a summary of what has been achieved here.
+
 \subsection{An Introduction to RISC-V}
+\label{sec:risc-v}
 
 The core idea of the RISC-V architecture has already been introduced in section \ref{sec:bg-riscv}.
 The base integer instruction set comprises instruction of four categories: integer and bit-vector arithmetic, memory operations, control transfer, and platform management.
 The instructions that are available to the RISC-V architecture specifically, will be introduced in section \ref{sec:rv-base-int-isa} subsequently.
 
-After that the privileged architecture of RISC-V will be introduced which is specified in \citetitle{RiscVISAP} \cite{RiscVISAP} and can be divided into three parts:
+Afterwards, the privileged architecture of RISC-V will be introduced which can be divided into three parts:
 The specification of\dots
 \begin{enumerate}
     \item Three levels of privilege
-    \item Exceptions, traps and interrupts
     \item Memory attributes
+    \item Exceptions, traps and interrupts
 \end{enumerate}
 
-In section \ref{sec:rv-priv-arch} and each of these parts will be introduced whilst the exceptions, traps and interrupts will be put into focus.
+In section \ref{sec:rv-priv-arch} each of these parts will be introduced whilst the exceptions, traps and interrupts will be put into focus.
 
 The overall goal of this section is to give a feel for how the RISC-V \gls{isa} works and how a more minimal, RISC-V inspired \gls{isa} could be distilled from it.
+A selection of features to be included in such a minimal architecture will be discussed in section \ref{sec:risc-v-restriction}.
 
 \subsubsection{The Base Integer Instruction Set}
 \label{sec:rv-base-int-isa}
@@ -145,7 +158,7 @@ The \gls{see} runs in machine-mode.
 
 \todo{Regarding footnote: But will it?}
 To keep things simple, the focus of this thesis lies on secure embedded systems\footnote{%
-    This will be justified in more detail in section \ref{sec:minrv8} where we introduce the architecture that will be verified as part of this thesis.
+    This will be justified in more detail in section \ref{sec:risc-v-selection} where we introduce the architecture that will be verified as part of this thesis.
 }.
 This means that the architecture to be worked with supports two modes: user- and machine-mode.
 Machine-, supervisor- and user-mode do not simply form a linear order of privilege attributes of code execution.
@@ -156,20 +169,39 @@ Supervisor-mode will be handled wherever it fits in the bigger picture but not o
 \paragraph{Memory Attributes}
 \label{sec:memory-attrs}
 
-\todo{Not anymore; restructure paragraph}
-In the previous paragraph, it was mentioned that \gls{mstatus} contains some bits that are not directly relevant to trap handling.
-In this section, these bits will be introduced alongside another \gls{csr} that is related to trap handling.
+RISC-V offers two ways to configure physical memory: \glspl{pma} and \gls{pmp}.
 
-These two remaining fields of \gls{mstatus} deal with memory privilege translation for machine-mode.
-Firstly, there is the MPRV bit which can translate memory access privilege.
+\glspl{pma} state \textcquote[p.40]{RiscVISAP}{inherent properties of the underlying hardware and rarely change during system operation}.
+Examples for such \enquote{inherent properties} are supported access types, whether a region of memory supports memory access ordering or and cacheability.
+Depending on the implementation, these attributes might be hardwired for certain regions (or all) or modifiable by software.
+In general, \glspl{pma} constrain possible interactions with physical memory.
+\glspl{pma} tell software what kind of behavior they can expect from a physical region of memory.
+
+The \gls{pmp} setup serves as another layer of \textit{protection} for regions of memory.
+This makes it similar to virtual memory.
+However, \gls{pmp} offers more coarse grained protection in comparison to virtual memory.
+\gls{pmp} assigns read, write, or execute permissions per region of memory per privilege mode.
+These permissions are setup in the \gls{pmpcfg} registers of which there are four.
+Each of these comprises four \gls{pmp} entries applying to one region of memory, i.e. there can be at most 16 regions of memory.
+The region of memory such a \gls{pmp} entry applies to is specified by a corresponding \gls{pmpaddr} register - consequently, there are 16 \gls{pmpaddr} registers.
+The details of these register match specific physical addresses will be left out here.
+The permissions specified about a region of memory by a \gls{pmp} entry are enforced on user- but not machine-mode by default.
+
+One exception to this is the \textit{locking} of \gls{pmp} entries.
+If a \gls{pmp} entry is locked, not only can its contents not be changed anymore\footnote{%
+    System resets may reset an entry - unlocking it.
+    However, manufacturers still can decide to hardwire a \gls{pmp} entry, e.g. to make it read-only.
+    This, however could also be realized via \glspl{pma}.
+}, the permissions setup in the entry also are applied to machine-mode.
+
+Another way of enforcing \gls{pmp} checks onto machine-mode is to set the MPRV bit in the \gls{mstatus} register.
 This bit is only available if at least two privilege modes are supported otherwise it is hardwired to zero.
 If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that has was preempted by taking the trap.
-Secondly, there is the MXR field that allows to read executable memory regions.
+
+Additionally, the \gls{mstatus} register supports the MXR field that allows to read executable memory regions.
 If MXR is not set, attempting to read from a memory region marked as executable will fail.
 If MXR is set, such reads can succeed if said region is also marked as readable.
 MXR is only applicable though, if page-based virtual memory is in place.
-
-\todo{Introduce pma- and pmpcfg}
 
 \paragraph{Exceptions, traps and interrupts}
 
@@ -256,7 +288,7 @@ After the mode to be targeted by the trap has been determined, it must be checke
 Exceptions can't be disabled and therefore will always be taken - as a consequence the following checks will be omitted for exceptions.
 Interrupts on the other hand can be dis- or enabled individually in the \gls{mie} register.
 Analogously to the \gls{mip} register, an interrupt is enabled if the bit corresponding to the interrupt's index is set to 1.
-Additionally, there is the \gls{mstatus} register which can globally dis- or enable interrupt handling for a specific mode via its $ x\text{IE} $ bits.
+Additionally, the \gls{mstatus} register can globally dis- or enable interrupt handling for a specific mode via its $ x\text{IE} $ bits.
 These $ x\text{IE} $ fields, however, are only taken into account if the \gls{hart} operates at an equal or higher privilege mode than targeted, i.e. interrupts are always enabled globally it is targeting a mode of higher privilege than the mode of current operation.
 Finally, an interrupt will be taken if interrupts are globally enabled \textit{and} the interrupt itself is enabled in the \gls{mie} register.
 
@@ -278,7 +310,20 @@ Note that due to the small offset between vectored interrupt jump destinations, 
 Furthermore, as exceptions can't be vectored, any differentiation between those must be performed by software.
 
 \paragraph{Summary}
-You can find an overview over all registers that are involved in trap handling in table \ref{tbl:trap-csrs}.
+In the previous paragraphs, the basic ideas of the three levels of privilege, memory attributes and protection and interrupt and exception handling specified by the privileged architecture of RISC-V \cite{RiscVISAP} were introduced.
+The specification includes even more mechanisms then these, e.g. it was touched that there are timer \glspl{csr} but there is much more.
+However, it was decided to not go into more detail on these as these mechanisms \begin{enumerate*}[label=\alph*)]
+    \item often do not introduce new concepts to the architecture as a whole but build up on already introduced ones\footnote{%
+        A prominent exception to this is supervisor-mode adding support for virtualization.
+    } and
+    \item already exceed what will incorporated in the MINRV8 architecture.
+\end{enumerate*}
+
+To summarize:
+\glspl{pma} and \gls{pmp} entries make general properties of physical memory transparent to software allowing it to adopt to possible interactions with respective regions correctly.
+\gls{pmp} entries, however, can also be used for memory protection in addition to virtualization.
+
+An overview on all registers that are involved in trap handling can be found in table \ref{tbl:trap-csrs}.
 Those \glspl{csr} which are available to user-mode would also be available to supervisor-mode in this context.
 Registers written in italic font are not actual registers on their own but provide a restricted view on their respective machine-mode counterpart.
 
@@ -303,7 +348,7 @@ Registers written in italic font are not actual registers on their own but provi
     \label{tbl:trap-csrs}
 \end{table}
 
-To summarize the mechanisms that play into interrupt and exception handling, recall the four steps to interrupt and exception handling we introduced at the beginning of this section.
+Summarizing the mechanisms that play into interrupt and exception handling, recall the four steps to interrupt and exception handling we introduced at the beginning of this section.
 These can now be filled with more details:
 \begin{enumerate}
     \item If an interrupt or exception is pending, determine the privilege mode to take the trap by checking the targeted privilege mode and any delegation settings
@@ -329,27 +374,82 @@ The only exception to this are other interrupts which are handled before any exc
 RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
 If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
 
-\todo{Summary of levels of privilege and memory attributes}
+\subsubsection{Feature Selection}
+\label{sec:risc-v-selection}
 
-\subsubsection{Summary}
+From what what has been introduced of the RISC-V architecture, a selection of features to include in the MINRV8 architecture will now be made.
+The overall goal is to create an architecture that is simplified in comparison to the RISC-V \gls{isa} but still incorporates all types of features necessary to introduce a sufficient level of complexity allowing the MINRV8 to be compared to modern architectures.
 
-\todo{Mention that many parts where left out}
+The first decision to be made is what combination of privilege levels to model.
+In section \ref{sec:rv-priv-arch}, it has already been mentioned that in this thesis, the focus will be put on secure embedded systems, i.e. systems supporting user- and machine-mode but not supervisor-mode.
+The core features added by supervisor-mode are those of virtualization.
+Since we deemed memory virtualization as out of scope in this context (cf. sec. \ref{sec:virtual-memory}), we value simplicity over completeness of the model and rule out supervisor-mode.
 
-\todo{Summarize}
+Additionally, to keep the state space small, we decided to model an architecture where the word size is 8, i.e. one byte.
+There is no reason to believe that an increase in word size introduces fundamentally new security or information flow issues to an architecture so it was decided to value efficiency over completeness in this case.
+Since the state space grows exponentially in word size, choosing a smaller word size should significantly improve the performance of the model.
 
-\todo{Add goal of the architecture and in particular, checking it}
+From both parts of the RISC-V specification, the base integer instruction set and the privileged architecture, the MINRV8 architecture will include the very foundation of all categories introduced.
+An exception to this will be jumps and branches.
+
+Consequently, MINRV8 supports integer arithmetic, bitwise-logical instructions and bit-shifts, loads and stores, as well as instructions to read and write \glspl{csr} and to transition between privilege modes.
+
+As for memory attributes, we decided to implement caching mechanisms in the architecture.
+Therefore, \glspl{pma} will be given in form of cacheability settings but nothing more.
+The RISC-V specification is quite vague when it comes to other types of \glspl{pma}.
+It mentions them but does not formally specify their workings.
+We interpret this as \glspl{pma} applying more to specific implementations than RISC-V as a whole since each type of \glspl{pma} needs to be specified further when implemented.
+Therefore, it was decided to only include \glspl{pma} for which positive reasons can be given - applying only to caching \glspl{pma}.
+
+We adopt \gls{pmp} entries as well.
+There will be no configurable but fixed memory regions but each of these can be set readable, writable and locked freely.
+The decision towards fixed regions of memory was made during the prototyping phase of this thesis where it was found that dynamic memory regions significantly impacted the performance of the model.
+
+As for interrupts and exceptions, the MINRV8 architecture supports the call to machine-mode exception and external interrupts targeting machine-mode but only these.
+An implementation of more types of interrupts does not serve a clear purpose besides completeness of the model.
+Therefore, following the decision on supervisor-mode, simplicity was valued over completeness.
+Coming to the interrupt handling routine, it was decided to remove all optional parts from it, i.e. there is no interrupt delegation and there are no vectored interrupts.
+Furthermore, as all interrupts target machine mode, there is no need to check the target of an interrupt or exception initially.
+This leaves MINRV8 with the following, very simple interrupt/exception handling routine:
+\begin{enumerate}
+    \item If an interrupt is pending, check that interrupts are enabled globally and the specific interrupt is enabled as well
+    \item Take the trap
+    \item Return from trap handler
+\end{enumerate}
 
 \subsection{The MINRV8 Architecture}
 \label{sec:minrv8}
 
 The architecture that will be model checked in this thesis is a minimal, RISC-V-inspired 8-bit architecture and shall be named MINRV8 from now on.
 A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
+The reasoning behind the architecture and which features will be included was given in section \ref{sec:risc-v-selection}.
+In this section, the architecture itself will be introduced and briefly specified.
 
 MINRV8 supports 4 general purpose registers and has two privilege modes: machine- and user-mode.
 Besides this, it has 4-bytes of readable and writeable memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies all remaining addresses, i.e. 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with \minrv{And} and \minrv{Or}, a \minrv{Mov} instruction to move a word from one register to another, a comparison instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
 Machine words are generally interpreted as signed-words thus there won't be unsigned counterparts to integer arithmetic or the comparison instruction.
+
+With this list of instructions, all instructions of the base integer instruction set of the RISC-V \gls{isa} are either left out deliberately, can be emulated, or have been made redundant by other design decisions of the MINRV8 \gls{isa}.
+As for what has been left out it was already mentioned that jumps and branches will not be modelled.
+Since this removes the need for a \gls{pc}, this also removes the need to model the \gls{auipc} instruction that is supported by RISC-V.
+At the end of this section, an outlook for why jumps and branches were not modelled will be given.
+Additionally, there is the \gls{ebreak} instruction that transfers control to a debugging environment.
+It was decided to not include debugging in the MINRV8 architecture since, as already said, at its current state the level of complexity offered by the architecture is sufficient to make it comparable to other modern \gls{risc} architectures.
+Finally, there is the FENCE instruction that allows to order memory access.
+As the \glspl{pma} do not support memory ordering, this instruction was left out as well.
+
+For most computational instructions, RISC-V offers an immediate alternative that, instead of receiving two registers as arguments, receive one register and one immediate value from memory as arguments.
+These instructions can be emulated by first executing the \minrv{Loadi} instruction and then the respective non-immediate version of the instruction.
+Also, RISC-V supports the XOR, \gls{srl}, and \gls{csrrw} instructions that can both be emulated.
+XOR can be emulated by a combination of \minrv{Sub}\footnote{%
+    \minrv{Sub} can be used to implement the bitwise, logical not, i.e. for a bit vector $ x $ of length $ n $, the bitwise, logical not is given by $ 1^n - x $, where $ 1^n $ is the repeated concatenation of bit $ 1 $.
+}, \minrv{And}, and \minrv{Or}, \gls{srl} by \minrv{Sll} with a negative argument to shift the register by, and \gls{csrrw} by \minrv{Csrrs} and \minrv{Csrrc} executed subsequently.
+
+Instructions that have been made redundant are all unsigned variants of computational instructions and load/store instructions of word sizes greater than bytes the latter of which has been made redundant with the decision to limit the word size of MINRV8 to one byte.
+
+All this gives strong assurance that the computational model of MINRV8 does not lack in any major part in comparison to RISC-V.
 
 \begin{table}
     \centering
@@ -376,15 +476,14 @@ Machine words are generally interpreted as signed-words thus there won't be unsi
     \label{tbl:min-arch-instrs}
 \end{table}
 
-Besides the general purpose storage options, MINRV8 also includes three \glspl{csr}: an \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration of some \glspl{pma} as described in section \ref{sec:memory-attrs}.
+Besides the general purpose storage options, MINRV8 also includes three \glspl{csr}: an \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration \glspl{pma} as described in section \ref{sec:risc-v-selection}.
 MINRV8 supports external interrupts as the only source of interrupts and an environment call to machine-mode as the only source of exceptions.
-Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits comprising two stacking bits for taking traps, a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts.
+Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits comprising two stacking bits for taking traps, i.e. MPP (machine-mode prior privilege) and MPIE (machine-mode prior interrupts enabled), a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts globally.
+By this combination of \glspl{csr}, it was only included from RISC-V what was necessary to implement the features presented in section \ref{sec:risc-v-selection}.
 
 The \gls{pmacfg} register defines cacheability of the two memory regions.
 Each memory region can either be set as uncacheable, write-back-cacheable, write-through-cacheable or write-protected-cacheable.
-\todo{Is it really the x86 architecture?}
-\todo{Introduce caching in detail}
-These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the System Programming Guide in the Software Developer's Manual.
+These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the \citetitle{IntelSystemProgramming} \cite{IntelSystemProgramming}.
 This manual describes these methods of caching as follows:
 \begin{displaycquote}[p.11-7]{IntelSystemProgramming}
     \begin{description}
@@ -403,7 +502,7 @@ This manual describes these methods of caching as follows:
     \end{description}
 \end{displaycquote}
 
-These paragraphs from the System Programming Guide are summarized in table \ref{tbl:cache-methods}.
+Cited paragraphs from the \citetitle{IntelSystemProgramming} are summarized in table \ref{tbl:cache-methods}.
 In this setting, it was decided to always fill the cache on write-hits for write-through-cacheable memory regions to make the caching methods as concise as possible although the manual leaves it open to implementations to also invalidate the cache.
 
 \begin{table}
@@ -419,29 +518,45 @@ In this setting, it was decided to always fill the cache on write-hits for write
         & Miss & \ding{53} & Fill & Fill & Fill \\
         \hline
     \end{tabular}
+
+    {\small \ding{53} = no action}
     \caption{Caching Methods}
     \label{tbl:cache-methods}
 \end{table}
 
 The \gls{pmpcfg} register allows to set read and write privileges per memory region and also allows to lock the settings of individual regions.
 
-Someone experienced in the field of microcontrollers and processors might find MINRV8 to lack some crucial features, such as jump and branch instructions and the specification of executable memory or an instruction fetch unit.
+Someone experienced in the field of microcontrollers and processors might find MINRV8 to lack the crucial features of jump and branch instructions and the specification of executable memory.
 These points were left out or left unspecified deliberately.
-However, a good reasoning for this can not be given at this point.
 The development of the MINRV8 architecture was tightly coupled to its implementation in nuXmv which will presented in section \ref{sec:model-implementation}.
-In section \ref{sec:discuss-arch}, the scope of the MINRV8 architecture will be analyzed - both in terms of what it tries to achieve and what it actually is capable of representing, i.e. how close it is to real-life architectures.
-In this section, the aforementioned problems will also be reflected.
+In the implementation, it was decided to model the stream of instructions to the architecture as input variables.
+This makes a model of jump and branch instructions or executable memory pointless since input variables can not be constrained.
+A more thorough discussion of this problem will be given in section \ref{sec:discuss-arch} where the scope of the MINRV8 architecture will be analyzed - both in terms of what it tries to achieve and what it actually is capable of representing, i.e. how close it is to real-life architectures.
 
 \subsection{Implementation of MINRV8 in nuXmv}
 \label{sec:model-implementation}
 
-\todo{better introduction, i.e. introduce the parts we will talk about and nuXmv in general (this might have already been done in the introduction then)}
+With the MINRV8 \gls{isa} being set up, this section will present its implementation in nuXmv.
+Cf. section \ref{sec:nuxmv} for an introduction to this tool.
+The implementation of MINRV8 was split into two modules:
+the first module implements the general mechanisms of the \gls{isa} which include everything but caching which is implemented in a separate module.
+In analogy to this, section \ref{sec:implementation-core} will describe how the main module was implemented and section \ref{sec:implementation-caching} explain the implementation of the module related to caching.
+In each of these section, the variables and their corresponding types will be stated declared as part of the modules after which the transition relation for each of the respective variables will be outlined.
+
+The goal of this section is not to give a full description of the whole implementation but to give an overall understanding of the core ideas behind it\footnote{%
+    If the full implementation is of interest, the repository containing it is accessible via: https://github.com/felixlinker/ifc-rv-thesis
+}.
+The implementation includes work-arounds for certain downsides of nuXmv, and generalizations to ease the implementation as a whole.
+All these aspects are not relevant for the goal of this thesis.
+It should, however, be noted that the macro processing engine pyexpander \cite{pyexpander} was used to remove redundancies.
+nuXmv is certainly not the most low-level language imaginable, e.g. SMT certainly comes with less features to aid programmers, however programming nuXmv still lead to many redundancies in the codebase.
+pyexpander in principle serves the same purpose as the C-preprocessor but is much more powerful and allowed to get rid of most aforementioned redundancies.
 
 \subsubsection{Core Functionality}
+\label{sec:implementation-core}
 
 \paragraph{Variables}
-In nuXmv, models of a piece of software, hardware or in this case a specification are described using variables with transition relations.
-The core of the model is implemented using four variables:
+The core of the MINRV8 architecture is modelled using four variables:
 \begin{itemize}
     \item \smv{priv : boolean}
     \item \smv{csrs : array 0..1 of unsigned word[8]}
@@ -466,12 +581,12 @@ Furthermore, the model knows five input variables:
 \end{itemize}
 
 \smv{op}, \smv{rd}, \smv{rs1} and \smv{rs2} represent a fully decoded instruction where \smv{op} is the opcode as a symbolic constant and the other arguments point to registers with per-instruction determined semantics.
-When an instruction does not support some or all of the arguments to the instruction, the values of these input variables are simply ignored.
+When an instruction does not support some or all of the arguments to the instruction, the values of these input variables simply are ignored.
 The variable \smv{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
 There is no input variable for an immediate value which might be needed by the \minrv{Loadi} instruction because otherwise, extra state space would be wasted.
-\todo{is this understandable?}
 Instead, the content of the destination register in the case of a \minrv{Loadi} instruction being executed is not constrained.
+This means that nuXmv can choose any value in the next state for register \smv{i} if it happens to be targeted by instruction \minrv{Loadi}.
 Thereby, the value written to the destination register by the \minrv{Loadi} instruction is encoded implicitly in the transition relation rather than in the state space.
 
 \paragraph{Transitions}
@@ -480,47 +595,6 @@ The system can make a transition if it satisfies all formulas given as constrain
 Therefore - if full control over the transition relation is desired - it often is not sufficient to simply constrain transitions by a group of implications\footnote{%
     The exception to this are groups of implications where the antecedents form a total case differentiation, i.e. where one antecedent is always true.
 }.
-
-\begin{example}
-    Consider this nuXmv model that implements an adder that can store its result in two registers:
-    \begin{lstlisting}[language=smv]
-        MODULE main
-            VAR
-                r1 : integer;
-                r2 :integer;
-            IVAR
-                ri : 1..2;
-                summand1 : integer;
-                summand2 : integer;
-
-            DEFINE sum := summand1 + summand2;
-
-            TRANS ri = 1 -> next(r1) = sum;
-            TRANS ri = 2 -> next(r2) = sum;
-
-            LTLSPEC G (ri = 1 -> r2 = next(r2));
-            LTLSPEC G (ri = 2 -> r1 = next(r1));
-    \end{lstlisting}
-
-    At first, this implementation seems to match the intuition of the adder.
-    It is declared imperatively that when the selector input variable \smv{ri} equals 1, \smv{r1} is updated and when it equals 2, \smv{r2} is updated.
-    However, attempting to prove one of the two properties in the model which both state that a register doesn't change if it isn't selected, results in nuXmv quickly giving a counter-example.
-    This is because the implications do not fully cover all possible transitions of the system.
-    On a transition where \smv{ri} does not equal 1 (or 2), the next value of \smv{r1} (or \smv{r2}) is not constrained, i.e. can change to any value.
-    Swapping out the implication \smv{->} with a iff \smv{<->} does not solve this as now only that whenever the next value chosen randomly for \smv{r1} or \smv{r2} happens to coincide with the sum of the input variables, \smv{ri} must be equal to the appropriate index.
-    In all other cases, nuXmv still can choose whatever next value it wants.
-
-    The only solution to this is covering all other cases and explicitly stating what should happen then as for example can be done by using an inline-if expression:
-    \begin{lstlisting}[language=smv]
-        TRANS next(r1) = (ri = 1 ? sum : r1);
-        TRANS next(r2) = (ri = 2 ? sum : r2);
-    \end{lstlisting}
-
-    Now, whenever \smv{ri} is not equal to the respective index, \smv{r1} (or \smv{r2}) will be stable.
-    With this implementation, nuXmv fails to find a counter-example for the two \gls{ltl} properties.
-\end{example}
-
-\todo{What is SMV?}
 In the implementation in SMV of the MINRV8 architecture, \smv{case}-expressions that always close with a default statement were used to ensure that transitions of variables are always fully constrained.
 
 In the following, the \enquote{formal idea} of the variable transitions of the model will be introduced.
@@ -532,14 +606,14 @@ Firstly, whenever there is an exception - be it an exception triggered by a pend
 Secondly, when the \minrv{Mret} instruction is executed, the \gls{hart} sets \smv{priv} to the value stored in \gls{mstatus}.MPP (cf. section \ref{sec:rv-priv-arch}).
 
 \gls{mstatus} changes under the same conditions which leads to the transitions of \smv{csrs}.
-On a trap, MPP and MPIE are written accordingly while MEIP and MIE are set to zero.
+On a trap, MPP (machine-mode prior privilege) and MPIE (machine-mode prior interrupts enabled) are written accordingly while MEIP (machine-mode external interrupt pending) and MIE (machine-mode interrupts enabled) are set to zero.
 MEIP can be set to zero although the trap might have been triggered by an \minrv{Ecall} instruction because interrupts have higher priority in RISC-V than synchronous exceptions.
 To understand why this is correct, there are two cases to consider.
-Either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state of the \gls{hart}.
+Either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state since MEIP was 0 to begin with.
 On return from machine-mode, i.e. execution of \minrv{Mret}, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
-An exception to the rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smv{m_externel_interrupt}.
+An exception to the rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smv{m_external_interrupt}.
 
-The \glspl{csr} can also be written by the \minrv{Csrrc} or \minrv{Csrrs} instructions.
+All \glspl{csr}, \gls{pmacfg}, \gls{pmpcfg}, and partially \gls{mstatus}, can also be written by the \minrv{Csrrc} or \minrv{Csrrs} instructions.
 In order to control read- and write-access to the \glspl{csr}, the model knows two constant arrays:
 \begin{lstlisting}[language=smv]
     __csrs_read_privs := [ 0h_0F, 0h_00 ];
@@ -569,43 +643,62 @@ No exception will be generated - the memory simply will not be written.
 The same is true for read privileges and \smv{regs} on a \minrv{Load}.
 
 \subsubsection{Caching}
+\label{sec:implementation-caching}
 
-\todo{mention that the cache is its own module accessible via \texttt{cache}}
-The cache spices up transitions of memory and registers and comprises three variables:
+The cache is implemented as its own module that gets instantiated by the main module and increases the complexity of the memory's and registers' transition relation.
+The module comprises three variables:
 \begin{itemize}
     \item \smv{addr : 0..3}
     \item \smv{valid : boolean}
     \item \smv{line : signed word[8]}
 \end{itemize}
 
-These variables transition dependent on the cache-configuration of the respective memory region in \gls{pmacfg}.
+These variables transition dependending on the cache-configuration of the respective memory region in \gls{pmacfg}.
 As already introduced in section \ref{sec:minrv8}, a memory region can be either set as uncacheable, write-back-cacheable or write-through-cacheable.
 If a memory region is set as uncacheable, the cache will ignore reads and writes to this region and not make any transition.
 
 \paragraph{Reads}
 If a memory region is set as cacheable\footnote{%
     In context of this thesis, \enquote{cacheable} means that a memory region is marked as write-back-cacheable, write-through-cacheable or write-protected-cacheable.
-}, reads will trigger a cache-fill.
-On a \minrv{Load} if the cache is invalid or currently holds the contents of a different memory address than targeted, \smv{addr} gets written with \smv{regs[rs1] mod 4}, \smv{valid} becomes \smv{TRUE} and \smv{line} is written with \smv{memory[addr]}\footnote{%
+}, reads will trigger a cache-fill:
+On a \minrv{Load} if the cache is invalid or currently holds the contents of a different memory address than targeted, \smv{addr} gets written with \smv{regs[rs1] mod 4}, i.e. the address to read from,, \smv{valid} becomes \smv{TRUE} and \smv{line} is written with \smv{memory[addr]}\footnote{%
     \smv{addr} here refers to the already updated value of that variable, i.e. \smv{regs[rs1] mod 4}.
-}.
-This process is independent of the current privilege level, e.g. user-mode can cause a cache-fill with memory content in regions that are unreadable to it.
+}, i.e. the value to read.
+This process is independent of the current privilege level, e.g. user-mode attempting to read from a memory address causes a cache-fill regardless of whether user-mode can access the region.
 Though, user-mode still won't be able to read the respective word as reads are privileged controlled.
 
 If, however, on a \minrv{Load} the cache already holds the targeted word, is valid and the current mode suffices to read the respective memory address, \smv{line} instead of \smv{memory[regs[rs1] mod 4]} will be written into register \smv{rd}.
 
 \paragraph{Writes}
 From the cache's perspective, writes to regions which are set cacheable work the same way, regardless of the specific region's cacheability settings.
-For such a region, on a \minrv{Store}, \smv{line} will be written with \smv{regs[rs2]}, \smv{address} with \smv{regs[rs1] mod 4} and \smv{valid} will become \smv{TRUE}.
+For such a region, on a \minrv{Store}, \smv{line} is written with \smv{regs[rs2]}, i.e. the word to write, \smv{address} with \smv{regs[rs1] mod 4}, i.e. the address to write to, and \smv{valid} becomes \smv{TRUE}.
 However, if the region is set to be write-through-cacheable, the write will also be reflected in memory whereas for a write-back-cacheable region the write will be reflected in cache only.
 
 This brings the need to persist writes to the cache in memory when cache lines are evicted.
-For example, consider the following program where it is assumed that \minrv{regs[1] mod 4 != regs[2] mod 4}:
+For example, consider the following program:
 \begin{lstlisting}[language=minrv8]
     Store 1, 0  # store regs[0] at memory[regs[1] mod 4]
     Load 0, 2   # read memory[regs[2] mod 4] to regs[0]
 \end{lstlisting}
 
-If the memory region targeted by \minrv{regs[1]} was set to be write-back-cacheable the write in the first line would not be persisted in memory but would happen on cache level only.
-If furthermore the memory region targeted by \minrv{regs[2]} was set to be cacheable as well, the read in the second line would overwrite changes of the first instruction which is why the cache content must first be written to memory.
+In general (i.e. when \minrv{regs[1] mod 4 != regs[2] mod 4}\footnote{%
+    If this is not assumed, the \minrv{Load} instruction would simply read the word that has just been written from cache.
+    The problematic instances are where the cache line is evicted because of the \minrv{Load} instruction.
+}), if the memory region targeted by \minrv{regs[1]} is set to be write-back-cacheable the write in the first line will not be persisted in memory but on cache level only.
+If furthermore the memory region targeted by \minrv{regs[2]} is set to be cacheable as well, the read in the second line will overwrite changes of the first instruction which is why the cache content must first be written to memory.
 Therefore, if the cache holds some non persisted values of write-back-cacheable memory regions and either the cache's target changes or the \gls{pmacfg} attributes change such that the cache is not write-back-cacheable anymore, the content of the cache will be written to memory as well.
+
+\subsection{Summary}
+\label{sec:arch-summary}
+
+In this section, the core of the RISC-V \gls{isa} was introduced from which the MINRV8 architecture was derived (cf. section \ref{sec:risc-v}).
+MINRV8 supports machine- and user-mode as privilege levels and 15 instructions to perform general computation, read/write memory, load immediate values from memory, transition between privilege modes and read/write \glspl{csr} (cf. table \ref{tbl:min-arch-instrs}).
+It was shown that this list of instructions is complete in comparison to RISC-V minus very few but negligible instructions that were not included and modulo instructions made redundant by design decisions or that can be emulated.
+Furthermore, MINRV8 supports caching of memory regions and \gls{pmp} entries for memory regions, i.e. read- and write-permissions configurable for user-mode and to some extent for machine-mode (cf. section \ref{sec:minrv8}).
+
+It was argued that MINRV8 provides a sufficient amount of complexity to make it comparable to modern \gls{risc} architectures besides not including a model of executable memory and not supporting jumps and branches.
+This downside will be discussed in section \ref{sec:discuss-arch} and is related to the decision to model the stream of instructions as input variables in nuXmv.
+
+Finally, it was presented how MINRV8 was implemented in nuXmv (cf. section \ref{sec:model-implementation}).
+The implementation was conducted by hand with aid of the preprocessor engine pyexpander \cite{pyexpander}.
+The file containing the model overall includes 630 lines of code where for the most part no line exceeded 80 characters.
