@@ -406,6 +406,7 @@ MODULE main
             op = LOADI: unsigned(resize(signed(word1(priv)), $XLEN));
             op = ADD: $extend_sup_conf("regs_conf[rs1] | regs_conf[rs2]");
             op = SUB: $extend_sup_conf("regs_conf[rs1] | regs_conf[rs2]");
+            op = AND | op = OR: regs_conf[rs1] | regs_conf[rs2];
             op = SLT: (0h_00 < regs_conf[rs1] | 0h_00 < regs_conf[rs2] ? 0h_01 : 0h_00);
             op = SLL: (
                 regs_conf[rs1] << $clamp("toint(regs[rs2])", 0, XLEN)
@@ -446,6 +447,7 @@ MODULE main
             op = LOADI: (priv ? 0h_FF : 0h_00);
             op = ADD: $extend_sup_integrity("regs_integrity[rs1] & regs_integrity[rs2]");
             op = SUB: $extend_sup_integrity("regs_integrity[rs1] & regs_integrity[rs2]");
+            op = AND | op = OR: regs_integrity[rs1] & regs_integrity[rs2];
             op = SLT: (0h_FF = (regs_integrity[rs1] & regs_integrity[rs2])
                 ? 0h_FF
                 : 0h_FE
