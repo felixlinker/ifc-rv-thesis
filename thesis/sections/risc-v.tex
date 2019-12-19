@@ -258,6 +258,8 @@ Such an alert will be given by a timer interrupt.
 Software interrupts can be set pending by software running on the same \gls{hart} with equal or higher privilege than the targeted privilege mode.
 Software interrupts have no predefined semantics and thus can be used by programmers or system designers in every imaginable way.
 
+\todo[inline]{replace m in registers and fields by x}
+
 Each of these categories of interrupts can target any privilege-mode resulting in a total of 6 interrupts available to the platform in our case (or 9 if supervisor-mode is supported).
 These interrupt-types are associated with indices in the range from $ 0_{10} $ to $ 11_{10} $, also called interrupt code\footnote{%
     The reader might have noticed that these are more indices than needed to encode all interrupts available - even if supervisor-mode is present.
@@ -308,6 +310,8 @@ Secondly, there is a prior-privilege bit $ x\text{PP} $ that stores the privileg
 
 Note that due to the small offset between vectored interrupt jump destinations, the instructions located there can't perform more than jumping to the \textit{real} trap handler.
 Furthermore, as exceptions can't be vectored, any differentiation between those must be performed by software.
+
+\todo[inline]{explain return procedure}
 
 \paragraph{Summary}
 In the previous paragraphs, the basic ideas of the three levels of privilege, memory attributes and protection and interrupt and exception handling specified by the privileged architecture of RISC-V \cite{RiscVISAP} were introduced.
