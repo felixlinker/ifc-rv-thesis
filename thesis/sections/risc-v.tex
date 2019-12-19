@@ -92,7 +92,12 @@ The basis of the privileged architecture is formed by the three levels of privil
 
 For example, the purpose of interrupts and exceptions is not only to handle error conditions that arise during runtime but also to communicate between these privilege layers.
 Also, memory attributes rely on these levels of privilege as they define which mode is eligible to do some operation on some region of memory.
-In this section, the aforementioned concepts will be introduced subsequently.
+
+This basis of the privileged architecture is controlled by the \gls{mstatus} register which is the core of machine-mode.
+This register controls both parts of the memory attributes and interrupt and exception handling.
+There are more \glspl{csr} in the RISC-V architecture that will be introduced where necessary, however, note that the \gls{mstatus} register is the most important of all \glspl{csr}.
+
+In this section, the aforementioned concepts will be introduced subsequently while respective parts of the \gls{mstatus} register will be discussed whenever applicable.
 
 \paragraph{Levels of Privilege}
 
@@ -156,7 +161,6 @@ The \gls{see} runs in machine-mode.
     \label{fig:rv-priv-lvls}
 \end{figure}
 
-\todo{Regarding footnote: But will it?}
 To keep things simple, the focus of this thesis lies on secure embedded systems\footnote{%
     This will be justified in more detail in section \ref{sec:risc-v-selection} where we introduce the architecture that will be verified as part of this thesis.
 }.
@@ -258,8 +262,6 @@ Such an alert will be given by a timer interrupt.
 Software interrupts can be set pending by software running on the same \gls{hart} with equal or higher privilege than the targeted privilege mode.
 Software interrupts have no predefined semantics and thus can be used by programmers or system designers in every imaginable way.
 
-\todo[inline]{replace m in registers and fields by x}
-
 Each of these categories of interrupts can target any privilege-mode resulting in a total of 6 interrupts available to the platform in our case (or 9 if supervisor-mode is supported).
 These interrupt-types are associated with indices in the range from $ 0_{10} $ to $ 11_{10} $, also called interrupt code\footnote{%
     The reader might have noticed that these are more indices than needed to encode all interrupts available - even if supervisor-mode is present.
@@ -275,43 +277,46 @@ By default, all interrupts and exceptions will be handled by machine-mode.
 However, interrupts and exceptions can be delegated to less privileged modes via the \gls{mideleg} and \gls{medeleg} register\footnote{%
     It would also be possible to delegate traps by using the \gls{mret} instruction and setting all corresponding \glspl{csr} accordingly.
     However, this would come with a higher latency as a couple of jumps would need to be performed first.
+
+    Furthermore, if supervisor-mode is supported, there are supervisor-mode equivalents to the \gls{medeleg} and \gls{mideleg} registers to further delegate interrupts and exceptions to user-mode.
 }.
 Delegation of interrupts can be disabled either by software writing the bits of \gls{mideleg} and \gls{medeleg} accordingly or by an implementation not supporting these registers altogether.
-Similar to \gls{mip} and the \gls{mie} register, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
+Similar to the \gls{mip} register, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
 Exceptions also have an exception code assigned and thus, fields of \gls{medeleg} correspond to these codes.
 An interrupt or exception can only be delegated to modes equally or higher privileged than the mode the interrupt or exception was targeting originally.
 For example, if an interrupt is targeting supervisor-mode it must be handled by machine-mode or can optionally be delegated to supervisor-mode but can not be handled by user-mode.
-If an interrupt is delegated to mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $\footnote{%
-In future, we will simply use $ x $ or other variables as placeholders for a mode-flag without specifically introducing the variable.
-}), the corresponding bit in $ x\text{ip} $ reads accordingly and $ x\text{ie} $ becomes writable.
-Otherwise both registers appear to be hardwired to zero.
+For each mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $, there are respective counterparts to machine-mode registers such as \gls{mip}.
+E.g., if an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and becomes writable.
+Otherwise it appears to be hardwired to zero.
+From now on, registers related to interrupt and exception handling will be introduced for some arbitrary mode $ x $.
 
 After the mode to be targeted by the trap has been determined, it must be checked whether the given interrupt is actually enabled.
 Exceptions can't be disabled and therefore will always be taken - as a consequence the following checks will be omitted for exceptions.
-Interrupts on the other hand can be dis- or enabled individually in the \gls{mie} register.
-Analogously to the \gls{mip} register, an interrupt is enabled if the bit corresponding to the interrupt's index is set to 1.
-Additionally, the \gls{mstatus} register can globally dis- or enable interrupt handling for a specific mode via its $ x\text{IE} $ bits.
-These $ x\text{IE} $ fields, however, are only taken into account if the \gls{hart} operates at an equal or higher privilege mode than targeted, i.e. interrupts are always enabled globally it is targeting a mode of higher privilege than the mode of current operation.
-Finally, an interrupt will be taken if interrupts are globally enabled \textit{and} the interrupt itself is enabled in the \gls{mie} register.
+Interrupts on the other hand can be dis- or enabled individually in the \gls{xie} register.
+Analogously to the \gls{xip} register, an interrupt is enabled if the bit corresponding to the interrupt's index is set to 1.
+Additionally, the \gls{xstatus} register can globally dis- or enable interrupt handling for a specific mode via its $x$IE bits.
+These $x$IE fields, however, are only taken into account if the \gls{hart} operates at an equal or higher privilege mode than targeted, i.e. interrupts are always enabled globally it is targeting a mode of higher privilege than the mode of current operation.
+Finally, an interrupt will be taken if interrupts are globally enabled \textit{and} the interrupt itself is enabled in the \gls{xie} register.
 
-If a pending interrupt is taken, the \gls{mepc}, \gls{mcause} and \gls{mtval} registers are written and the platform will jump to a base address held by the \gls{mtvec} register.
-\gls{mtvec} also provides a field that controls whether interrupts can be \textit{vectored}, i.e. for interrupts the \gls{pc} is not set to the base address for handling trap but to $ (\text{base} + 4 \times \text{cause}) $.
-\gls{mepc} holds the address of the original instruction stream that was preempted, i.e. either the address of the instruction that caused the exception or the instruction that was next to be executed as a external interrupt was taken.
-\gls{mcause} holds an identifier of the current interrupt or exception being handled by the trap.
+If a pending interrupt is taken, the \gls{xepc}, \gls{xcause}, \gls{xtval}, and \gls{xstatus} registers are written and the platform will jump to a base address held by the \gls{xtvec} register.
+\gls{xtvec} also provides a field that controls whether interrupts can be \textit{vectored}, i.e. for interrupts the \gls{pc} is not set to the base address for handling trap but to $ (\text{base} + 4 \times \text{cause}) $.
+\gls{xepc} holds the address of the original instruction stream that was preempted, i.e. either the address of the instruction that caused the exception or the instruction that was next to be executed as a external interrupt was taken.
+\gls{xcause} holds an identifier of the current interrupt or exception being handled by the trap.
 The most significant bit indicates whether an interrupt is currently being serviced and all other bits hold the exception or interrupt code.
-\gls{mtval} serves as a register to hold arguments for a trap handler.
+\gls{xtval} serves as a register to hold arguments for a trap handler.
 Technically, it holds \textcquote{RiscVISAP}{exception-specific information to assist software in handling the trap}.
-One example for such \enquote{exception-specific information} is that \gls{mtval} can contain the faulting bits of an instruction for an illegal instruction exception whereas \gls{mepc} would only point to the instruction in memory as a whole therefore not giving specific information about which part of the instruction caused the exception.
+One example for such \enquote{exception-specific information} is that \gls{xtval} can contain the faulting bits of an instruction for an illegal instruction exception whereas \gls{xepc} would only point to the instruction in memory as a whole therefore not giving specific information about which part of the instruction caused the exception.
 
-\gls{mstatus} also provides bits to \enquote{stack} certain values when handling exceptions or interrupts.
+\gls{xstatus} also provides bits to \enquote{stack} certain values when handling exceptions or interrupts.
 Firstly, nested interrupts are only supported between privilege modes.
-To implement this, on a trap to handle an interrupt in mode $ x $, interrupts are disabled for this mode and the value of the interrupt-enable bit is \enquote{stacked onto} a prior-interrupt-enable bit $x\text{PIE} $, i.e. $ x\text{PIE} := x\text{IE} $ and $ x\text{IE} := 0 $.
-Secondly, there is a prior-privilege bit $ x\text{PP} $ that stores the privilege mode before the trap was taken.
+To implement this, on a trap to handle an interrupt in mode $ x $, interrupts are disabled for this mode and the value of the interrupt-enable bit is \enquote{stacked onto} a prior-interrupt-enable bit $x$PIE, i.e. $ x\text{PIE} := x\text{IE} $ and $ x\text{IE} := 0 $.
+Secondly, there is a prior-privilege bit $x$PP that stores the privilege mode before the trap was taken.
 
 Note that due to the small offset between vectored interrupt jump destinations, the instructions located there can't perform more than jumping to the \textit{real} trap handler.
 Furthermore, as exceptions can't be vectored, any differentiation between those must be performed by software.
 
-\todo[inline]{explain return procedure}
+After the jump to the trap handler, at some point, the $x$RET instruction will be executed signalizing that the trap has been handled sufficiently.
+On execution of the $x$RET instruction, the architecture will reset the state according to the values stacked earlier, i.e. \gls{xstatus}.$x$IE is written with \gls{xstatus}.$x$PIE, the privilege mode is set to \gls{xstatus}.$x$PP and the \gls{pc} is set to \gls{xepc} and normal execution continues until the next interrupt or exception occurs.
 
 \paragraph{Summary}
 In the previous paragraphs, the basic ideas of the three levels of privilege, memory attributes and protection and interrupt and exception handling specified by the privileged architecture of RISC-V \cite{RiscVISAP} were introduced.
@@ -376,7 +381,7 @@ This is necessary as exceptions always are closely related to the current stream
 The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
 % Source: https://stackoverflow.com/a/56402079/7194995
 RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
-If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{mepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
+If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{xepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
 
 \subsubsection{Feature Selection}
 \label{sec:risc-v-selection}
