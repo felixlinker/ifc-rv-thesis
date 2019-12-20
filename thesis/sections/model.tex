@@ -303,7 +303,7 @@ More on this in section \ref{sec:checking}.
 \label{sec:ifc-implementation}
 
 In order to implement the information flow tracking semantics described in section \ref{sec:ifc-model} we define a binary representation of the lattice of security labels given by $ \Sigma $ and $ \sqcup $.
-We define $ \binSigma = \{ 00, 01, 10, 11 \}$ with a mapping $ \varphi : \Sigma \rightarrow \binSigma $:
+Let $ \binSigma = \{ 00, 01, 10, 11 \}$ with a mapping $ \varphi : \Sigma \rightarrow \binSigma $ such that:
 \begin{align*}
     \varphi(\PT) &= 01 \\
     \varphi(\PU) &= 00 \\
@@ -313,34 +313,12 @@ We define $ \binSigma = \{ 00, 01, 10, 11 \}$ with a mapping $ \varphi : \Sigma 
 
 \begin{figure}
     \centering
-    \begin{tikzpicture}
-        \begin{scope}
-            \node (pt) {\PT};
-            \node[above right=of pt] (ct) {\CT}
-                edge (pt);
-            \node[above left=of pt] (pu) {\PU}
-                edge (pt);
-            \node[above right=of pu] (cu) {\CU}
-                edge (ct)
-                edge (pu);
-        \end{scope}
-
-        \begin{scope}[xshift=0.7cm,draw=gray,text=gray]
-            \node (01) {$ 01 $};
-            \node[above right=of 01] (11) {$ 11 $}
-                edge (01);
-            \node[above left=of 01] (00) {$ 00 $}
-                edge (01);
-            \node[above right=of 00] (10) {$ 10 $}
-                edge (11)
-                edge (00);
-        \end{scope}
-    \end{tikzpicture}
+    \includegraphics[width=0.4\textwidth]{figures/binary-lattice.png}
     \caption{Security lattice for SecVerilogBL \cite{Ferraiuolo17} with binary equivalent}
     \label{fig:sec-lattice-bin}
 \end{figure}
 
-We define $ \sqcup $ on $ \binSigma $ such that $ \varphi $ is an isomorphism.
+Let $ \sqcup $ be defined on $ \binSigma $ such that $ \varphi $ is an isomorphism, e.g. $ 00 \; \sqcup \; 11 = 10 $.
 This mapping is depicted in figure \ref{fig:sec-lattice-bin}.
 Note that public and untrusted correspond to a 0 whereas confidential and trusted correspond to a 1.
 This abstraction can be formalized by examining two equivalence-relations or -classes on $ \Sigma $ and $ \binSigma $.
@@ -351,8 +329,8 @@ We define two partitionings $ \Sigma/_{\equiv_C} $ and $ \Sigma/_{\equiv_I} $ on
 \end{align*}
 
 We coin the names $ \P = [\PU]_{\equiv_C} $, $ \C = [\CU]_{\equiv_C} $, $ \U = [\PU]_{\equiv_I} $ and $ \T = [\PT]_{\equiv_I} $ and lift $ \sqcup $ to be defined on equivalence-classes in the usual fashion, i.e. $ [x] \sqcup [y] = [x \sqcup y] $.
-Note that this allows lifting of the $ \preceq $ order on $ \Sigma $ as well, i.e. $ \P \preceq \C $ and $ \T \preceq \U $ where $ \P \preceq \C :\Leftrightarrow \forall l_1 \in \P, l_1 \in \C: l_1 \preceq l_2 $.
-It is possible to define $ \sqcup $ solely by working with these equivalence classes:
+Note that this allows lifting of the $ \preceq $ order on $ \Sigma $ as well, i.e. $ \P \preceq \C $ and $ \T \preceq \U $ where $ \P \preceq \C $ iff there is no label $ l_1 \in \C $ such that for any $ l_2 in \P $ one has $ l l_1 \preceq l_2 $, and that all labels can be represented by the intersection of the respective equivalence classes,i.e. $ \{ \PU \} = \P \cap \U $.
+Furthermore, it is possible to define $ \sqcup $ solely by working with these equivalence classes:
 \begin{equation*}
     \{ x \sqcup y \} = \big(([x]_{\equiv_C} \sqcup [y]_{\equiv_C}) \cap ([x]_{\equiv_I} \sqcup [y]_{\equiv_I}) \big)
 \end{equation*}
@@ -366,9 +344,19 @@ It is possible to define $ \sqcup $ solely by working with these equivalence cla
     \end{align*}
 \end{example}
 
-This means that labels of the lattice of security labels $ (\Sigma, \sqcup, \sqcap) $ can be tracked by tracking the confidentiality and integrity labels individually.
+This means that labels of the lattice $ (\Sigma, \sqcup, \sqcap) $ can be tracked by considering the confidentiality and integrity parts individually.
+In other words: in general one can calculate the supremum or infimum of two labels by performing the respective operation on the parts in the domains of confidentiality and integrity individually.
+This is illustrated in figure \ref{fig:lattice-equiv-classes} where again the lattice of security labels is shown but there also are two axes which divide each domain in half.
+There, you can see why, e.g. $ \{ \PT \} = \P \cap \T $ and also that $ \P \sqcup \C = \C $ or $ \T \sqcup \U = \U $.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.4\textwidth]{figures/equivalence-class-lattice.png}
+    \caption{Security lattice for SecVerilogBL \cite{Ferraiuolo17} with equivalence-classes}
+    \label{fig:lattice-equiv-classes}
+\end{figure}
+
 Dealing with information flow labels in this way also is much more intuitive:
-\todo{rewrite this}
 \begin{itemize}
     \item Two sources of information combined are considered to be confidential if \textit{any} of the sources is confidential.
     This is sensible as with some result of an operation at least partial knowledge about its confidential source can be inferred- depending on whether the public source or the operation are known.
@@ -393,7 +381,7 @@ In summary, these paragraphs showed to things:
     \item Information flow labels of information can be tracked by using separate labels for the domain of confidentiality and the domain of integrity which in turn can be stored independently of each other.
     This means that the implementation of the MINRV8 architecture does not need to work with the full lattice of information flow labels itself.
     It is sufficient to deal with equivalence classes which can be inferred from individual bits.
-    \item The $ \sqcup $ operation on the binary representation of the security labels $ \binSigma $ can be implemented by deriving the confidentiality label by taking the logical disjunction ($ \lor $) of the olds labels and the integrity label by taking the logical conjunction ($ \land $) of the old labels.
+    \item The $ \sqcup $ operation on the binary representation $ \binSigma $ of the security labels can be implemented by concatenating the logical disjunction ($ \lor $) of the confidentiality bits and the logical conjunction ($ \land $) of the integrity bits.
 \end{enumerate}
 
 This now allows for adding security label tracking to the model in nuXmv.
@@ -418,8 +406,9 @@ For each variable in the model, an confidentiality or integrity tracking counter
 
 These variables transition under the same conditions as their base variable does, e.g. \smv{regs_conf} does a transition if and only if \smv{regs} transitions and \smv{regs_conf} will deduct its content from sources parallel the those of \smv{regs}.
 The values themselves change based on the current instruction and its information flow tracking semantics as described in section \ref{sec:ifc-model}.
-\todo{explain why this is the case}
 The only exception to this is the information flow tracking of the variable \smv{csrs} the labels of which do not change at all.
+\Glspl{csr} are assigned constants labels because they do not store information but reflect the architectures state.
+Certain parts of the architectural state might be for example confidential but the characteristic of being confidential is not determined by the actual value that the respective \gls{csr} is written with but the kind of state that is defined by respective \gls{csr}.
 
-In other words, the \lstinline[language=SMV,mathescape]{$\dots$_conf} and \lstinline[language=SMV,mathescape]{$\dots$_integrity} variables perfectly mirror the architecture implementation as described in section \ref{sec:model-implementation}.
-Rather than simply simulating the MINRV8 architecture in nuXmv, the domain of confidentiality and the domain of integrity of the MINRV8 architecture are tracked in addition to simulating the pure computational-world.
+In other words, the \lstinline[language=SMV,mathescape]{$\dots$_conf} and \lstinline[language=SMV,mathescape]{$\dots$_integrity} variables mirror the architectural part of implementation as described in section \ref{sec:model-implementation}.
+The domain of confidentiality and the domain of integrity of the MINRV8 architecture are tracked in addition to simulating the pure computational world where variables implementing the information flow tracking change in parallel to their counterparts in the computational world.

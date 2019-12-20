@@ -103,18 +103,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
 
     \begin{figure}
         \centering
-        \begin{tikzpicture}
-            \begin{scope}
-                \node (pt) {\PT};
-                \node[above right=of pt] (ct) {\CT}
-                    edge (pt);
-                \node[above left=of pt] (pu) {\PU}
-                    edge (pt);
-                \node[above right=of pu] (cu) {\CU}
-                    edge (ct)
-                    edge (pu);
-            \end{scope}
-        \end{tikzpicture}
+        \includegraphics[width=0.4\textwidth]{figures/ifp-lattice.png}
         \caption{Security lattice for verifying an ARM TrustZone implementation \cite{Ferraiuolo17}}
         \label{fig:sec-lattice}
     \end{figure}
