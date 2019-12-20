@@ -172,7 +172,7 @@ Although \cite{Ferraiuolo17} not explicitly mentions whether bit vectors are one
 }
 As the definition of $ \tau $ uses indexing over the set $ [ 1, i ] $ it can be assumed for bit vectors to be one indexed as the alternative, i.e. zero-indexing, would contradict each bit being affected by \enquote{all bits below} - the definition would skip bit zero.
 
-The label of each bit of the result is inferred by taking the supremum of all bits that come below.
+The label of each bit of the result is inferred by taking the supremum of all bits that come below in order to deal with possible carrying of bits.
 This leads to a partially ordered sequence of security labels, i.e. we have $ \forall i' > i. \tau(i) \succeq \tau(i') $ where $ \preceq $ denotes the partial order on $ \Sigma $ induced by $ \sqcup $.
 This notion is adopted to words of labels by the helper function extendSup which is defined as follows:
 \begin{equation*}
@@ -208,8 +208,8 @@ With extendSup, the semantics of the \minrv{Add} and \minrv{Sub} instructions ca
 \end{example}
 
 T-LShift and T-RShift infer the type of $ e \ll n $ and $ e \gg n $ by simply shifting the labels.
-Most of the work to translate these type system rules has already been done by the definition of $ \ll $ and $ \gg $ on security label words with the only difference being that shifts in SecVerilogBL are unsigned.
-Therefore in the type system rules $ \bot $ is shifted in not only for left shifts but also for right shifts; this exception has been already coped with in the definition of $ \gg $.
+The biggest part of these type system rules has already been translated in the definition of $ \ll $ and $ \gg $ on security label words with the only difference being that shifts in SecVerilogBL are unsigned.
+Therefore in the type system rules, $ \bot $ is shifted in not only for left shifts but also for right shifts; this exception has been already coped with in the definition of $ \gg $.
 
 However, in \cite{Ferraiuolo17} the authors also only know one source of labels, i.e. the word that is shifted, because shifts can only occur by constant amounts\footnote{%
     Recall that constants in SecVerilogBL are of type $ \bot $, i.e. do not need to be considered further as $ x \sqcup \bot = x $.
@@ -238,7 +238,7 @@ Since \minrv{Mov} only \textit{moves} information, the labels of a moved word mu
 
 Similar is true for \minrv{Load} and \minrv{Store}.
 These instructions also simply move values through the architecture and therefore also simply cascade security labels.
-However, as memory addressing is dynamic via indices stored in registers.
+However, as memory addressing is dynamic via indices stored in registers the labels to propagate for a read are not associated with the inputs to the instruction itself but with the memory location that is read.
 The magic function \mbox{memoryLabel} that maps memory addresses to the corresponding labelings copes with this.
 It allows to define the semantics of \minrv{Load} and \minrv{Store} as follows:
 \begin{align*}
@@ -253,8 +253,7 @@ The magic function \mbox{csrLabel} that maps \gls{csr}-indices to the correspond
 \end{align*}
 
 Finally, the semantics of \minrv{Loadi} is coupled to the current execution context.
-\todo{Reference to threat-model}
-Under the given threat-scenario, it is sensible to assume that constants loaded by machine-mode are always labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
+Under the given threat-scenario (cf. section \ref{sec:threat-model}), it is sensible to assume that constants loaded by machine-mode are always labelled with \CT{} and constants loaded by user-mode are always labeled with \PU{}.
 \begin{equation*}
     \I(\textsc{Loadi}) = c \mapsto \begin{cases}
         8 \times \CT & \; \text{if current mode is machine-mode} \\

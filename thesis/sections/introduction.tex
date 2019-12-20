@@ -3,7 +3,7 @@
 \section{Introduction}
 \label{sec:introduction}
 
-This thesis falls in the realm of formal verification, i.e. the attempt to verify a system by the use of formal methods such as SAT solvers, interactive theorem provers and model checkers.
+This thesis is in the realm of formal verification, i.e. the attempt to verify a system by the use of formal methods such as SAT solvers, interactive theorem provers and model checkers.
 With these tools, formal verification engineers strive to prove the correctness of systems such as general computer programs, \glspl{os}, compilers or hardware designs.
 Often times, for a system to be correct means that it complies with a specification.
 Formal verification of a system then is the attempt to prove that some system is free of errors, i.e. meets all properties imposed by some specification.
@@ -26,7 +26,7 @@ In this thesis, two lines of his research will be continued: \begin{enumerate*}[
 The higher level properties an \gls{isa} will be verified against, mainly stem from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
 As the title indicates, their work also falls into the domain of verification; the authors propose a new way of verifying \gls{hdl} implementations.
 The core idea here is to use a a type system in which types serve as security annotation of information.
-By applying typing rules to expressions in the \gls{hdl} code, new labels are generated and thus information is tracked through the code.
+By applying typing rules to expressions in the \gls{hdl} code, these annotations are forwarded and thus information is tracked through the code.
 Certain type conversions are, however, prohibited and mark a security vulnerability.
 Thus, their approach can be summarized as tracking and controlling information flow in \gls{hdl} code.
 The authors evaluate their approach by applying it to the implementation of the ARM TrustZone extension.
@@ -50,6 +50,8 @@ nuXmv on the other hand allows to consider infinite sequences of instructions, i
 This thesis is structured as follows:
 In section \ref{sec:background}, the background of this thesis will be introduced.
 This includes both key papers of \citeauthor{Reid17} and \citeauthor{Ferraiuolo17} as well as \glspl{isa} and model checkers.
+An introduction to \gls{risc} architectures and their ecosystem will be discussed concluding with a threat model for this thesis.
+After this, model checkers will be explained.
 At the end of this section, the methodology of this thesis will be discussed in more detail.
 
 In section \ref{sec:arch}, the RISC-V architecture and a new, minimal, RISC-V-inspired architecture called MINRV8 will be introduced.

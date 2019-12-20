@@ -32,7 +32,7 @@ The specification of\dots
 In section \ref{sec:rv-priv-arch} each of these parts will be introduced whilst the exceptions, traps and interrupts will be put into focus.
 
 The overall goal of this section is to give a feel for how the RISC-V \gls{isa} works and how a more minimal, RISC-V inspired \gls{isa} could be distilled from it.
-A selection of features to be included in such a minimal architecture will be discussed in section \ref{sec:risc-v-restriction}.
+A selection of features to be included in such a minimal architecture will be discussed in section \ref{sec:risc-v-selection}.
 
 \subsubsection{The Base Integer Instruction Set}
 \label{sec:rv-base-int-isa}
@@ -380,6 +380,7 @@ Finally, note that exceptions are handled as soon as they occur.
 This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
 The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
 % Source: https://stackoverflow.com/a/56402079/7194995
+\todo{Stack overflow reference?}
 RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
 If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{xepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
 
