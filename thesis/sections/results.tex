@@ -4,19 +4,18 @@
 \label{sec:results}
 
 This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
-Our main finding was that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if we assume the 8 assumptions that will be introduced in subsequent sections.
+Our main finding is that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the 8 assumptions that will be introduced in subsequent sections are in place.
 
 Additionally, roughly 22 bug fix patches\footnote{%
     The number of 22 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
-} and some \smv{INIT} constraints were applied to the model.
+} were applied to the model and some \smv{INIT} constraints were set up.
 Taken together with aforementioned assumptions these patches mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
 
-\todo{Mention that counter-examples are in appendix}
 This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints.
 
-Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the model would behave when deliberate breaking points were introduced to it.
-These breaking points tried to mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
-The results to these tests will finally be presented in section \ref{sec:canaries}.
+Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the results would change when deliberate breaking points are introduced to the architecture.
+These breaking points mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
+The results of these tests will finally be presented in section \ref{sec:canaries}.
 
 \todo{Motivation also was to test, whether these assumptions are too strong/model can actually capture weakpoints}
 
@@ -30,9 +29,9 @@ Conceptually, however, these two concepts should be distinguished.
 In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
 Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
 
-We guarantee former aspect of validity by constraining the contents of registers to only contain confidential data when the model starts in machine-mode and to only contain malicious data when the model starts in user-mode.
+The former aspect of validity is guaranteed by constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
-If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv could find a counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register trivially violating the respective property.
+If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv returns a trivial counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register.
 
 The latter aspect of validity regarding the initial state of the model complying with the specification is guaranteed by two constraints.
 The first is rather simple and is depicted in the following snippet:
@@ -42,8 +41,7 @@ The first is rather simple and is depicted in the following snippet:
 ]
     INIT MIE = 0b_1 -> MPP = 0b_0;
 \end{lstlisting}
-This constraint ensures that the interrupt handling mechanisms are set up correctly and is mandated by the RISC-V specification (cf. section \ref{sec:rv-priv-arch} and figure \ref{fig:interrupt-handling}).
-No other \smv{INIT} constraints are required to set up the initial state of the model correctly.
+This constraint ensures that the interrupt handling mechanisms are set up correctly as mandated by the RISC-V specification (cf. section \ref{sec:rv-priv-arch} and figure \ref{fig:interrupt-handling}).
 The second constraint sets up caching correctly, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
 \subsubsection{Property Assumptions}
