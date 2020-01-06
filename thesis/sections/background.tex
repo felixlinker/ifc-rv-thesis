@@ -544,7 +544,7 @@ Here, the setup of virtual memory also is delegated to an \gls{os} and can be co
 
 Again, it is important that hardware modules that handle address translation work functionally correct.
 This has been covered in \cite{Dalinger05} and will be left out in this context to keep the target of verification implementation independent.
-On the other hand, it can be verified whether virtual memory management systems \textit{correctly} isolate programs and correctly setup virtual memory.
+It can be verified whether virtual memory management systems \textit{correctly} isolate programs and correctly setup virtual memory.
 This problem, however, falls in the realm of \gls{os} verification and has been touched by \cite{Vaynberg12} in detail.
 The reader is also referenced to the sel4 project \cite{Klein09} in which a complete kernel was formally verified.
 
@@ -682,7 +682,7 @@ However, this part of code gives you an indication for how models written in PRO
 Besides \lstinline{if} statements and labels similar to those in C (cf. line \ref{ln:label}), PROMELA supports \lstinline{do}-loops to control process execution flow.
 \lstinline{do}-loops run indefinitely until they are exited manually by a \lstinline{break} statement.
 
-As data types, PROMELA knows three categories of them: processes, message channels and data objects.
+As data types, PROMELA knows three categories: processes, message channels and data objects.
 Data objects comprise atomic data types such as \lstinline{byte}, \lstinline{bool}, \lstinline{int}, etc. as well as complex data type defined by \lstinline{typedef} that define a complex structures that have fields of data objects.
 Both atomic data types and complex data types are very close to the data types of C.
 
@@ -829,7 +829,8 @@ To illustrate what this means, we introduce two other rules.
     \pi_2 := & P(a, b) \Rightarrow P(a + 1, b + 1)
 \end{align*}
 The Datalog-program $ \Pi := \{ \pi_0, \pi_1, \pi_2 \} $ now induces the relation $ < $ on all natural numbers including $ 0 $.
-$ \pi_1 $ sets up a start of induction which, stating that $ 0 $ is smaller than $ 1 $ which is generalized for all natural numbers by $ \pi_2 $.
+$ \pi_1 $ sets up a start of induction which, stating that $ 0 $ is smaller than $ 1 $.
+This is generalized for all natural numbers by $ \pi_2 $.
 
 Whether or not this exact Datalog-program is supported by a given Datalog-engine depends on the extensions implemented by the respective engine.
 Our example relies on an extension for scalar operators since we use the $ + $ operator.
@@ -994,7 +995,7 @@ The initial state must model the \smv{INIT} constraints the transition relation 
 Whenever nuXmv checks a property $ P $ for a module $ M $ it is checked if every state transition system $ S $ which is given by $ M $ models $ P $.
 
 SMV is a strongly typed language.
-Variables can be of type boolean, integer range, a custom enumeration, bit-vectors or arrays in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
+Variables can be of type boolean, integer range, a custom enumeration, bit-vector or array in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
 \smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit-vectors, arrays, etc., such as basic arithmetic, array indexing, standard boolean operators on both bit-vector and boolean level, but also case and if-then-else expressions.
 \smv{TRANS} constraints also are forumlas of propositional logic but additionally support use of the \smv{next(...)} operator which is a reference to the value of the respective expression in the next state.
 

@@ -3,7 +3,6 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\todo{Say that our properties only restrict machine-mode}
 \todo{glspl ifc}
 In section \ref{sec:checking}, a set of IFC properties based on the work in \cite{Ferraiuolo17} has been introduced; we will refer to these properties as the set $ P $.
 These properties were model checked in the previous section \ref{sec:results}, the result of which was a set of rules $ R $.
@@ -38,8 +37,6 @@ With every abstraction, there is a small chance that it perfectly matches the co
 In this section, we will reflect on the limits of the MINRV8 architecture and its implementation.
 
 \todo{mention that other fields are well modelled}
-\todo{mention that we actually don't need all computational instructions}
-\todo{mention performance hit of dynamic memory regions}
 
 In summary, the MINRV8 architecture knows three groups of instructions (cf. table \ref{tbl:min-arch-instrs}):
 \begin{itemize}
@@ -62,10 +59,10 @@ nuXmv allows to think of the following options:
     \item \label{itm:exmem-frozen}
     Use \smv{FROZENVAR}s to model executable memory - a \smv{FROZENVAR} (frozen variable) is something like a constant in other programming languages but without a fixed value.
     nuXmv chooses the value on the first simulation step but does not change it afterwards.
-    This is more efficient than using a plain \smv{VAR} and constraining it to not change, e.g. \smv{TRANS x = next(x);}.
+    This is more efficient than using a plain \smv{VAR} and constraining it to not change, e.g. \smv{TRANS next(x) = x;}.
     \item \label{itm:exmem-var}
     Use \smv{VAR}s to model executable memory.
-    In practice, this would mean that the memory of the implementation as described in section \ref{sec:model-implementation} would be much larger than the current 4 bytes.
+    In practice, this would mean that for memory to hold all instructions executed it would need to be much larger than the current 4 bytes.
     \item \label{itm:exmem-ivar}
     Finally, use \smv{IVAR}s to model the stream of instruction.
     This is the option we decided to go for as described in section \ref{sec:model-implementation}.
@@ -87,6 +84,7 @@ First and foremost, using input variables means that it is pointless to model a 
 Instead, instructions will simply magically appear on each cycle of the processor model.
 This means that the simulation is inaccurate in this regard which in itself is not a problem.
 The model is supposed to be an abstraction.
+
 Since it was decided to use input variables over a model of the \gls{mtvec} register and a \gls{pc}, the question now arises how accurately the implementation of the MINRV8 architecture is capable to simulate real architectures.
 In a nutshell, the use of input variables over (frozen) variables introduces a certain sense of non-determinism to the model of the MINRV8 architecture when it comes to handling interrupts and exceptions.
 
@@ -101,7 +99,7 @@ Consider an example memory layout for the RISC-V architecture as depicted in fig
 Executing this instruction triggers a shift in control to machine-mode which jumps to address \minrv{X} pointed to by the \gls{mtvec} register.
 Then, the instructions at addresses \minrv{X} to \minrv{Z} and subsequent ones are executed until finally, a \minrv{Mret} instruction is read an executed which triggers a jump to address \minrv{A}.
 Two instructions later, another \minrv{Ecall} instruction is executed, etc.
-We would expect the order of instructions to be executed to look like:
+We would expect the order of instructions to be executed to look something like:
 
 \begin{enumerate}
     \item First environment call: \lstinline[language=minrv8,mathescape=true]{Ecall, Load, Add, Store, $\dots$, Mret}
@@ -111,7 +109,7 @@ We would expect the order of instructions to be executed to look like:
 \end{enumerate}
 Where \minrv{Load, Add, Store} are the instructions located at addresses \minrv{X} to \minrv{Z} and \minrv{Load, Mov, Slt} the instructions located at addresses \minrv{A}, \minrv{B} and \minrv{C} respectively.
 
-As input variables can not be constrained in nuXmv, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
+However, as input variables can not be constrained in nuXmv, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
 \begin{enumerate}
     \item First environment call: \lstinline[language=minrv8,mathescape=true]{Ecall, Load, Add, Store, $\dots$, Mret}
     \item Return: \lstinline[language=minrv8,mathescape=true]{Load, Mov}
@@ -121,7 +119,7 @@ As input variables can not be constrained in nuXmv, there is no way to model tha
 
 Such a stream of instructions is not realistic without some program modifying the code located at \gls{mtvec} and as such \enquote{shouldn't} be considered when checking the IFC properties.
 One would expect to find the same code after an \minrv{Ecall} instruction being executed since in both cases, an architecture would jump to the respective interrupt handler.
-However, there of course also exists a sequence of input variable valuations that exactly match a \enquote{real} stream of instructions where the instructions executed after an environment call coincide.
+However, there also exists a sequence of input variable valuations that exactly matches a \enquote{real} stream of instructions where the instructions executed after an environment call coincide.
 
 This illustrates one example for why the implementation of the MINRV8 \textit{abstracts} from real architectures.
 In regard to program flow on traps, it can be expected that the model accurately comprises all expected streams of instructions but also includes many more one would naturally consider to be unrealistic.
@@ -132,13 +130,14 @@ Since the implementation does not support executable memory and as such does not
 This, however, does not turn out to be a fundamental problem.
 In principle, jump and branch instructions in real systems are security relevant since they are used to perform function calls and returns and implement loops or conditional statements.
 \todo{gls rop}
-In practice though, jumps and branches usually are security relevant since they are targeted by adversarial programs trying to manipulate jump addresses to launch ROP attacks.
+\todo{introduce ROP}
+In practice though, jumps and branches usually are security relevant since they are targeted by adversarial programs trying to manipulate jump addresses to launch e.g. ROP attacks.
 ROP attacks are only effective because they jump to locations where critical code is located.
 It does not matter whether the critical code is executed without the intervention of some malicious program or whether some malicious program tricks privileged code into executing said critical code - in practice, the former case simply occurs rarely.
 The concept of jumps being influenced by some malicious program is, however, captured in approach: both properties \ref{itm:prop-mem-i} and \ref{itm:prop-csr-i}, i.e. the integrity of memory- and \gls{csr}- related instruction, ensure that certain instructions may not be influenced by user-mode.
 There is no reason to assume that user-mode would control jumps and branches by fundamentally different flows of information than memory- and \gls{csr}-related instructions, i.e. jump related vulnerabilities are covered in principle.
 
-Additionally, our implementation might not be able to model programs including jumps and branches but the set of programs considered by nuXmv does include those where jumps have been linearized\footnote{%
+Additionally, the implementation might not be able to model programs including jumps and branches but the set of programs considered by nuXmv does include those where jumps have been linearized\footnote{%
     This is similar to function inlining supported by many compilers.
 }.
 Consider figure \ref{fig:jump-inlining} where in the upper half depicts an ordinary program, being executed from left to right and including jump instructions.
@@ -155,10 +154,8 @@ The sequence of states generated by the linearized programs is equal to the sequ
 
 \paragraph{Summary}
 
-\todo{My implementation of the stream of instructions is an over-abstraction}
-
 Starting with the premise of this thesis, it was always clear that the MINRV8 architecture is a simplification.
-This, though, is not a problem since by focusing on the very core, security related instructions allowed us to implement a tractable and small model in nuXmv.
+This, though, is not a problem since by focusing on the very core, security related instructions allowed to implement a tractable and small model in nuXmv.
 If one would add jump and branch instructions to the MINRV8 architecture, it'd be comparable to actual RISC-V architectures.
 From this point of view, it is not a problem to apply the results of the verification process, i.e. the set of assumptions, to the RISC-V architecture.
 
@@ -181,28 +178,28 @@ This leaves us with good reasons to assume that programs considered by nuXmv, i.
 
 \todo{Mention these goals in introduction/background}
 
-The goal we had in mind when phrasing the assumptions which ultimately established the correctness of the information flow properties was for them to be realistic.
-This goal includes:
+The goal of phrasing the assumptions which ultimately established the correctness of the information flow properties was for them to be realistic.
+These goals are:
 \begin{enumerate}
     \item \label{itm:assumptions-non-trivial}
     The assumptions must be non-trivial, i.e. they must not be contradictory and must not trivially entail the information flow properties to be verified,
     \item \label{itm:assumptions-machine-mode}
-    the assumptions must only constrain machine-mode,
+    the assumptions must only constrain machine-mode, and
     \item \label{itm:assumptions-verifiable}
     the assumptions must be decidable and verifiable.
 \end{enumerate}
 
 The reasoning behind point \ref{itm:assumptions-non-trivial} is straight-forward:
 Trying to prove \enquote{$ \text{false} \Rightarrow \text{properties} $} or \enquote{$ \text{properties} \Rightarrow \text{properties} $} is pointless.
-Although we can't give formal proofs that neither is the case, we have good reasons to believe it.
+Although we can't give formal proofs that neither is the case, there are good reasons to believe it.
 Recall that we were able to prove that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $}.
 In this case, the assumptions can only be contradictory if the properties are as well which we think, they are obviously not.
 On the other hand, recall that in section \ref{sec:canaries} we were able to make changes to the architecture such that \enquote{$ \neg(\text{assumptions} \Rightarrow \text{properties}) $} held.
-This indicates clearly that the assumption actually express something meaningful and do not trivially entail the information flow properties.
+This indicates that the assumption actually express something meaningful and do not trivially entail the information flow properties.
 
 Point \ref{itm:assumptions-machine-mode} also is met by the assumptions introduced in section \ref{sec:assumptions}.
 Whenever it is said that certain instructions must not be executed under certain circumstances, these formulas are guarded by the antecedent \smv{priv ->}.
-Additionally, all other assumptions only constrain state transitions that are under control of machine-mode only, such as changes to \glspl{csr} or state before machine-mode hands back control to user-mode.
+Additionally, all other assumptions only constrain state transitions being under control of machine-mode only, such as changes to \glspl{csr} or state before machine-mode hands back control to user-mode.
 All in all, this point does not need to be discussed extensively.
 However, it was raised nonetheless because it is important to note that the assumptions introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
 Recall, that in context of this thesis it is assumed that user-mode is adversarial to machine-mode and compromised completely.
@@ -243,7 +240,7 @@ Whilst working on this assumption, we found that the specific implementation of 
     \item \label{itm:no-sysret-mret}
     omitting the expression \smv{(op = MRET & MPP = 0b_0)} in line \ref{ln:sp-call-mret}
 \end{enumerate}
-led to nuXmv not finding the SYSRET vulnerability.
+led to nuXmv not reporting the SYSRET vulnerability.
 Why is that?
 
 The first part of the \smv{SP_BANK} assumption states: \enquote{Whenever there is a switch from user- to machine-mode, latter can only use the \minrv{Push} or \minrv{Pop} instructions after having returned to user-mode or having ensured that the stack-pointer is safe}.
@@ -262,7 +259,7 @@ For the same reasons as stated above, this part is critical.
 Leaving this expression out would equal machine-mode having state persistent over user-mode-calls and -returns to and from machine-mode, by which machine-mode memorizes whether it has set the stack-pointer to user-mode or to machine-mode.
 With such a mechanism in place, machine-mode could not be fooled into using the user-mode stack-pointer on any trap handler since it would first check this state.
 
-These two examples stress that the precise phrasing of the assumptions is highly critical for both how realistic the assumptions are and how well they might be suited to serve as target for verification of actual code-bases.
+These two examples stress that the precise phrasing of the assumptions is critical for both how realistic the assumptions are and how well they might be suited to serve as target for verification of actual code-bases.
 While it would be sufficient to find a stronger precondition for these assumptions in existing code-bases, it is non-trivial whether such preconditions are easy to find or whether the assumptions might be rephrased such that they still grant the absence of information flow related bugs but are easier to verify in programs.
 This topic, though, can't be handled as part of this thesis leading to future work.
 
@@ -285,14 +282,14 @@ They usually have a feel for what they attempt to verify and have some vulnerabi
 If the actual work of modeling a prototype and implementing a verification procedure is influenced by this too strongly, one might object:
 \enquote{You were able to find vulnerability \textit{X} only because you knew that it was there. Your procedure is nothing but an abstracted simulation of known issues.}
 
-This also leads to another concern:
+This leads to another concern:
 As with most programming, the verification process will tackle what is aimed for in some more general sense, i.e. when aiming to verify systems against certain bugs these are usually generalized to classes of related vulnerabilities.
 But with such an approach, one can never be sure that there is no other class of vulnerabilities that was missed.
 In other words: Does the verification procedure have blind spots?
 
-It shall now be subject to investigate whether our work is touched by aforementioned two issues.
+It shall now be subject to investigate whether this work is touched by aforementioned two issues.
 
-First, we will investigate whether our thesis has made a circular argument.
+First, it will be investigated whether a circular argument has been made in this thesis.
 Recall the steps that have been taken to verify the MINRV8 architecture against the information flow properties:
 \todo{Cite respective sections}
 \begin{enumerate}
@@ -315,7 +312,7 @@ In both cases, the selection of RISC-V features and instruction to include or vu
 The work on this thesis was indeed influenced by the canaries the model was ultimately tested against and vice versa: the selection of vulnerabilities to test the model against was based on the features implemented in it.
 Despite the ciruclar character of these two steps, we find that this is not an issue.
 Steps \ref{itm:step-minrv} and \ref{itm:step-canaries} must be understood as a prototype of a verification procedure proposed in this thesis which is given by steps \ref{itm:step-semantics} to \ref{itm:step-loop}.
-Having the setup to test these steps in being derived via a methodology that is circular to some degree does not make the procedure itself circular.
+Having the setup to test these steps being derived via a methodology that is circular to some degree does not make the procedure itself circular.
 The opposite is the case:
 We find that the definition of information flow semantic, information flow control properties and the proof-refine-loop are all well founded and comprehensible, i.e. follow some intuition which could make one have more trust in the given system.
 
@@ -333,7 +330,7 @@ We mark this problem as future work.
 
 \subsubsection{Abstract Model}
 
-You as a reader might have wondered, why we decided to concretely model all flow of information through the model of the MINRV8 architecture and indeed: In the very scope of this thesis, the actual content of registers is not mandatory.
+You as a reader might have wondered, why we decided to concretely model all flows of information through the model of the MINRV8 architecture and indeed: In scope of this thesis, the actual content of registers is not mandatory.
 It does play a role when memory is indexed, but one could probably get away with non-deterministically choosing a memory location to be targeted by loads and stores.
 
 There are two reasons for why this decision was made.
@@ -353,12 +350,12 @@ With these two reasons at hand and the overall goal of this thesis to implement 
 
 \subsubsection{Per-Bit Information Flow Tracking}
 
-Another issue, a reader might have stumbled upon is that in section \ref{sec:results} it was mentioned that counter-examples never involved spurious flows of information where the bit-wise labels of values in the architecture was mandatory.
+Another issue, a reader might have stumbled upon is that in section \ref{sec:results} it was mentioned that counter-examples never involved flows of information where the bit-wise labels of values in the architecture was mandatory.
 In other words: for this thesis, tracking only one bit for confidentiality and one bit for integrity for each register and memory address would suffice.
 Initially, it was decided to track labels bit-wise because \begin{enumerate*}[label=\alph*)]
     \item we followed the approach of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} which tracked information flow bit-wise as well,
     \item again, performance was sufficient to allow for it, and
-    \item we couldn't have been sure prima facie non-bit-wise tracking of information would suffice.
+    \item one couldn't have been sure prima facie non-bit-wise tracking of information would suffice.
 \end{enumerate*}
 
 Additionally, it can also be seen that computational instructions never played a major role in any counter-example.

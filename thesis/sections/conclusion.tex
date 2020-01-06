@@ -34,7 +34,7 @@ We discussed another case where model checking was applied to architectural spec
 However, this approach was flawed, did not use model checking to its full potential and implemented a very limited model
 In \cite{BradfieldS16}, the properties only took one transition in the state spaces into consideration whereas in this work we proved properties touching traces of possibly infinite length.
 Additionally, in \cite{BradfieldS16}, the model only comprised instructions related to mode-transitioning whereas here, we implemented a more or less complete set of basic \gls{risc} instructions.
-This, taken together with the discussion of related work in section \ref{sec:related-work} clearly shows that this work is \textit{supplemental}.
+This, taken together with the discussion of other related work in section \ref{sec:related-work} shows that this work is \textit{supplemental}.
 
 What is left to show is that this work is \textit{viable}.
 All proofs were run on a laptop equipped with an Intel Core i7-7500U CPU with 8GB of RAM.
@@ -89,7 +89,7 @@ Finally, we give an outlook on future work:
     \item[Complete model] An obvious improvement of this work would be to enhance it by more instructions and use a bigger word-size.
     This would bring the model closer to real-world architectures but might also introduce performance issues.
     \item[Verification of assumptions] Finally, it could be investigated whether the assumptions introduced in context of the verification process serve as practical and sensible target of verification for compilers and/or \glspl{os}.
-    It could be investigated whether code generated from compilers or \glspl{os} itself adhere to these assumptions.
+    It could be investigated whether code generated from compilers or \glspl{os} itself adheres to these assumptions.
     Applying the assumptions to the next level of abstraction in modern computing might lead to more easy and mainstream usage of formal verification in programming.
     Since these properties are stable for a given architecture, there could be off the shelf tools verifying programs for high-level correctness removing the need to tailor verification efforts per system to be verified.
 \end{description}

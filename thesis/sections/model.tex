@@ -225,7 +225,7 @@ The reasoning behind this is that each bit of the word shifted is influenced by 
 Now, the only thing left is to give semantics for all the instruction that do not have an analogous type system rule, i.e. \minrv{Slt}, \minrv{Mov}, \minrv{Load}, \minrv{Store}, \minrv{Csrrs} and \minrv{Csrrc}, \minrv{Loadi}.
 
 \minrv{Slt} sets only one bit of the targeted register thus its semantics also should set only one literal of the resulting security labeling.
-As on a bit comparison of bit vectors all bits are taken into account to produce the comparison result, the resulting comparison bit is set to the maximum of all bits of both arguments.
+As all bits are taken into account when comparing two bit vectors, the resulting bit is set to the maximum of all bits of both arguments.
 \begin{equation*}
     \I(\textsc{Slt}) = (w, w') \mapsto (7 \times \bot) \cdot \Big(\bigsqcup l(w) \sqcup \bigsqcup l(w') \Big)
 \end{equation*}
@@ -412,3 +412,5 @@ Certain parts of the architectural state might be for example confidential but t
 
 In other words, the \lstinline[language=SMV,mathescape]{$\dots$_conf} and \lstinline[language=SMV,mathescape]{$\dots$_integrity} variables mirror the architectural part of implementation as described in section \ref{sec:model-implementation}.
 The domain of confidentiality and the domain of integrity of the MINRV8 architecture are tracked in addition to simulating the pure computational world where variables implementing the information flow tracking change in parallel to their counterparts in the computational world.
+
+\todo[inline]{Summary}

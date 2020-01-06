@@ -102,7 +102,7 @@ In this section, the aforementioned concepts will be introduced subsequently whi
 \paragraph{Levels of Privilege}
 
 RISC-V knows three privilege levels: user-mode, supervisor-mode and machine-mode\footnote{%
-    In an earlier version, there was a fourth privilege-mode being hypervisor-mode that was more privileged than supervisor- but less privileged than machine-mode.
+    In an earlier version, there was a fourth privilege-mode, hypervisor-mode, that was more privileged than supervisor- but less privileged than machine-mode.
     However, this mode has been dropped from the specification as of now.
     Yet, RISC-V still needs to encode mode-relative bit-fields with two bits.
     Usually, 00 stands for user-, 01 for supervisor and 11 for machine-mode.
@@ -608,7 +608,7 @@ Therefore - if full control over the transition relation is desired - it often i
 In the implementation in SMV of the MINRV8 architecture, \smv{case}-expressions that always close with a default statement were used to ensure that transitions of variables are always fully constrained.
 
 In the following, the \enquote{formal idea} of the variable transitions of the model will be introduced.
-In this context, it is assumed that variables are stable unless otherwise mentioned, i.e. default statements of model explicitly are not listed for the most part.
+In this context, it is assumed that variables are stable unless otherwise mentioned.
 
 The transitions of the \smv{priv} variable are simple.
 There are two conditions by which \smv{priv} can change.

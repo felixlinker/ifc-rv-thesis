@@ -6,6 +6,8 @@
 This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
 Our main finding is that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the 8 assumptions that will be introduced in subsequent sections are in place.
 
+\todo[inline]{Klarstellen, dass keine Schwachstelle gefunden wurde}
+
 Additionally, roughly 22 bug fix patches\footnote{%
     The number of 22 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
 } were applied to the model and some \smv{INIT} constraints were set up.
@@ -13,6 +15,7 @@ Taken together with aforementioned assumptions these patches mark a fixpoint of 
 
 This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints.
 
+\todo{Wurden arch.-ref. eingeführt?}
 Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the results would change when deliberate breaking points are introduced to the architecture.
 These breaking points mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
 The results of these tests will finally be presented in section \ref{sec:canaries}.
@@ -28,12 +31,13 @@ Conceptually, however, these two concepts should be distinguished.
 
 In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
 Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
+Consequently, these constraints were introduced during the proof-refine loop as fixes to the model.
 
 The former aspect of validity is guaranteed by constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
 If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv returns a trivial counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register.
 
-The latter aspect of validity regarding the initial state of the model complying with the specification is guaranteed by two constraints.
+The aspect of the initial state complying with the specification is guaranteed by two constraints.
 The first is rather simple and is depicted in the following snippet:
 \begin{lstlisting}[
     language=smv,
@@ -42,7 +46,9 @@ The first is rather simple and is depicted in the following snippet:
     INIT MIE = 0b_1 -> MPP = 0b_0;
 \end{lstlisting}
 This constraint ensures that the interrupt handling mechanisms are set up correctly as mandated by the RISC-V specification (cf. section \ref{sec:rv-priv-arch} and figure \ref{fig:interrupt-handling}).
-The second constraint sets up caching correctly, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
+As \smv{MPP} is cleared on return from a trap handler and \smv{MIE} being high implies that no interrupt is being handled at the moment, \smv{MPP} must be low.
+
+The second constraint sets up caching errorless, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
 \subsubsection{Property Assumptions}
 \label{sec:assumptions}
@@ -78,7 +84,9 @@ The second constraint sets up caching correctly, i.e. if the cache is valid, it 
     \label{tbl:assumptions-overview}
 \end{table}
 
-The 8 assumptions that have been introduced throughout the verification process can be grouped into three categories:
+During the proof-refine loop, whenever it was found that a counter-example to a property reported by nuXmv was valid and not an actual vulnerability of the architecture but a risk to be controlled by software, an assumption was phrased resembling a mitigation of the respective vulnerability.
+This led to a total number of eight assumptions which in total grant the absence of any information flow policy violation.
+These assumptions can be grouped into three categories:
 \begin{itemize}
     \item Mode-boundary crossing related assumptions
     \item Memory related assumptions
@@ -88,15 +96,22 @@ The 8 assumptions that have been introduced throughout the verification process 
 Find an overview of all these assumptions in table \ref{tbl:assumptions-overview}.
 Each row represents one assumption and each column one property.
 A check mark denotes that the respective assumption is critical for the respective property, i.e. there exists a counter-example proving the property to be false if the assumption at hand is not assumed.
+These counter-examples are given in detail in appendix \ref{sec:cexs} and will be skipped here.
+
 Note that each of the assumptions is critical for at least one property.
 This shows that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $} as opposed to only \enquote{$ \text{assumptions} \Rightarrow \text{properties} $} since \enquote{$ \neg \text{assumptions} \Rightarrow \neg \text{properties} $}.
 
 \paragraph{Mode-boundary crossing related assumptions}
-As could be seen in table \ref{tbl:assumptions-overview}, there are two properties related to mode-boundary crossing.
-The first of these is called \smv{SAN_ON_CALL} and mandates from machine-mode to not use \textit{dangerous} instructions before having cleared the registers from any untrusted data when entering machine-mode from user-mode.
-Dangerous instructions here are \minrv{Load}, \minrv{Store}, \minrv{Csrrs} and \minrv{Csrrc} and directly stem from the properties \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}).
+As can be seen in table \ref{tbl:assumptions-overview}, there are two properties related to mode-boundary crossing.
+\todo{Refernce to threat model and example of direct passing of information}
+Mode-boundary crossing related here refers to vulnerabilities that violate a property at execution of the \smv{Ecall} or \smv{Mret} instruction.
+
+The first of these is called \smv{SAN_ON_CALL} and mandates from machine-mode to not use \textit{dangerous} instructions before having cleared the registers from any untrusted data when entering machine- from user-mode.
+Dangerous instructions here are \minrv{Load}, \minrv{Store}, \minrv{Csrrs} and \minrv{Csrrc} and directly stem from the instructions used in properties \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}).
 The next assumption to be introduced is called \smv{CLR_ON_RET}; it states: Whenever machine-mode hands back control to user-mode, the registers must be cleared of any confidential information.
-The implementations of \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} can be found in snippet \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
+The implementation of \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} can be found in snippet \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
+
+Taken together, these two assumptions ensure that machine-mode neither directly hands secrets to nor directly is handed malicious data by user-mode.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -139,6 +154,9 @@ Whereas confidentiality related assumptions always constrain flow of information
 \paragraph{Memory related assumptions}
 Two assumptions about memory reads and writes join the ranks of these groups, namely \smv{NO_PUBLIC_READS} and \smv{NO_PUBLIC_WRITES} which are formally given in snippet \ref{snpt:no-public-reads} and \ref{snpt:no-public-writes} respectively.
 These two assumptions don't express more than the title says; they require machine-mode to never read from or write to public memory.
+As such, they directly extend the mode-boundary related assumptions.
+At first, it was ensured that machine-mode neither hands out secrets nor accepts malicious data directly.
+These two assumptions now ensure that the same must not happen by a detour into memory.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -169,7 +187,7 @@ These two assumptions don't express more than the title says; they require machi
 \paragraph{Memory privilege related assumptions}
 The four assumptions that have been introduced up to this point seem to cover all relevant channels of information transmission: registers and memory.
 However, these are not enough to ensure that the MINRV8 architecture implements all information flow properties subject to this thesis.
-Whereas the two memory related properties covered the group of actions by machine-mode where information directly is given to or taken from user-mode, it is also possible to transmit information indirectly via memory by writing it to or reading it from safe memory regions but doing so while changing the attributes of respective memory regions.
+Whereas the two memory related properties covered the group of actions by machine-mode where information directly is given to or taken from user-mode, it is also possible to transmit information indirectly via memory by writing it to or reading it from safe memory regions but then changing the attributes of respective memory regions.
 The two assumptions \smv{SANITIZE_ON_DECLASSIFICATION} and \smv{CLR_ON_DECLASSIFICATION} counter issues arising from these vectors.
 The former assumption demands from machine-mode to ensure that a memory region does not contain malicious information when its set to be publicly inaccessible.
 This assumption is formalized in snippet \ref{snpt:san-on-classify}.
@@ -209,6 +227,12 @@ It turns out that only ensuring memory regions to not contain confidential/malic
 This brings the need to also assume that the cache is cleared and sanitized by the architecture whenever a memory region is (de-)classified.
 This is expressed in the assumptions \smv{SAN_CACHE_ON_CLASSIFICATION} and \smv{CLR_CACHE_ON_DECLASSFICATION} (cf. snippets \ref{snpt:sanc-on-classify}, \ref{snpt:clrc-on-declassify}).
 
+To summarize all assumptions:
+At first, \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} assumed that no direct flow of sensitive or malicious data is possible between user- and machine-mode (snippets \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret}).
+Then, these assumptions were generalized to rule out detours into memory by \smv{NO_PUBLIC_WRITES} and \smv{NO_PUBLIC_READS} (snippets \ref{snpt:no-public-writes} and \ref{snpt:no-public-reads}).
+Finally, it was assumed that machine-mode must not freely alter access privileges of memory regions.
+It must clear or sanitize regions accordingly, depending on the previous access privileges, e.g. machine-mode must ensure to not forget secrets in memory that is made publicly accessible.
+
 \begin{figure}
     \begin{lstlisting}[
         language=smv,
@@ -240,15 +264,16 @@ This is expressed in the assumptions \smv{SAN_CACHE_ON_CLASSIFICATION} and \smv{
 \subsection{Canaries}
 \label{sec:canaries}
 
-\todo{Introduce Intel x86 architecture}
 In this section, it will be presented how the model of the MINRV8 architecture was altered in order to implement real-world attacks to the Intel x86 architecture.
-By default, the MINRV8 architecture was not vulnerable to these attacks, however, making the architecture vulnerable will put the approach of this thesis to formally verify an instruction set architecture to a test.
+By default, the MINRV8 architecture is not vulnerable to these attacks, however, making the architecture vulnerable will put the approach of this thesis to formally verify an instruction set architecture to a test.
 
 \subsubsection{Cache Poisoning Attack on x86}
 
-The - as it will be called here - cache poisoning attack was discovered and presented by Rafal Wojtczuk and Joanna Rutkowska in their publication \textit{Attacking SMM Memory via Intel CPU Cache Poisoning} \cite{Wojtczuk09}.
-The term \enquote{SMM memory} refers to a specific region of memory that is designed to be only accessible by the mode of highest privilege in x86 architectures: System Management Mode.
-This memory should be written only on start-up and then locked down for later write-accesses.
+The cache poisoning attack\footnote{%
+    The name \enquote{cache poisoning attack} is not official.
+} was discovered and presented by Rafal Wojtczuk and Joanna Rutkowska in their publication \textit{Attacking SMM Memory via Intel CPU Cache Poisoning} \cite{Wojtczuk09}.
+\enquote{SMM memory} refers to a specific region of memory that is designed to be only accessible by the mode of highest privilege in x86 architectures: System Management Mode.
+This memory is intended to be written only on start-up and then locked down for later write-accesses.
 Wojtczuk and Rutkowska, however, managed to find a vulnerability to the x86 architecture which allowed them to effectively write to SMM memory without SMM privileges by marking respective memory region as write-back-cacheable.
 The attack comprises the following steps and requires administrator privileges on the machine to be attacked:
 \begin{enumerate}
@@ -262,10 +287,13 @@ The attack comprises the following steps and requires administrator privileges o
 \end{enumerate}
 
 Steps \ref{itm:cache-pois-mem} and \ref{itm:cache-pois-smi} can also be swapped to read from SMM memory.
-Then, SMM memory will first read by SMM mode executing the interrupt handler which will leave result in some parts of the handler being cached.
-After SMM returned from handling the interrupt, administrator mode can read these words from cache.
+Then, triggering the interrupt will make SMM mode execute parts of SMM memory which will leave some parts of the handler being cached.
+After SMM returns from handling the interrupt, administrator mode can read these words from cache.
 
 This attack does not fully apply to the MINRV8 architecture since it does not support as fine grained privilege modes as the x86 architecture.
+In x86, administrator privileges are needed to set SMM memory cacheable and attack SMM-mode which is of higher privilege than administrator-mode.
+To apply this attack to the MINRV8 would bring the need of user-mode being able to set cacheability properties of memory regions.
+It is not reasonable to assume that anyone would give user-mode this power.
 However, the basic idea can still be implemented by following changes to the model:
 \begin{itemize}
     \item For all cache transition relations, do not check whether current privilege mode suffices for the memory operation at hand, i.e. user-mode can write to cache of memory regions not set as writable to it.
@@ -276,13 +304,13 @@ These changes manage to introduce a vulnerability to the MINRV8 architecture.
 If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv manages to find a counter-example for all three information flow properties.
 These are depicted in table \ref{tbl:cex-cache-vuln}.
 As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
-We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} \ref{itm:prop-mem-i} in detail now.
+We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) in detail now.
 Initially, user-mode executes a \minrv{Store} instruction which is not reflected in memory.
 Then, it reads from a \gls{csr} to put a trusted value into register 0.
 Interestingly, user-mode thereby aids machine-mode in sanitizing the registers since now, all registers contain trusted values.
 In the next step, a pending external interrupt is taken which leads to the transition to machine-mode.
 Machine-mode performs a load instruction targeting the same address as the user's store instruction which leads to an untrusted value being stored in register two.
-This value is then used to perform a load or store operation.
+This value is then used to perform a load/store operation.
 
 The load in the fourth step resulting in an untrusted value means, the initial store must have been targeting the only region set cacheable which is region one in table \ref{tbl:cex-mem-i-cache-vuln} and region zero in table \ref{tbl:cex-csr-i-cache-vuln} respectively.
 Here, it can be seen that dropping memory privilege controls on cache-writes and -reads leads to states inconsistent with the MINRV8 specification.
@@ -290,15 +318,15 @@ In table \ref{tbl:cex-mem-i-cache-vuln}, memory region one is locked and as neit
 Yet, the cache-access succeeds.
 
 In the case of the original cache-poisoning attack, the authors wrote to executable memory directly influencing what would be executed by System Management Mode.
-Since the MINRV8 model does not support a model of executable memory, it is not possible to implement this exact vulnerability.
-However, these counter-examples show that it is still possible to implement the very core of the cache poisoning attack into the MINRV8 model which leads to a similar vulnerability in the architecture.
+Since the MINRV8 model does not support a model of executable memory, it is not possible to implement this exact vulnerability here.
+However, these counter-examples show that it is still possible to implement the very core of the cache poisoning attack into the MINRV8 model which leads to a similar vulnerability of the architecture.
 
 This carries over to the counter-example for property \smv{NO_LEAK} (\ref{itm:prop-no-leak}) which is depicted in table \ref{tbl:cex-no-leak-cache-vuln}.
 This counter-example more closely matches the alternative version of the cache-poisoning attack used for reading SMM memory.
 nuXmv sets the initial state up such that the cache holds some confidential data for one of the memory regions which both are set to be write-back-cacheable and non-readable to user-mode.
 Yet still, user-mode can gain access to the confidential word in cache as no access controls are performed when reading from cache.
 
-One distinction from the original cache-poisoning attack to these counter-examples is that here the attacker does need need to set the attacked memory region to be cacheable in the first place.
+One distinction from the original cache-poisoning attack to these counter-examples is that here, the attacker can't set the attacked memory region to be cacheable in the first place.
 This difference does not play a major role since the attack can take place nonetheless if some memory region happens to be locked down to user-mode and is set to be write-back-cacheable, still this weakens the attack to some degree.
 
 What can be done to mitigate this attack?
@@ -339,16 +367,16 @@ One possible approach to this would be to extend the MINRV8 architecture by said
 \subsubsection{The SYSRET Vulnerability}
 \label{sec:sysret}
 
-The so called \textit{SYSRET vulnerability} to the intel x86-64 architecture is listed as vulnerability \textit{CVE-2012-0217} by the \textit{Common Vulnerabilities and Exposures} database (CVE\textsuperscript{\textregistered}) \cite{SYSRET-vuln} and allegedly has also been found by Rafal Wojtczuk \cite{SYSRETFreeBSD,SYSRETDebian,SYSRETCert}.
+The so called \textit{SYSRET vulnerability} to the intel x86 architecture is listed as vulnerability \textit{CVE-2012-0217} by the \textit{Common Vulnerabilities and Exposures} database (CVE\textsuperscript{\textregistered}) \cite{SYSRET-vuln} and allegedly has also been found by Rafal Wojtczuk \cite{SYSRETFreeBSD,SYSRETDebian,SYSRETCert}.
 To our knowledge, the most concise and freely available explanation of the vulnerability can be found in the blog post \textit{The Intel SYSRET Privilege Escalation} by George Dunlap published on the page of Xen Project, a community for virtualization-related open source projects which in part also have been affected by said vulnerability \cite{Dunlap19}.
 
 The x86 architecture provides multiple ways to switch between privilege modes.
 In principle, these ways work analogously to how the MINRV8 architecture changes privilege modes: either an interrupt/exception leads to the privilege escalation or a dedicated instruction is executed that changes privilege mode, i.e. \minrv{Ecall} in case of the MINRV8 architecture.
-In general, when changing the privilege mode, the \lstinline{RIP} register, which is the \gls{pc} equivalent for x86-64 architectures, and the stack-pointer are set to the respective version of the targeted privilege-mode.
+In general, when changing the privilege mode, the \lstinline{RIP} register, which is the \gls{pc} equivalent for x86 architectures, and the stack-pointer are set to the respective version of the targeted privilege-mode.
 The designers of the architecture, however, found that parts of the normal privilege mode changing routines could be left out in some scenarios to improve performance.
 One of this routines to be left out was changing the stack-pointer by hardware.
 If fast interrupts are needed on the x86, programs can execute the \lstinline{SYSCALL} instruction to make a cheap transition to high-privilege mode which is then paired with a \lstinline{SYSRET} instruction to return control back to user-mode.
-However, since \lstinline{SYSCALL} does not set the stack-pointer accordingly, it is the duty of the interrupt handler to set the stack-pointer back to user-mode\footnote{%
+However, since \lstinline{SYSCALL} does not set the stack-pointer accordingly, it is the obligation of the interrupt handler to set the stack-pointer back to user-mode\footnote{%
     There are more than two privilege modes provided by the x86 architecture and they also have different names than the privilege modes of the MINRV8 architecture, however, the SYSRET vulnerability only touches two privilege modes with have the same purpose as user- and machine-mode in the case of the MINRV8 architecture.
     Therefore, in this context, the terms user-mode and machine-mode will also be used to talk about the x86 architecture.
 } before executing the \lstinline{SYSRET} instruction.
@@ -356,14 +384,14 @@ However, since \lstinline{SYSCALL} does not set the stack-pointer accordingly, i
 When \lstinline{SYSRET} restores the user-mode's context, it reads the \lstinline{RIP} value from the \lstinline{RCX} register which is used by the \lstinline{SYSCALL} instruction to store the value of the \lstinline{RIP} register in the first place.
 Furthermore, the x86 architecture requires the contents of the \lstinline{RIP} register to be in a special form.
 The same requirements are, though, not imposed on the contents of the \lstinline{RCX} register.
-If, on executing a \lstinline{SYSRET} instruction on an intel x86-64 system, the \lstinline{RCX} register contains a malformed value in regards to the requirements of the \lstinline{RIP} register, a general protection fault would be generated by the architecture which aborts the transition to user-mode.
-It is, however, very likely that at this point the interrupt handler would have already set the stack-pointer back to the user-mode's context leaving the machine-mode with a user-mode controlled stack-pointer.
+If, on executing a \lstinline{SYSRET} instruction on an intel x86 system, the \lstinline{RCX} register contains a malformed value in regards to the requirements of the \lstinline{RIP} register, a general protection fault is generated by the architecture which aborts the transition to user-mode.
+It is, however, very likely that at this point the interrupt handler would has already set the stack-pointer back to the user-mode's context leaving the machine-mode with a user-mode controlled stack-pointer.
 At the time of disclosure of the SYSRET vulnerability, several major operating systems were affected by it, such as Debian \cite{SYSRETDebian}, FreeBSD \cite{SYSRETFreeBSD} and Microsoft Windows 7 \cite{SYSRETMicrosoft}.
 
 The core of the SYSRET vulnerability is the exception that is being generated during the executing of the \lstinline{SYSRET} instruction that will be handled before privilege is set back to user-mode but after the stack-pointer has been set to user-mode.
 
 \paragraph{Modification of the MINRV8 Architecture}
-This very core of the SYSRET vulnerability can be optionally added to the MINRV8 architecture.
+This very core of the SYSRET vulnerability can optionally be added to the MINRV8 architecture.
 This extension adds three new registers and four instructions to the architecture:
 \begin{itemize}
     \item Two stack-pointer registers, \smv{sp[0]} and \smv{sp[1]}
@@ -374,17 +402,17 @@ This extension adds three new registers and four instructions to the architectur
     \item An instruction to pop a value from the stack and store it into register \minrv{rd}, \minrv{Pop rd}
 \end{itemize}
 
-As can be guessed from the available instructions that deal with the stack, it does not support much automation by hardware.
+As can be guessed from the available instructions that deal with the stack, not much automation by hardware is supported.
 There are no stack-pointers dedicated to specific privilege-modes.
 Consequently, stack-pointers are not automatically switched by hardware on privilege-mode changes.
 However, when pushing to or popping from the stack, the stack-pointer automatically is in- or decremented.
 Additionally, when the stack-pointer after being pushed to or popped from crosses the boundary of the memory as a whole or of single memory regions, the architecture also ensures that it wraps around inside its memory region.
-It might be a threat to some architectures having the stack-pointer move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out.
+It might be a threat to some architectures having the stack-pointer move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out by definition.
 
-Furthermore, an \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither read- nor writable to user-mode.
+An \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither read- nor writable to user-mode.
 This, as usual, ensures that the information flow properties are not violated by some obvious initial condition.
 
-With the extension to the architecture also comes an assumption that tries to emulate all the major steps that software vulnerable to the SYSRET attack already follows but which do not suffice to implement a secure system.
+Furthermore, with the extension to the architecture comes an assumption that emulates all the major steps that software vulnerable to the SYSRET attack already follows but which do not suffice to implement a secure system.
 This assumption is called \smv{SP_BANK} and is depicted in snippet \ref{snpt:sp-bank}.
 It comprises four parts.
 Firstly, in lines \ref{ln:sp-call-start}-\ref{ln:sp-call-end}, it is assumed that machine-mode must not use the \minrv{Push} or \minrv{Pop} instructions before the stack points to a safe memory region.
@@ -396,7 +424,7 @@ These two assumptions closely resemble the assumptions \smv{SAN_ON_CALL} and \sm
 
 Thirdly, in lines \ref{ln:sp-sel-start}-\ref{ln:sp-sel-end}, machine-mode is also not allowed to use the \minrv{Push} or \minrv{Pop} instructions when it \textit{selects} a stack-pointer pointing to a user-mode-controlled region.
 This ensures that machine-mode not deliberately decides to use a bad stack-pointer.
-And lastly, in lines \ref{ln:sp-set-start}-\ref{ln:sp-set-end}, for the same reasons it is also assumed that machine-mode does not \textit{set} its stack-pointer to point to a memory region controlled by user-mode.
+And lastly, in lines \ref{ln:sp-set-start}-\ref{ln:sp-set-end}, for the same reasons it is also assumed that machine-mode does not set its stack-pointer to point to a memory region controlled by user-mode.
 These two parts follow the same structure as the first part of the \smv{SP_BANK} assumption but trigger on different conditions.
 
 \begin{figure}
@@ -452,7 +480,7 @@ In the counter-example for the \smv{MEMORY_OP_INTEGRITY} property, the architect
 }.
 In the first two instructions, machine-mode selects a user-mode controlled stack-pointer as the active one and attempts to give back control to user-mode.
 However, an external interrupt must have been set pending and taken exactly when machine-mode attempted to execute the \minrv{Mret} instruction since no privilege-mode transition occurs.
-The memory region that is pointed towards by the now active stack-pointer contains only untrusted values.
+The memory region that is pointed towards by the now active stack-pointer contains untrusted values only.
 This alone marks the core of the SYSRET vulnerability but it only becomes a problem because machine-mode then decides to pop a value from the stack which consequently is untrusted and then uses that value.
 
 In the case of the SYSRET vulnerability, a specially crafted value must have been placed into a special register to trigger an exception during the \lstinline{SYSRET} instruction.
