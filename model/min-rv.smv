@@ -16,6 +16,7 @@ $default(
     CACHE_VULN=False,
     SP_ENABLE=False,
     MPRV=False,
+    CACHE_INVALIDATE_ON_TRANS=False,
 )
 
 $# Available assumptions
@@ -106,6 +107,7 @@ MODULE cache_line(main_module)
         integrity : unsigned word[$XLEN];
 
     DEFINE
+        __priv := main_module.priv;
         __op := main_module.op;
         __mem_addr := main_module.mem_addr;
         __rs2 := main_module.rs2;
@@ -142,6 +144,10 @@ MODULE cache_line(main_module)
             & (__target_wb | (__target_wt & __hit));
 
     TRANS next(valid) = case
+        $if(CACHE_INVALIDATE_ON_TRANS)
+            -- Invalidate cache on mode-transition
+            __priv != next(__priv): FALSE;
+        $endif
         main_module.do_trap: valid;
         -- Invalidate cache when cache gets disabled
         next(__un): FALSE;
