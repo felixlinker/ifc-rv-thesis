@@ -184,3 +184,28 @@ Again, a mysterious confidential word appears in register three which must have 
     \end{subtable}
     \caption{Counter-examples for \smv{CLR_CACHE_ON_DECLASSIFICATION} and \smv{SAN_CACHE_ON_CLASSIFICATION}}
 \end{table}
+
+It could be seen that counter-example \ref{tbl:cex-no-leak-ccod} to the cache-relate assumptions \smv{CLR_CACHE_ON_DECLASSIFICATION} resulted in a trace where memory privileges are lowered but sensitive data remains in cache.
+One therefore might think that this vulnerability can be mitigated by changing the architecture such that the cache is invalidated on mode-transitions\footnote{%
+    The traces \ref{tbl:cex-mem-i-scocl} and \ref{tbl:cex-csr-i-scocl} both do not involve mode-transitions.
+    However, it could be safely assumed that initially, the confidentiality or integrity labels in the cache line are low or high respectively.
+    This would rule out the initial state where malicious data is in cache and bring the need for user-mode to prep the cache with such data.
+}.
+However, the critical part of the cache-related assumptions does not lie in the privilege-transition itself.
+
+Consider the trace depicted in table \ref{tbl:cex-no-leak-inval-trans}.
+This trace was generated \textit{with} the adoption to the architecture that the cache is invalidated on any mode-transition and is straight-forward:
+machine-mode first gives user-mode read access to memory region one which is fine since only public values are stored in that region.
+Then, machine-mode attempts to load some word from memory which, however, leads to a confidential value appearing in memory region one.
+How can that be?
+Note that memory region one is set to be write-back cacheable.
+There must have been some confidential value in the cache which was written back to memory because the cache was about to be filled with other data by the \smv{Load} instruction.
+When machine-mode now returns control back to user-mode, having the cache invalidated still allows user-mode to load the confidential value from the memory region accessible to it.
+Therefore, this architectural mitigation does not suffice and cache needs to be taken into account when changing access privileges of memory regions.
+
+\begin{table}
+    \centering
+    \input{../results/CACHE-INVALIDATE-ON-TRANS/NO-LEAK.tex}
+    \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak}) counter-example when invalidating the cache on privilege transitions}
+    \label{tbl:cex-no-leak-inval-trans}
+\end{table}
