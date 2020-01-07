@@ -210,3 +210,94 @@ Therefore, this architectural mitigation does not suffice and cache needs to be 
     \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak}) counter-example when invalidating the cache on privilege transitions}
     \label{tbl:cex-no-leak-inval-trans}
 \end{table}
+
+\section{Canary Related Counter-Examples}
+\label{sec:cexs-canaries}
+
+\subsection{Cache Poisoning Attack on x86}
+
+As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
+We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) in detail now.
+Initially, user-mode executes a \minrv{Store} instruction which is not reflected in memory.
+Then, it reads from a \gls{csr} to put a trusted value into register 0.
+Interestingly, user-mode thereby aids machine-mode in sanitizing the registers since now, all registers contain trusted values.
+In the next step, a pending external interrupt is taken which leads to the transition to machine-mode.
+Machine-mode performs a load instruction targeting the same address as the user's store instruction which leads to an untrusted value being stored in register two.
+This value is then used to perform a load/store operation.
+
+The load in the fourth step resulting in an untrusted value means, the initial store must have been targeting the only region set cacheable which is region one in table \ref{tbl:cex-mem-i-cache-vuln} and region zero in table \ref{tbl:cex-csr-i-cache-vuln} respectively.
+Here, it can be seen that dropping memory privilege controls on cache-writes and -reads leads to states inconsistent with the MINRV8 specification.
+In table \ref{tbl:cex-mem-i-cache-vuln}, memory region one is locked and as neither the read- nor the write-bit is set, both user- and machine-mode should not be able to read from or write to memory region one.
+Yet, the cache-access succeeds.
+
+In the case of the original cache-poisoning attack, the authors wrote to executable memory directly influencing what would be executed by System Management Mode.
+Since the MINRV8 model does not support a model of executable memory, it is not possible to implement this exact vulnerability here.
+However, these counter-examples show that it is still possible to implement the very core of the cache poisoning attack into the MINRV8 model which leads to a similar vulnerability of the architecture.
+
+This carries over to the counter-example for property \smv{NO_LEAK} (\ref{itm:prop-no-leak}) which is depicted in table \ref{tbl:cex-no-leak-cache-vuln}.
+This counter-example more closely matches the alternative version of the cache-poisoning attack used for reading SMM memory.
+nuXmv sets the initial state up such that the cache holds some confidential data for one of the memory regions which both are set to be write-back-cacheable and non-readable to user-mode.
+Yet still, user-mode can gain access to the confidential word in cache as no access controls are performed when reading from cache.
+
+\begin{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/CACHE-VULN/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+        \label{tbl:cex-mem-i-cache-vuln}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/CACHE-VULN/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+        \label{tbl:cex-csr-i-cache-vuln}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/CACHE-VULN/NO-LEAK.tex}
+        \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
+        \label{tbl:cex-no-leak-cache-vuln}
+    \end{subtable}
+    \caption{Counter-examples for the Cache Vulnerability}
+    \label{tbl:cex-cache-vuln}
+\end{table}
+
+\subsection{The SYSRET Vulnerability}
+
+Here, only the integrity-related properties shall be covered as only these are relevant to the SYSRET vulnerability.
+The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.
+A new feature is used to visualize the two stack-pointers.
+It has already been mentioned that the architecture supports two stack-pointers being indexed by \minrv{0} and \minrv{1}.
+These indices are visualized by a superscript in the cells that contain the memory labels.
+For example, in table \ref{tbl:cex-mem-i-sysret} the stack-pointer \minrv{sp[1]} points to address \minrv{1} and \minrv{sp[0]} to address \minrv{3}.
+The stack-pointer selected as currently active is highlighted by being underlined.
+
+As usual, both counter-examples for the \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRTIY} (\ref{itm:prop-csr-i}) properties are very similar.
+Therefore, only the first of these counter-examples will be introduced in detail.
+In the counter-example for the \smv{MEMORY_OP_INTEGRITY} property, the architecture starts in machine-mode with stack-pointer one being active and set to memory region zero which only contains trusted values\footnote{%
+    Furthermore, memory region zero is locked and not set to be write- or readable which makes it inaccessible to machine-mode but this is not relevant to the counter-example.
+}.
+In the first two instructions, machine-mode selects a user-mode controlled stack-pointer as the active one and attempts to give back control to user-mode.
+However, an external interrupt must have been set pending and taken exactly when machine-mode attempted to execute the \minrv{Mret} instruction since no privilege-mode transition occurs.
+The memory region that is pointed towards by the now active stack-pointer contains untrusted values only.
+This alone marks the core of the SYSRET vulnerability but it only becomes a problem because machine-mode then decides to pop a value from the stack which consequently is untrusted and then uses that value.
+
+\begin{table}
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SP-ENABLE/MEMORY-OP-INTEGRITY.tex}
+        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
+        \label{tbl:cex-mem-i-sysret}
+    \end{subtable}
+
+    \begin{subtable}{\textwidth}
+        \centering
+        \input{../results/SP-ENABLE/CSR-INTEGRITY.tex}
+        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
+        \label{tbl:cex-csr-i-sysret}
+    \end{subtable}
+    \caption{Counter-examples for the SYSRET vulnerability}
+    \label{tbl:cex-sysret}
+\end{table}

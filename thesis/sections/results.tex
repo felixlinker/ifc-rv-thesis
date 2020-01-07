@@ -303,41 +303,21 @@ However, the basic idea can still be implemented by following changes to the mod
 These changes manage to introduce a vulnerability to the MINRV8 architecture.
 If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv manages to find a counter-example for all three information flow properties.
 These are depicted in table \ref{tbl:cex-cache-vuln}.
-As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
-We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) in detail now.
-Initially, user-mode executes a \minrv{Store} instruction which is not reflected in memory.
-Then, it reads from a \gls{csr} to put a trusted value into register 0.
-Interestingly, user-mode thereby aids machine-mode in sanitizing the registers since now, all registers contain trusted values.
-In the next step, a pending external interrupt is taken which leads to the transition to machine-mode.
-Machine-mode performs a load instruction targeting the same address as the user's store instruction which leads to an untrusted value being stored in register two.
-This value is then used to perform a load/store operation.
 
-The load in the fourth step resulting in an untrusted value means, the initial store must have been targeting the only region set cacheable which is region one in table \ref{tbl:cex-mem-i-cache-vuln} and region zero in table \ref{tbl:cex-csr-i-cache-vuln} respectively.
-Here, it can be seen that dropping memory privilege controls on cache-writes and -reads leads to states inconsistent with the MINRV8 specification.
-In table \ref{tbl:cex-mem-i-cache-vuln}, memory region one is locked and as neither the read- nor the write-bit is set, both user- and machine-mode should not be able to read from or write to memory region one.
-Yet, the cache-access succeeds.
-
-In the case of the original cache-poisoning attack, the authors wrote to executable memory directly influencing what would be executed by System Management Mode.
-Since the MINRV8 model does not support a model of executable memory, it is not possible to implement this exact vulnerability here.
-However, these counter-examples show that it is still possible to implement the very core of the cache poisoning attack into the MINRV8 model which leads to a similar vulnerability of the architecture.
-
-This carries over to the counter-example for property \smv{NO_LEAK} (\ref{itm:prop-no-leak}) which is depicted in table \ref{tbl:cex-no-leak-cache-vuln}.
-This counter-example more closely matches the alternative version of the cache-poisoning attack used for reading SMM memory.
-nuXmv sets the initial state up such that the cache holds some confidential data for one of the memory regions which both are set to be write-back-cacheable and non-readable to user-mode.
-Yet still, user-mode can gain access to the confidential word in cache as no access controls are performed when reading from cache.
+\todo[inline]{Fix text flow}
 
 One distinction from the original cache-poisoning attack to these counter-examples is that here, the attacker can't set the attacked memory region to be cacheable in the first place.
 This difference does not play a major role since the attack can take place nonetheless if some memory region happens to be locked down to user-mode and is set to be write-back-cacheable, still this weakens the attack to some degree.
 
 What can be done to mitigate this attack?
 Obviously, the vulnerability purposefully introduced to the architecture could be dropped.
-It is not clear, though, how realistic this characteristic of the MINRV8 architecture is since at least in the case of the x86 architecture, the findings of \cite{Wojtczuk09} suggest that is not possible for the hardware to perform privilege checks when writing to the cache.
-Therefore this vulnerability stresses a weakness of the model as implemented in this thesis.
-Since the MINRV8 architecture only knows two privilege modes, the problem of setting potentially \enquote{interesting} regions of memory to be cacheable for an attack does not come into play.
-If, however, three or more privilege modes were given the question would arise which of the non-user-modes should be able to set caching methods for memory regions.
-If for example the supervisor-mode of RISC-V also was part of the MINRV8 architecture and additionally would be allowed to write \gls{pmacfg} registers, a possible attack vector to gain access to machine-mode would be to first gain access to supervisor-mode and then set memory regions of interest to be write-back-cacheable.
+At this point, though, it is not clear how realistic this characteristic of the MINRV8 architecture is since at least in the case of the x86 architecture, the findings of \cite{Wojtczuk09} suggest hardware does not perform privilege checks when writing to the cache.
 
-One possible approach to this would be to extend the MINRV8 architecture by said supervisor-mode and to test how architectural measures could mitigate this vulnerability, if for hardware-reasons, the platform could not check privileges for cache accesses.
+It not likely, however, that RISC-V is vulnerable to this attack.
+One the one hand, the specification states that cacheability settings can be modified by machine-mode only \cite[p.43]{RiscVISAP}.
+One the other hand, it also states that \gls{pmp} attributes (including access privileges) are checked in \textit{parallel} to \glspl{pma} (defining cacheability), i.e. regardless of cacheability settings, and always trap at privilege violations \cite[44-45]{RiscVISAP}.
+This indicates that neither would a privilege mode other than machine-mode be able to set any memory region cacheable nor would it be able to read from cache of memory regions it otherwise does not have access to.
+It should be part of future work, though, to implement a complete model of the RISC-V specification which would verify whether RISC-V is actually not susceptible to this attack vector.
 
 \begin{table}
     \begin{subtable}{\textwidth}
@@ -371,24 +351,30 @@ The so called \textit{SYSRET vulnerability} to the intel x86 architecture is lis
 To our knowledge, the most concise and freely available explanation of the vulnerability can be found in the blog post \textit{The Intel SYSRET Privilege Escalation} by George Dunlap published on the page of Xen Project, a community for virtualization-related open source projects which in part also have been affected by said vulnerability \cite{Dunlap19}.
 
 The x86 architecture provides multiple ways to switch between privilege modes.
-In principle, these ways work analogously to how the MINRV8 architecture changes privilege modes: either an interrupt/exception leads to the privilege escalation or a dedicated instruction is executed that changes privilege mode, i.e. \minrv{Ecall} in case of the MINRV8 architecture.
+In principle, these ways work analogously to how the MINRV8 architecture changes privilege modes: either an interrupt/exception leads to the privilege escalation or a dedicated instruction is executed that changes privilege mode, e.g. \minrv{Ecall} in case of the MINRV8 architecture.
 In general, when changing the privilege mode, the \lstinline{RIP} register, which is the \gls{pc} equivalent for x86 architectures, and the stack-pointer are set to the respective version of the targeted privilege-mode.
 The designers of the architecture, however, found that parts of the normal privilege mode changing routines could be left out in some scenarios to improve performance.
 One of this routines to be left out was changing the stack-pointer by hardware.
-If fast interrupts are needed on the x86, programs can execute the \lstinline{SYSCALL} instruction to make a cheap transition to high-privilege mode which is then paired with a \lstinline{SYSRET} instruction to return control back to user-mode.
-However, since \lstinline{SYSCALL} does not set the stack-pointer accordingly, it is the obligation of the interrupt handler to set the stack-pointer back to user-mode\footnote{%
+These performance improvements are implemented in the \lstinline{SYSCALL} instruction which makes a cheap transition to high-privilege mode by for instance not changing the stack-pointer by hardware.
+In consequence, there is the analogous \lstinline{SYSRET} instruction to return control back to user-mode which also does not set the stack-pointer.
+However, if an interrupt handler invoked by the \lstinline{SYSCALL} instruction intends to use the stack-pointer, it must first set the stack-pointer up accordingly and afterwards set it back to user-mode\footnote{%
     There are more than two privilege modes provided by the x86 architecture and they also have different names than the privilege modes of the MINRV8 architecture, however, the SYSRET vulnerability only touches two privilege modes with have the same purpose as user- and machine-mode in the case of the MINRV8 architecture.
     Therefore, in this context, the terms user-mode and machine-mode will also be used to talk about the x86 architecture.
 } before executing the \lstinline{SYSRET} instruction.
 
-When \lstinline{SYSRET} restores the user-mode's context, it reads the \lstinline{RIP} value from the \lstinline{RCX} register which is used by the \lstinline{SYSCALL} instruction to store the value of the \lstinline{RIP} register in the first place.
+When \lstinline{SYSRET} restores the user-mode's context, it reads the \lstinline{RIP} value from the \lstinline{RCX} register which is used to store the original value of the \lstinline{RIP} register during interrupt handling.
 Furthermore, the x86 architecture requires the contents of the \lstinline{RIP} register to be in a special form.
 The same requirements are, though, not imposed on the contents of the \lstinline{RCX} register.
 If, on executing a \lstinline{SYSRET} instruction on an intel x86 system, the \lstinline{RCX} register contains a malformed value in regards to the requirements of the \lstinline{RIP} register, a general protection fault is generated by the architecture which aborts the transition to user-mode.
 It is, however, very likely that at this point the interrupt handler would has already set the stack-pointer back to the user-mode's context leaving the machine-mode with a user-mode controlled stack-pointer.
 At the time of disclosure of the SYSRET vulnerability, several major operating systems were affected by it, such as Debian \cite{SYSRETDebian}, FreeBSD \cite{SYSRETFreeBSD} and Microsoft Windows 7 \cite{SYSRETMicrosoft}.
 
-The core of the SYSRET vulnerability is the exception that is being generated during the executing of the \lstinline{SYSRET} instruction that will be handled before privilege is set back to user-mode but after the stack-pointer has been set to user-mode.
+The core of the SYSRET vulnerability is the exception that is being generated during the executing of the \lstinline{SYSRET} instruction and handled before privilege is set back to user-mode but after the stack-pointer has been set to user-mode.
+
+It is noteworthy that the SYSRET vulnerability did not affect the x86 specification of Intel but \glspl{os} incorrectly using the specification.
+One could argue that the SYSRET vulnerability was only made possible by poor design decisions by Intel, however, at its core, the SYSRET vulnerability only came to effect because \gls{os} engineers did not have this corner case of the specification in mind when writing interrupt handlers.
+This stresses the benefits of this thesis's approach since not only the specification but also software running on it will be verified.
+It will turn out that the core of the SYSRET vulnerability will be detected by our approach and that both a mitigation in the architecture and in software can be verified to be successful.
 
 \paragraph{Modification of the MINRV8 Architecture}
 This very core of the SYSRET vulnerability can optionally be added to the MINRV8 architecture.
@@ -406,7 +392,7 @@ As can be guessed from the available instructions that deal with the stack, not 
 There are no stack-pointers dedicated to specific privilege-modes.
 Consequently, stack-pointers are not automatically switched by hardware on privilege-mode changes.
 However, when pushing to or popping from the stack, the stack-pointer automatically is in- or decremented.
-Additionally, when the stack-pointer after being pushed to or popped from crosses the boundary of the memory as a whole or of single memory regions, the architecture also ensures that it wraps around inside its memory region.
+Additionally, whenever the stack-pointer is in- or decremented and thereby crosses the boundary of a memory region or the memory as a whole, the architecture also ensures that it wraps around inside its memory region.
 It might be a threat to some architectures having the stack-pointer move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out by definition.
 
 An \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither read- nor writable to user-mode.
@@ -416,8 +402,7 @@ Furthermore, with the extension to the architecture comes an assumption that emu
 This assumption is called \smv{SP_BANK} and is depicted in snippet \ref{snpt:sp-bank}.
 It comprises four parts.
 Firstly, in lines \ref{ln:sp-call-start}-\ref{ln:sp-call-end}, it is assumed that machine-mode must not use the \minrv{Push} or \minrv{Pop} instructions before the stack points to a safe memory region.
-Alternatively, machine-mode also might not use these instructions at all.
-In this case, the requirements to machine-mode are dropped as soon as it returns control back to user-mode.
+Alternatively, machine-mode also might not use these instructions at all until it returns control back to user-mode.
 Secondly, in lines \ref{ln:sp-return-start}-\ref{ln:sp-return-end}, whenever machine-mode hands control back to user-mode the prior instruction must have selected a stack-pointer that is user-mode controllable.
 This assumption is the most critical to the SYSRET vulnerability.
 These two assumptions closely resemble the assumptions \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} as shown in section \ref{sec:assumptions}, snippets \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
@@ -465,45 +450,12 @@ These two parts follow the same structure as the first part of the \smv{SP_BANK}
 
 All these assumptions, however, do not ensure that the architecture models all information flow properties.
 Similar to the SYSRET vulnerability, there is a stream of instructions that violates each of these properties.
-Here, only the integrity-related properties shall be covered as only these are relevant to the SYSRET vulnerability.
-The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.
-The tables that can be found there use a new feature to visualize the two stack-pointers.
-It has already been mentioned that the architecture supports two stack-pointers being indexed by \minrv{0} and \minrv{1}.
-These indices are visualized by a superscript in the cells that contain the memory labels.
-For example, in table \ref{tbl:cex-mem-i-sysret} the stack-pointer \minrv{sp[1]} points to address \minrv{1} and \minrv{sp[0]} to address \minrv{3}.
-The stack-pointer selected as currently active is highlighted by being underlined.
 
-As usual, both counter-examples for the \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRTIY} (\ref{itm:prop-csr-i}) properties are very similar.
-Therefore, only the first of these counter-examples will be introduced in detail.
-In the counter-example for the \smv{MEMORY_OP_INTEGRITY} property, the architecture starts in machine-mode with stack-pointer one being active and set to memory region zero which only contains trusted values\footnote{%
-    Furthermore, memory region zero is locked and not set to be write- or readable which makes it inaccessible to machine-mode but this is not relevant to the counter-example.
-}.
-In the first two instructions, machine-mode selects a user-mode controlled stack-pointer as the active one and attempts to give back control to user-mode.
-However, an external interrupt must have been set pending and taken exactly when machine-mode attempted to execute the \minrv{Mret} instruction since no privilege-mode transition occurs.
-The memory region that is pointed towards by the now active stack-pointer contains untrusted values only.
-This alone marks the core of the SYSRET vulnerability but it only becomes a problem because machine-mode then decides to pop a value from the stack which consequently is untrusted and then uses that value.
+\todo[inline]{Fix flow of text}
 
 In the case of the SYSRET vulnerability, a specially crafted value must have been placed into a special register to trigger an exception during the \lstinline{SYSRET} instruction.
 In case of the MINRV8 architecture, no such special mechanisms are necessary.
 Here, the vulnerability is triggered by an external interrupt which goes along with the core idea of the SYSRET vulnerability nicely.
-
-\begin{table}
-    \begin{subtable}{\textwidth}
-        \centering
-        \input{../results/SP-ENABLE/MEMORY-OP-INTEGRITY.tex}
-        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
-        \label{tbl:cex-mem-i-sysret}
-    \end{subtable}
-
-    \begin{subtable}{\textwidth}
-        \centering
-        \input{../results/SP-ENABLE/CSR-INTEGRITY.tex}
-        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
-        \label{tbl:cex-csr-i-sysret}
-    \end{subtable}
-    \caption{Counter-examples for the SYSRET vulnerability}
-    \label{tbl:cex-sysret}
-\end{table}
 
 \paragraph{Mitigations}
 
@@ -514,8 +466,8 @@ Aforementioned assumption is depicted in snippet \ref{snpt:sp-safety}.
 It states that interrupts must be disabled, whenever machine-mode hands back control to user-mode.
 This rules out any attack vector where an external interrupt aborts the execution of the \minrv{Mret} instruction leaving machine-mode with a user-mode-controlled stack pointer.
 Some pending external interrupt can then only be handled after the \minrv{Mret} instruction has been executed.
-This makes the MINRV8 architecture effectively more similar to AMD's version of the x86 architecture which is not vulnerable to the SYSRET vulnerability \cite{Dunlap19}.
-In AMD's x86 architecture, when setting the \lstinline{RIP} with a bad value the general protection fault is thrown after the privilege mode has been lowered rendering the SYSRET attack vector ineffective.
+This resembles AMD's version of the x86 architecture which is not susceptible to the SYSRET vulnerability \cite{Dunlap19}.
+In AMD's implementation of the x86 architecture, when setting the \lstinline{RIP} with a bad value the general protection fault is thrown after the privilege mode has been lowered rendering the SYSRET attack vector ineffective.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -536,7 +488,7 @@ However, new assumptions and \smv{INIT} constraints must be introduced.
 With the hardware automatically switching stack-pointers, it must be ensured that the memory regions these stack-pointers point to always are assigned with the respective privileges, i.e. user-mode-stack-pointer is user-mode-read- and -writeable, etc.
 This is assumed initially, and made stable by the assumption given in snippet \ref{snpt:sp-autobank-assumption}.
 These assumptions are to some extent unrealistic as it cannot be taken for granted that machine-mode actually is capable of setting up the memory regions correctly and guaranteeing that user-mode does not interfere with these settings.
-However, verifying such mechanisms is out of scope in this thesis.
+However, verifying such mechanisms does not serve any purpose at this point and was skipped as a consequence.
 We therefore make aforementioned assumptions to show that \textit{given} such mechanisms, the herein proposed hardware mitigation to the SYSRET vulnerability can be verified by our approach.
 
 \begin{figure}

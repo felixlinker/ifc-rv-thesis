@@ -20,9 +20,9 @@ We found that related work can be characterized by four dimensions:
     \item Information flow properties are either expressed directly or as non-interference properties.
 \end{enumerate}
 
-Given these categories, our work falls into the box of having hardware as subject, verifying a specification statically via direct information flow properties.
+Given these categories, our work has hardware as subject verifying a specification statically via direct information flow properties.
 
-Two papers that do not consider hardware verification come from the Massachusetts Institute of Technology.
+Two papers that do not consider hardware but software verification come from the Massachusetts Institute of Technology.
 Firstly, \citeauthor{GordonKPGNR15} present their tool DroidSafe for static analysis of information flow properties for android applications in \citetitle{GordonKPGNR15} \cite{GordonKPGNR15}.
 Secondly, \citeauthor{SuhLZD04} propose an approach to live track information on \gls{os} level tacking by traps on security policy violations in \citetitle{SuhLZD04} \cite{SuhLZD04}.
 It is quite far-fetched to call \cite{SuhLZD04} a paper about \textit{verification}.
@@ -44,18 +44,17 @@ The authors propose a simple security policy involving two rules:
     \textit{No instruction can be generated from I/O inputs}, and \textit{No I/O inputs and spurious values based on propagated inputs can be used as pointers unless they are bound-checked and added to an authentic pointer}.
 \end{displaycquote}
 
-Whereas the first can not be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to the integrity property \ref{itm:prop-mem-i} which (in words of the authors of \cite{SuhLZD04}) states that no \enquote{spurios} value can be used as pointer.
+Whereas the first can not be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to the integrity property \ref{itm:prop-mem-i} which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
 The exception of bound-checks is implicitly modelled by the \smv{SAN_ON_*} assumptions in section \ref{sec:results} which mandate from machine-mode to sanitize register of spurious values before using them.
 Such a sanitization might be implemented by boundary-checking.
-\todo{Double check whether this actually is true}
-Recall that the security lattice continues to track data as malicious only if both sources of an operation are malicious.
-For example, comparing a value to a constant bound, loaded from trusted memory would set it to be trustworthy.
+Here, machine-mode can only sanitize registers by clearing them, e.g. by using the shift left instruction \minrv{Sll}.
+This is not critical for our results since if an actual value ever was to be relevant for an attack, nuXmv could have chosen to let machine-mode load this exact value via an \minrv{Loadi} instruction.
+If, however, executable memory was part of the model, sanitization methods might need to be adopted.
 
 The approach of \cite{SuhLZD04} achieves a 100\% success rate in a benchmark and the authors claim that their approach has negligible performance impact.
 
-These two papers were those related to software.
-The other five papers are all related to hardware.
-\citeauthor{Zhang15} considered the detection of hardware trojans in \citetitle{Zhang15} \cite{Zhang15}, i.e. parts of an integrated circuit that behave maliciously, can be activated by very few inputs and otherwise do not affect the functionality of the circuit.
+All remaining papers are all related to hardware.
+\citeauthor{Zhang15} consider the detection of hardware trojans in \citetitle{Zhang15} \cite{Zhang15}, i.e. parts of an integrated circuit that behave maliciously, can be activated by very few inputs and otherwise do not affect the functionality of the circuit.
 They analyzed \gls{hdl} implementations of such integrated circuits searching for (mostly) unused parts in the design.
 The techniques employed in this work do not come close to what has been used in this thesis.
 However, one can view the detection of (mostly) unused parts of a design and information flow tracking as two sides of the same coin: whereas here, we strived for finding out where information can flow, the authors in \cite{Zhang15} aim for finding out where information (mostly) does not flow.
@@ -64,11 +63,12 @@ However, one can view the detection of (mostly) unused parts of a design and inf
 He implements a formal model of the ARM architecture in the theorem prover HOL, using general first order logic.
 In this implementation, \citeauthor{Fox02} models two views on the ARM architecture: the \gls{isa} itself and the micro-architecture implementing this \gls{isa}.
 \citeauthor{Fox02} uses theorems expressing that there always must be some correspondence between runs of the \gls{isa}-world and runs of the micro-architecture-world.
-If for a given list of instructions or a given list of steps in the micro-architecture, no corresponding run of the opposite world can be found, the architecture itself must be flawed.
+If for a given list of instructions or a given list of steps in the micro-architecture, no corresponding run of the opposite world can be found, either the micro-architecture or the \gls{isa} must be flawed.
 This work was picked up by \citeauthor{KhakpourSD13} in \citetitle{KhakpourSD13} \cite{KhakpourSD13}.
 The authors here extend the implementation of \citeauthor{Fox02} proving three isolation properties of user- and machine-mode:
 User-mode processes must only depend on process-accessible-resources, processes must only modify those memory regions they can access by a given \gls{mmu} configuration and user-mode-processes must only execute code by calling machine-mode through a trap.
 The first of these is a non-interference property.
+\todo{Explain non-interference better}
 In general, non-interference properties state that a given system (in this case: user-mode-processes) must not be influenced by certain values (in this case: non-user-mode-process accessible resources).
 They are generally stated in the following form: whenever two initial states of the system agree on a list of selected values, the respective final states must also agree on these values.
 This is an indirect way of expressing information flow properties.
@@ -80,7 +80,7 @@ It would be an interesting line of research to add an \gls{mmu} to the model and
 
 On the other hand, \citeauthor{KhakpourSD13} do not give any sense for what these properties actually achieve when it comes to security.
 It is not clear what kind of bugs concretely might be tackled by their properties; whilst they are intuitive and certainly should be met by the ARM architecture, it is unclear whether they actually guarantee any desirable characteristics of the architecture.
-To some extent, these properties fall out of nowhere.
+These properties fall out of nowhere.
 Whilst this critique to some extent also applies to our work, we think that the methodology of deriving the information flow properties as presented in section \ref{sec:checking} gives some sense of completeness to our properties which is missing from the work of \citeauthor{KhakpourSD13}.
 
 Lastly, we consider the work of \citeauthor{Nienhuis19} in \citetitle{Nienhuis19} \cite{Nienhuis19}.
@@ -103,9 +103,9 @@ In their methodology, the authors first identify a group of vulnerable instructi
 They then model these instructions alongside with all state touched by these instructions.
 By sparsely constraining the initial state of the model they finally prove: for all initial states, there is no direct successor state where a general protection fault has been thrown and one of the stack, base or instruction pointers is controlled by user-mode.
 The authors claim that by the constraints chosen for the initial states of the model, these states actually embody an over-approximation of all reachable states of the x86 architecture.
-With this methodology, the authors manage to find that Intel's version of the x86 architecture is vulnerable to the SYSRET vulnerability while AMD's version is not.
+With this methodology, the authors manage to correctly find that Intel's version of the x86 architecture is vulnerable to the SYSRET vulnerability while AMD's version is not.
 
-On the one hand, we find it to be unfair to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} clearly does not have the same scope as ours.
+On the one hand, we find it to be unfair to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} clearly does not have the same scope as ours - their paper only comprises five pages.
 On the other hand, we find that the work in \cite{BradfieldS16} is lacking in two, key aspects.
 First and foremost, the problem of a circular argument in verification as discussed in section \ref{sec:trustworthiness} fully applies to this work.
 The authors don't use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restrict their model to instructions of which they know these are relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
@@ -124,15 +124,15 @@ In practice, operating systems opted to ensure that no general protection fault 
 
 In contrast, regarding the first issue, in our work we not only proposed more general properties that were not rooted in specific vulnerabilities but in a structured model of information flow and also would apply to other architectures with few adjustments required, we also took clear and justifiable steps when minimizing the RISC-V architecture such that it would be feasible to verify it in scope of this thesis.
 Regarding the second issue of verifying the x86 architecture to not meet the specification, in our work we took a more moderate approach of verifying mitigations to the SYSRET vulnerability.
-Instead of proving the absence of the SYSRET vulnerability, we opted to prove that the mitigation of disabling interrupts when executing the SYSRET instruction is effective (cf. snippet \ref{snpt:sp-safety}, sec. \ref{sec:sysret}).
+Instead of proving the absence of the SYSRET vulnerability, we opted to prove that the mitigations of either disabling interrupts when executing the SYSRET instruction or changing the stack-pointer by hardware are effective (cf. sec. \ref{sec:sysret}).
 
 \subsection{Summary}
 
-We considered seven papers as related work.
+Seven papers were considered as related work.
 Find an overview of all papers in table \ref{tbl:related-work}.
 Each column classifies related work in regard to the categories introduced at the beginning of this section: the subject of verification is software/hardware and an implementation/specification, verification is performed live/statically and information flow properties are expressed directly or as non-interference properties (if at all).
 
-The work coming closest to our methodology of verification via information flow control considered software and was \cite{GordonKPGNR15,SuhLZD04}.
+The work coming closest to our methodology of verification via information flow control was \cite{GordonKPGNR15,SuhLZD04} and considered software.
 The work coming closest to our goal of verifying specifications against higher level properties was \cite{Fox02,KhakpourSD13,BradfieldS16}.
 Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our model by an implementation of an \gls{mmu} to prove isolation properties on user-process level.
 
@@ -142,6 +142,9 @@ Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our 
         \hline
         & \multicolumn{2}{c |}{Subject} & \multicolumn{2}{c |}{Level} & \multicolumn{2}{c |}{Context} & \multicolumn{2}{c |}{Information Flow} \\
         & SW & HW & Impl. & Spec. & Live & Static & Direct & Non-I. \\
+        \hline
+        This thesis & & \checkmark & & \checkmark & & \checkmark & \checkmark & \\
+        \hline
         \cite{GordonKPGNR15} & \checkmark & & \checkmark & & & \checkmark & \checkmark & \\
         \hline
         \cite{SuhLZD04} & \checkmark & & \checkmark & & \checkmark & & \checkmark & \\

@@ -306,7 +306,7 @@ To achieve this, it must be tackled how such an information flow policy as propo
     \item the labels can be tracked throughout the architecture by a model checker, and
     \item the policy can be controlled by the model checker.
 \end{enumerate*}, i.e. how can the two concepts of information flow tracking and control be implemented using a model checker?
-\todo{Do I answer above questions?}
+\todo{Do I answer above questions? -> yes, but make explicit in sec. 4}
 
 \subsection{RISC-Architectures}
 \label{sec:riscs}
@@ -1083,6 +1083,7 @@ Invariants specify that something (i.e. the respective next-expression) must be 
 \gls{ltl} on the other hand is a temporal logic and as such supports the specification of properties over time.
 Both, \gls{ltl} and \gls{ctl}, will be introduced semi-formally here as presented in the \citetitle{nuXmv} \cite{nuXmv}.
 Interpretations and models of an \gls{ltl} formula are infinite execution paths of a system, or in the context of nuXmv.
+\todo{Example}
 Let $ T = (t_1, t_2, \dots) $ be such an execution path.
 The most simple form of an \gls{ltl} formula again is a next-expression \smv{p}.
 $ T $ models \smv{p} in \gls{ltl} if \smv{p} is true in $ t_1 $.
