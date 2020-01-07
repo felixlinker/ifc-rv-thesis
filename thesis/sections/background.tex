@@ -140,8 +140,8 @@ Types are of a certain kind:
 Any type is of kind $ l $.
 Furthermore, the type $ x \mapsto \tau $ is of kind $ \texttt{int} \rightarrow k $ where $ k $ is the kind of $ \tau $.
 However, when type-checking is performed, types of kind $ l $ are lifted to be of kind $ \texttt{int} \rightarrow l $ such that every type is a partial function from bit indices to information flow labels.
-This construct spares programmers from writing type maps for arrays and bit-vectors where the type does not change per bit.
-This way, a constant type $ \tau $ of kind $ l $ can be applied to a whole bit-vector as for type-checking, $ \tau $ is lifted to $ i \mapsto \tau $ which is of kind $ \texttt{int} \rightarrow l $.
+This construct spares programmers from writing type maps for arrays and bit vectors where the type does not change per bit.
+This way, a constant type $ \tau $ of kind $ l $ can be applied to a whole bit vector as for type-checking, $ \tau $ is lifted to $ i \mapsto \tau $ which is of kind $ \texttt{int} \rightarrow l $.
 
 \begin{example}
     The following snippet shows the type annotation of parts of a register file definition in SecVerilogBL:
@@ -202,7 +202,7 @@ In \cite{Ferraiuolo17} three such environments are introduced:
     \item[Kind environment] $ \Theta $ maps types $ \tau $ to their respective kind $ k $.
 \end{description}
 
-\citeauthor{Ferraiuolo17} introduce eight typing rules; these are for constant expressions and variables, logical and arithmetic expressions, bit-vector concatenation and shifting as well as array indexing.
+\citeauthor{Ferraiuolo17} introduce eight typing rules; these are for constant expressions and variables, logical and arithmetic expressions, bit vector concatenation and shifting as well as array indexing.
 An overview of some typing rules of \cite{Ferraiuolo17} can be found in figure \ref{fig:type-rules}\footnote{%
     It will turn out that only these typing rules are relevant in context of this thesis.
 }.
@@ -319,7 +319,7 @@ To achieve this, it must be tackled how such an information flow policy as propo
     Typically, the operating system will encapsulate the details of doing I/O, allocating memory, and other low-level system functions so that application programmers do not need to worry about such details.
 \end{displaycquote}
 
-Modern architectures all provide instructions of these categories: instructions for general computation, i.e. bit-vector arithmetic, load-store instructions and platform management instructions.
+Modern architectures all provide instructions of these categories: instructions for general computation, i.e. bit vector arithmetic, load-store instructions and platform management instructions.
 
 As a target of verification, this thesis will work with \gls{risc} architectures.
 In \citetitle{Hennessy12}, \gls{risc} architectures are defined by three main concepts \cite[p.C-4]{Hennessy12}:
@@ -995,8 +995,8 @@ The initial state must model the \smv{INIT} constraints the transition relation 
 Whenever nuXmv checks a property $ P $ for a module $ M $ it is checked if every state transition system $ S $ which is given by $ M $ models $ P $.
 
 SMV is a strongly typed language.
-Variables can be of type boolean, integer range, a custom enumeration, bit-vector or array in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
-\smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit-vectors, arrays, etc., such as basic arithmetic, array indexing, standard boolean operators on both bit-vector and boolean level, but also case and if-then-else expressions.
+Variables can be of type boolean, integer range, a custom enumeration, bit vector or array in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
+\smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit vectors, arrays, etc., such as basic arithmetic, array indexing, standard boolean operators on both bit vector and boolean level, but also case and if-then-else expressions.
 \smv{TRANS} constraints also are forumlas of propositional logic but additionally support use of the \smv{next(...)} operator which is a reference to the value of the respective expression in the next state.
 
 \begin{example}
