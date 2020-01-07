@@ -3,13 +3,12 @@
 \section{Discussion}
 \label{sec:discussion}
 
-\todo{glspl ifc}
-In section \ref{sec:checking}, a set of IFC properties based on the work in \cite{Ferraiuolo17} has been introduced; we will refer to these properties as the set $ P $.
+In section \ref{sec:checking}, a set of \gls{ifc} properties based on the work in \cite{Ferraiuolo17} has been introduced; we will refer to these properties as the set $ P $.
 These properties were model checked in the previous section \ref{sec:results}, the result of which was a set of rules $ R $.
 What is the consequence of this?
 The formal achievement of this thesis can be summarized as follows:
 \begin{quote}
-    It can be guaranteed that programs running on the MINRV8 architecture, e.g. \glspl{os}, are \textit{secure} (in the sense of not violating the IFC properties $ P $) if they obey to the rules $ R $.
+    It can be guaranteed that programs running on the MINRV8 architecture, e.g. \glspl{os}, are \textit{secure} (in the sense of not violating the \gls{ifc} properties $ P $) if they obey to the rules $ R $.
 \end{quote}
 But what does \enquote{secure} mean here besides not violating $ P $?
 What is the \textit{actual} sense of security that can be guaranteed?
@@ -116,7 +115,7 @@ However, as input variables can not be constrained in nuXmv, there is no way to 
     \item Second return: \lstinline[language=minrv8,mathescape=true]{Slt, $\dots$}
 \end{enumerate}
 
-Such a stream of instructions is not realistic without some program modifying the code located at \gls{mtvec} and as such \enquote{shouldn't} be considered when checking the IFC properties.
+Such a stream of instructions is not realistic without some program modifying the code located at \gls{mtvec} and as such \enquote{shouldn't} be considered when checking the \gls{ifc} properties.
 One would expect to find the same code after an \minrv{Ecall} instruction being executed since in both cases, an architecture would jump to the respective interrupt handler\footnote{%
     To be precise, one would also need to take vectored interrupts into account (c.f. sec. \ref{sec:rv-priv-arch}) but even then, the issue applies.
 }.
@@ -161,7 +160,6 @@ The implementation of the MINRV8 architecture abstracted from real-world archite
 \end{enumerate}
 
 This leaves us with good reasons to assume that programs considered by nuXmv, i.e. the set of programs quantified over when running proofs, is sufficiently close to the set of \enquote{real} programs of the MINRV8 architecture including jumps and branches.
-\todo{Future work?}
 
 \subsubsection{Assumptions}
 
