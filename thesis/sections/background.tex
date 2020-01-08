@@ -3,7 +3,7 @@
 \section{Background}
 \label{sec:background}
 
-In the introduction, the core motivation of this thesis was given which is to formally verify \glspl{isa} by model checking information flow control policies.
+In the introduction, the core motivation of this thesis was given which is to formally verify \glspl{isa} by model checking information flow control properties.
 However, the methodology of this thesis has not been made clear.
 At this point, it is not tractable to introduce this in detail.
 Instead, the background of this thesis will be set up first.
@@ -96,7 +96,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
 \begin{example}
     To verify an ARM TrustZone implementation, \citeauthor{Ferraiuolo17} introduce four information flow labels $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
     These labels form the information flow policy lattice $ (\Sigma, \sqcup, \sqcap) $ which is depicted in figure \ref{fig:sec-lattice} as a hasse diagram.
-    As you can see, each of these four labels comprises two tokens from two domains of information flow control.
+    As you can see, each of these four labels comprises two tokens from two domains of the information flow policy.
     The first of these domains is the one of \textit{confidentiality}, i.e. each label states that a piece of information is either public (\P{}) or confidential (\C{}).
     The second of these domains is the one of \textit{integrity}, i.e. each label states that a piece of information is either trusted (\T{}) or untrusted (\U{}) where \enquote{trusted} means whether
     the values we deal with are integrous or in other words not malicious?
@@ -114,8 +114,8 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
 
 To implement the actual \textit{control} of such an information flow policy, \citeauthor{Ferraiuolo17} introduce the \gls{hdl} language SecVerilogBL that builds upon the \gls{hdl} SecVerilog.
 The core of both of these languages when it comes to information flow control is a type-system that adds syntax to the core \gls{hdl} allowing for annotating variables with security labels.
-This enables verifying an information flow control policy by static type-checking.
-In SecVerilog, variables are typed by labels of the respective information flow control policy.
+This enables verifying an information flow policy by static type-checking.
+In SecVerilog, variables are typed by labels of the respective information flow policy.
 The type of a variable is described either by a label $ l \in M $ directly, by the conjunction $ \sqcap $ or disjunction $ \sqcup $ of two labels or by a type-level function $ f $ that maps some program variable $ v $ to a type.
 SecVerilogBL enhances on this by tracking security labels not only per variable but also per bit and array element therefore allowing for more fine grained annotation of the \gls{hdl} code but also adding a mechanism to downgrade information.
 Since information is not allowed to flow \enquote{down} in the lattice, downgrading can be understood best as a typecast that allows such behavior.
@@ -299,9 +299,9 @@ In summary, the lattice of security labels taken together with the type system b
 \citeauthor{Ferraiuolo17} used these three concepts to verify an implementation of the ARM TrustZone architecture.
 In doing so, they first implemented the architecture as a prototype and used the information flow policy to ensure that it did not contain any bugs.
 Additionally, they deliberately added bugs to their implementation that have been found in other implementations of the ARM TrustZone architecture and checked whether they were able to find these bugs.
-It turned out that their approach was able to detect all bugs besides those which were related to downgrading, i.e. the approach of type-checking information flow control policies gives a strong security assurances with the exception of bugs due to downgrading expressions.
+It turned out that their approach was able to detect all bugs besides those which were related to downgrading, i.e. the approach of type-checking information flow control gives a strong security assurances with the exception of bugs due to downgrading expressions.
 
-In this thesis, the concept of an information flow control policy and information flow tracking will serve to define higher-level properties to verify an \gls{isa} against.
+In this thesis, the concept of an information flow policy, information flow tracking and information flow control will serve to define higher-level properties to verify an \gls{isa} against.
 To achieve this, it must be tackled how such an information flow policy as proposed by \citeauthor{Ferraiuolo17} can be applied to \glspl{isa} such that \begin{enumerate*}[label=\alph*)]
     \item the labels can be tracked throughout the architecture by a model checker, and
     \item the policy can be controlled by the model checker.
