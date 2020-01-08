@@ -3,15 +3,15 @@
 \section{Results}
 \label{sec:results}
 
-This section will cover the results of the verification process as it was described in section \ref{sec:checking}.
-Our main finding is that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:props} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the 8 assumptions that will be introduced in subsequent sections are in place.
+This section will cover the results of the verification process as it was described in section \ref{sec:sum-background}.
+Our main finding is that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the 8 assumptions that will be introduced in subsequent sections are in place.
 
 \todo[inline]{Klarstellen, dass keine Schwachstelle gefunden wurde}
 
 Additionally, roughly 22 bug fix patches\footnote{%
     The number of 22 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
 } were applied to the model and some \smv{INIT} constraints were set up.
-Taken together with aforementioned assumptions these patches mark a fixpoint of the verification process as depicted in figure \ref{fig:ver-process}.
+Taken together with aforementioned assumptions these patches mark a fixpoint of the prove-refine loop discussed in section \ref{sec:sum-background} and depicted in figure \ref{fig:ver-process}.
 
 This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints.
 
@@ -31,7 +31,7 @@ Conceptually, however, these two concepts should be distinguished.
 
 In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
 Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
-Consequently, these constraints were introduced during the proof-refine loop as fixes to the model.
+Consequently, these constraints were introduced during the prove-refine loop as fixes to the model.
 
 The former aspect of validity is guaranteed by constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
@@ -84,7 +84,7 @@ The second constraint sets up caching errorless, i.e. if the cache is valid, it 
     \label{tbl:assumptions-overview}
 \end{table}
 
-During the proof-refine loop, whenever it was found that a counter-example to a property reported by nuXmv was valid and not an actual vulnerability of the architecture but a risk to be controlled by software, an assumption was phrased resembling a mitigation of the respective vulnerability.
+During the prove-refine loop, whenever it was found that a counter-example to a property reported by nuXmv was valid and not an actual vulnerability of the architecture but a risk to be controlled by software, an assumption was phrased resembling a mitigation of the respective vulnerability.
 This led to a total number of eight assumptions which in total grant the absence of any information flow policy violation.
 These assumptions can be grouped into three categories:
 \begin{itemize}

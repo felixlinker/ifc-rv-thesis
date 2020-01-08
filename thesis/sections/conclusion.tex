@@ -5,7 +5,7 @@
 
 Find an overview of this thesis as a whole in figure \ref{fig:overview}.
 As a first step, the MINRV8 architecture inspired by the RISC-V architecture was defined and implemented in nuXmv in section \ref{sec:minrv8}.
-In sections \ref{sec:ifc}-\ref{sec:checking}, we developed information flow semantics and three information flow properties forming an information flow policy in spirit of the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
+In section \ref{sec:ifc}, we developed information flow semantics and three information flow properties forming an information flow policy in spirit of the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 The information flow semantics were used to augmented the model of the MINRV8 by information flow tracking.
 In section \ref{sec:results} we introduced eight assumptions that, when implemented software running in machine-mode such as \glspl{os}, guarantee the absence of vulnerabilities covered by aforementioned information flow properties.
 We evaluated our model, the properties and the assumptions by showing that taken together, they manage to detect both the cache poisoning \cite{Wojtczuk09} and the SYSRET vulnerability \cite{Dunlap19}.
@@ -21,7 +21,7 @@ Finally in section \ref{sec:discussion}, we discussed the limitations and the sc
 In the introduction, we set three other goals: it was claimed that the approach presented as part of this thesis is \textit{viable}, i.e. feasible, realistic and generalizable, \textit{relevant}, i.e. it is able to detect issues, and \textit{supplemental}, i.e. it enhances on related work.
 
 We were able to show the the implementation of the MINRV8 architecture models the property \enquote{assumptions $ \Leftrightarrow $ properties}.
-This was put to a test by showing that said implementation does violate the properties of section \ref{sec:checking} when it is exposed to the cache poisoning or SYSRET vulnerability.
+This was put to a test by showing that said implementation does violate the properties as presented in section \ref{sec:ifc-properties} when it is exposed to the cache poisoning or SYSRET vulnerability.
 In other words: it was shown that the three properties \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK} cover at least vulnerabilities related to the cache poisoning or SYSRET vulnerability.
 This marks the main result of this thesis and shows that this work is \textit{relevant}.
 Furthermore, mitigations to these vulnerabilities can be verified using the same model.

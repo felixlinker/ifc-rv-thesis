@@ -1257,13 +1257,51 @@ To achieve this, we will investigate the RISC-V architecture in more detail and 
 This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load-store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
 A model of this instruction set architecture will be implemented in nuXmv.
 
-As a next step, the two terms of information flow control \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
-As a first step in section \ref{sec:checking}, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in nuXmv.
+As a next step in section \ref{sec:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
+Thereby, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in nuXmv.
 By using nuXmv as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
-When this has been dealt with, the actual information flow control will be expressed as \gls{ltl} properties.
+When this has been dealt with, the actual \gls{ifc} will be expressed as \gls{ltl} properties.
 These properties will assume the user-mode of the system to be compromised and express that insecure flows of information between machine- and user-mode are impossible.
 
 The results of this verification process will be discussed in section \ref{sec:results}.
-There, it will be of subject to identify either weaknesses of and respective mitigations for the MINRV8 architecture or to state rules that \gls{os} or compiler engineers must obey in order to write programs that are safe in regard to aforementioned information flow properties.
+How will these results look like?
 
-From section \ref{sec:discussion} onwards, these results will be discussed, put into context and summarized.
+The idea of \gls{ifc} is to express properties like: \enquote{Information must not flow like \dots}.
+Whenever nuXmv is asked: \enquote{Does this model of the MINRV8 allow for such flows of information?}, it will either respond with yes giving a sequence of instructions that violate the information flow property or respond with no.
+If the response happens to be a counter-example, the following questions:
+\begin{enumerate}
+    \item \label{itm:counter-ex-validity}
+    Is the counter-example legitimate or is it a false positive?
+    \item \label{itm:counter-ex-mitigation}
+    If the counter-example is legitimate, how can the uncovered vulnerability to the system be mitigated?
+\end{enumerate}
+
+The former question arises because the model of the architecture itself might be flawed.
+To answer it, one simply must inspect the trace at hand and verify whether all state transitions and variable changes are indeed valid in regard to the specification of MINRV8.
+If the answer to this question is no, the implementation has to be fixed accordingly and the proofs must be re-run.
+
+The latter question leaves to the actual results.
+If it is found that the counter-example at hand is genuine, it must be decided how the newly found vulnerability is handled.
+There are two ways to handle a vulnerability.
+Either it is a proper architectural vulnerability that must be mitigated accordingly by architectural measures or it shows a vulnerable \textit{usage} of the architecture that cannot be mitigated by the architecture without removing critical features from it.
+For example, it is an obvious security issue, when machine-mode directly hands confidential data to user-mode.
+No sensible architectural mechanisms could prevent machine mode from doing this as long as machine mode is in fact able to hand data to user mode - which it should be.
+
+In the first case, where it is discovered that a counter-example comprises a proper architectural vulnerability, we will investigate mechanisms that mitigate the respective vulnerability and also attempt to verify the effectiveness of such mitigations by re-running the proofs.
+If however, we do not find the counter-example to uncover a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules to be obeyed by e.g. \gls{os} or compiler engineers that prohibit such bad vulnerabilities.
+We also will then verify the effectiveness of these rules by implementing them in the model as assumptions and re-running the proofs again.
+
+These steps constitute an interactive prove-refine loop that is depicted in figure \ref{fig:ver-process}.
+This loop is entered by running nuXmv in order to prove the absence of any \gls{ifc} violations.
+If, however, there is such a violation, the model will be refined either by a fix or by a refinement of the architecture or by a refinement of the assumptions implementing rules to secure usage of the architecture.
+At some point, a set of respective fixes, architectural changes and assumptions will mark a fixpoint to this loop where no further refinement is necessary and finally, now \gls{ifc} violations can be found.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/verfification-process.png}
+    \caption{Verification Process Flowchart}
+    \label{fig:ver-process}
+\end{figure}
+
+This is what will be presented in section \ref{sec:results}.
+From section \ref{sec:discussion} onwards, these results will be discussed, put into context of related work in section \ref{sec:related-work} and finally summarized in section \ref{sec:conclusion}.

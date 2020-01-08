@@ -1,9 +1,9 @@
 %!TEX root = ../thesis.tex
 
-\section{Information Flow Tracking}
+\section{Information Flow Control}
 \label{sec:ifc}
 
-With an architecture implemented in nuXmv, the only thing left to verify information flow properties about this architecture or its model respectively is to define how information is tracked in the model.
+With an architecture implemented in nuXmv, the only thing left to specify information flow properties about this architecture or its model respectively is to define how information is tracked in the model.
 The general idea of information flow tracking will be adopted from \cite{Ferraiuolo17} which has been presented in section \ref{sec:bg-ifc}.
 To recapture, \citeauthor{Ferraiuolo17} define three concepts:
 \begin{itemize}
@@ -13,11 +13,12 @@ To recapture, \citeauthor{Ferraiuolo17} define three concepts:
 \end{itemize}
 
 The information flow policy will be adopted directly.
-However, since the model checker is meant to perform the information flow tracking and control, the work in \cite{Ferraiuolo17} has to be adopted accordingly.
+However, since the model checker is meant to perform the information flow tracking and control, the idea of using type-checking to implement it can not be adopted directly as well.
 In this section, it will be discussed how information flow tracking was lifted to the architectural level and implemented in nuXmv.
 
-In section \ref{sec:ifc-model}, we will adopt the type system rules to instruction of the MINRV8 architecture.
+In section \ref{sec:ifc-model}, we will adopt the type system rules to instructions of the MINRV8 architecture.
 Section \ref{sec:ifc-implementation} then explains how information was tracked in nuXmv.
+Finally, in section \ref{sec:ifc-properties} the information flow properties that constitute the information flow control itself will be given.
 
 \subsection{Information Flow Semantics for Instructions}
 \label{sec:ifc-model}
@@ -276,7 +277,7 @@ The labels of these values have been left untouched purposefully.
 This does not mean that these labels don't matter to the system as a whole.
 However, they don't constitute the new labels of the actual \textit{values} moved through the architecture.
 The labels of these values will be used by the properties the architecture will be verified against.
-More on this in section \ref{sec:checking}.
+More on this in section \ref{sec:ifc-properties}.
 
 \begin{figure}
     \begin{align*}
@@ -408,9 +409,107 @@ These variables transition under the same conditions as their base variable does
 The values themselves change based on the current instruction and its information flow tracking semantics as described in section \ref{sec:ifc-model}.
 The only exception to this is the information flow tracking of the variable \smv{csrs} the labels of which do not change at all.
 \Glspl{csr} are assigned constants labels because they do not store information but reflect the architectures state.
-Certain parts of the architectural state might be for example confidential but the characteristic of being confidential is not determined by the actual value that the respective \gls{csr} is written with but the kind of state that is defined by respective \gls{csr}.
+Certain parts of the architectural state might be for example confidential but the characteristic of being confidential is not determined by the actual value that the respective \gls{csr} is written with but the kind of state that is defined by it.
 
 In other words, the \lstinline[language=SMV,mathescape]{$\dots$_conf} and \lstinline[language=SMV,mathescape]{$\dots$_integrity} variables mirror the architectural part of implementation as described in section \ref{sec:model-implementation}.
 The domain of confidentiality and the domain of integrity of the MINRV8 architecture are tracked in addition to simulating the pure computational world where variables implementing the information flow tracking change in parallel to their counterparts in the computational world.
 
-\todo[inline]{Summary}
+\subsection{Information Flow Properties}
+\label{sec:ifc-properties}
+
+Finally, the information flow properties constituting the information flow control will be defined now.
+Each property is expressed as an \gls{ltl} formula of the form \smv{assumptions -> G expr}.
+\smv{assumptions} here is a macro that will be replaced by a conjunction of assumptions that assume programs running on the architecture to obey the rules to secure usage of the architecture as discussed in \ref{sec:sum-background}.
+
+In the summary of section \ref{sec:ifc-model}, it was mentioned that there are some arguments to the information flow semantic functions in $ \I $ that are not used to determine the information flow label of some architectural word.
+These induce the first properties the MINRV8 architecture will be verified against.
+
+Firstly, recall the definition of the LOAD and STORE semantics.
+The new tracking labels resulting from executing such an instruction solely depend on the labels of the word loaded or stored.
+What hasn't been used in the definition of information flow is the label of the target address of the memory operation.
+It is intuitive that the address does not influence the label of the information itself.
+This leads to the following property:
+\begin{enumerate}[label=\Roman*.,series=]
+    \item \label{itm:prop-mem-i}
+    Whenever a memory operation is performed in privileged mode, the target address must be integrous.
+
+    \begin{lstlisting}[
+        language=smv,
+        caption={Implementation of property \ref{itm:prop-mem-i}},
+        label={snpt:prop-mem-i}
+    ]
+        LTLSPEC NAME MEMORY_OP_INTEGRITY :=
+            assumptions -> G (
+                priv & op in { LOAD, STORE }
+                -> (regs_integrity[rs1] & 0h_03) = 0h_03
+            );
+    \end{lstlisting}
+\end{enumerate}
+
+Secondly, recall the definition of the semantics for \rv{Csrrs} or \rv{Csrrc}, respectively.
+These only propagate information flow tracking labels by assigning the constant labels of the \gls{csr} read to the respectively targeted register.
+We decided to model the labels of \glspl{csr} as constants because they control the state of the architecture and as such might be target of an attack.
+We labelled all \glspl{csr} as integrous and \gls{mstatus} as confidential.
+We decided to not label \gls{pmacfg} or \gls{pmpcfg} as confidential since it can be assumed that user mode must be able to know where memory regions are to operate correctly.
+
+Coming back to the information flow semantics of \rv{Csrrs} and \rv{Csrrc}, notice that in the respective definition of the semantical functions the value the \glspl{csr} are written with is not used.
+This must necessarily be the case since the labels of the \glspl{csr} are constant and as such can not change based on the labels of the value to write them with.
+However, this leads us to phrase a property about the \gls{csr} labels that ensures their integrity:
+\begin{enumerate}[label=\Roman*.,resume]
+    \item \label{itm:prop-csr-i}
+    Whenever a \gls{csr} is written, the value it is written with must be integrous.
+
+    \begin{lstlisting}[
+        language=smv,
+        caption={Implementation of property \ref{itm:prop-csr-i}}
+    ]
+        LTLSPEC NAME CSR_INTEGRITY :=
+            assumptions -> G (
+                priv & op in { CSRRS, CSRRC }
+                -> regs_integrity[rs2] = 0h_FF
+            );
+    \end{lstlisting}
+\end{enumerate}
+
+Both of these properties are founded in intuition as well.
+It is not safe to have an attacker control the load and store instructions of machine-mode since this could lead to unwanted behavior of code.
+One might object that this is not problematic since, if a malicious value was to be loaded by machine-mode, information flow tracking should catch this, however, this must not necessarily be the case.
+An attacker could trick machine-mode into using a value that is labelled as integrous but coincidentally diverges the control flow of machine-mode in a way that is beneficial to an attacker.
+Additionally, it is obvious that \glspl{csr} should only be written with trusted data.
+
+From all the variables our implementation of the MINRV8 architecture comprises we now considered \smv{regs} and \smv{memory} as well as \smv{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
+We also considered the variable \smv{csrs} by assigning constant information flow labels to it and using it as an information flow target, i.e. we phrased properties ensuring that certain flows of information \textit{to} \smv{csrs} do not occur.
+However, up to this point the \smv{priv} variable which holds the current privilege mode was only handled implicitly.
+It was used as a source of labels since it determines the labels of machine words loaded as immediates by LOADI.
+
+It is reasonable to assume, though, that \smv{priv} also can serve as an information flow target - similar to \smv{csrs}.
+We already did this partially for property \ref{itm:prop-mem-i} where we assumed the architecture to be in privileged mode.
+These properties, however, only dealt with the integrity labels of information.
+The domain of confidentiality has yet been left out so we will introduce one final property for verification that covers the interplay between privilege mode and confidentiality labels:
+\begin{enumerate}[label=\Roman*.,resume]
+    \item \label{itm:prop-no-leak}
+    Whenever the architecture is in user mode, there is no confidential data in any register.
+
+    \begin{lstlisting}[
+        language=smv,
+        caption={Implementation of property \ref{itm:prop-no-leak}},
+        label={snpt:prop-no-leak}
+    ]
+        LTLSPEC NAME NO_LEAK :=
+            assumptions -> G (priv | (
+                regs_conf[0] = 0h_00
+                & regs_conf[1] = 0h_00
+                & regs_conf[2] = 0h_00
+                & regs_conf[3] = 0h_00
+            ));
+    \end{lstlisting}
+\end{enumerate}
+
+\subsection{Summary}
+
+\todo[inline]{Write}
+
+\todo{Use graphic}
+\begin{figure}
+    \includegraphics[width=\textwidth]{figures/properties.png}
+\end{figure}

@@ -3,8 +3,8 @@
 \section{Discussion}
 \label{sec:discussion}
 
-In section \ref{sec:checking}, a set of \gls{ifc} properties based on the work in \cite{Ferraiuolo17} has been introduced; we will refer to these properties as the set $ P $.
-These properties were model checked in the previous section \ref{sec:results}, the result of which was a set of rules $ R $.
+In section \ref{sec:ifc-properties}, a set of \gls{ifc} properties based on the work in \cite{Ferraiuolo17} has been introduced; we will refer to these properties as the set $ P $.
+These properties were model checked, the main result of which was a set of rules $ R $ as presented in the previous section \ref{sec:results} .
 What is the consequence of this?
 The formal achievement of this thesis can be summarized as follows:
 \begin{quote}
@@ -195,7 +195,7 @@ Constraining user-mode in the assumptions therefore would have contradicted this
 Lastly, the most critical point is point \ref{itm:assumptions-verifiable}.
 Ideally, the assumptions established in context of this thesis would serve as a verification target for \glspl{os} or compilers.
 If one was to write a collection of interrupt handlers for an \gls{os}, one might want to check that all 8 assumptions are implemented by these.
-This would grant the absence of information flow related bugs in context of the information flow properties as proposed in section \ref{sec:checking}.
+This would grant the absence of information flow related bugs in context of the information flow properties as proposed in section \ref{sec:ifc-properties}.
 This, however, presupposes that it is actually possible to verify programs against these properties.
 As part of this thesis, we cannot give guarantees on the feasibility of this undertaking.
 Yet, we tried to allow for it.
