@@ -163,44 +163,27 @@ This leaves us with good reasons to assume that programs considered by nuXmv, i.
 
 \subsection{Assumptions}
 
-\todo{Mention these goals in introduction/background}
+Recall the requirements of the assumptions that have been laid out in section \ref{sec:sum-background}:
+\begin{enumerate*}
+    \item The assumptions must be non-trivial,
+    \item the assumptions must only constrain machine-mode, and
+    \item the assumptions must be practical and verifiable.
+\end{enumerate*}
 
-The goal of phrasing the assumptions which ultimately established the correctness of the information flow properties was for them to be realistic.
-These goals are:
-\begin{enumerate}
-    \item \label{itm:assumptions-non-trivial}
-    The assumptions must be non-trivial, i.e. they must not be contradictory and must not trivially entail the information flow properties to be verified,
-    \item \label{itm:assumptions-machine-mode}
-    the assumptions must only constrain machine-mode, and
-    \item \label{itm:assumptions-verifiable}
-    the assumptions must be practical and verifiable.
-\end{enumerate}
+In this section, it will be investigated whether the assumptions that ultimately established the correctness of the information flow properties meet all these requirements.
 
-The reasoning behind point \ref{itm:assumptions-non-trivial} is straight-forward:
-Trying to prove \enquote{$ \text{false} \Rightarrow \text{properties} $} or \enquote{$ \text{properties} \Rightarrow \text{properties} $} is pointless.
-Although we can't give formal proofs that neither is the case, there are good reasons to believe it.
+Regarding point \ref{itm:assumptions-non-trivial}, it must be checked that neither are the assumptions contradictory nor do they trivially entail the information flow properties.
 Recall that we were able to prove that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $}.
-In this case, the assumptions can only be contradictory if the properties are as well which we think, they are obviously not.
+In this case, the assumptions could only be contradictory if the properties are as well which they are obviously not as there are valid counter-examples to the properties when no assumptions are given.
 On the other hand, recall that in section \ref{sec:canaries} we were able to make changes to the architecture such that \enquote{$ \neg(\text{assumptions} \Rightarrow \text{properties}) $} held.
 This indicates that the assumption actually express something meaningful and do not trivially entail the information flow properties.
 
 Point \ref{itm:assumptions-machine-mode} also is met by the assumptions introduced in section \ref{sec:assumptions}.
 Whenever it is said that certain instructions must not be executed under certain circumstances, these formulas are guarded by the antecedent \smv{priv ->}.
 Additionally, all other assumptions only constrain state transitions being under control of machine-mode only, such as changes to \glspl{csr} or state before machine-mode hands back control to user-mode.
-All in all, this point does not need to be discussed extensively.
-However, it was raised nonetheless because it is important to note that the assumptions introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
-Recall, that in context of this thesis it is assumed that user-mode is adversarial to machine-mode and compromised completely.
-Constraining user-mode in the assumptions therefore would have contradicted this threat model.
 
-Lastly, the most critical point is point \ref{itm:assumptions-verifiable}.
-Ideally, the assumptions established in context of this thesis would serve as a verification target for \glspl{os} or compilers.
-If one was to write a collection of interrupt handlers for an \gls{os}, one might want to check that all 8 assumptions are implemented by these.
-This would grant the absence of information flow related bugs in context of the information flow properties as proposed in section \ref{sec:ifc-properties}.
-This, however, presupposes that it is actually possible to verify programs against these properties.
-As part of this thesis, we cannot give guarantees on the feasibility of this undertaking.
-Yet, we tried to allow for it.
-Meeting point \ref{itm:assumptions-machine-mode} is one step in the right direction.
-However, how these simplified properties might be transferred to real-world system is an open question.
+For point \ref{itm:assumptions-verifiable}, meeting point \ref{itm:assumptions-machine-mode} is one step in the right direction.
+However, it must remain an open question here whether the assumptions introduced in section \ref{sec:assumptions} can be applied to real-world systems in a verification scenario.
 The problems behind this are illustrated by the \smv{SP_BANK} assumption introduced parallel to the SYSRET vulnerability in section \ref{sec:sysret}.
 There are two aspects of the first part of this assumption which are noteworthy.
 The relevant part of the \smv{SP_BANK} assumption is given in snippet \ref{snpt:sp-bank-p1}.
@@ -220,7 +203,7 @@ The relevant part of the \smv{SP_BANK} assumption is given in snippet \ref{snpt:
     \end{lstlisting}
 \end{figure}
 
-Whilst working on this assumption, we found that the specific implementation of two \textit{ideas} was critical to the presence of the SYSRET vulnerability, both:
+Whilst working on this assumption, it was found that the specific implementation of two \textit{ideas} was critical to the presence of the SYSRET vulnerability, both:
 \begin{enumerate}
     \item \label{itm:no-sysret-priv}
     replacing the expression \smv{!priv & X priv} in line \ref{ln:sp-call-priv} by \smv{(op = ECALL) | (bool(MIE) & bool(MEIP))} which is the actual condition under which a trap is taken and

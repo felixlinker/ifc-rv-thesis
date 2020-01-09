@@ -1292,6 +1292,31 @@ In the first case, where it is discovered that a counter-example comprises a pro
 If however, we do not find the counter-example to uncover a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules to be obeyed by e.g. \gls{os} or compiler engineers that prohibit such bad vulnerabilities.
 We also will then verify the effectiveness of these rules by implementing them in the model as assumptions and re-running the proofs again.
 
+When phrasing assumptions, we impose the following requirements upon them:
+\begin{enumerate}
+    \item \label{itm:assumptions-non-trivial}
+    The assumptions must be non-trivial, i.e. they must not be contradictory and must not trivially entail the information flow properties to be verified,
+    \item \label{itm:assumptions-machine-mode}
+    the assumptions must only constrain machine-mode, and
+    \item \label{itm:assumptions-verifiable}
+    the assumptions must be practical and verifiable.
+\end{enumerate}
+
+The reasoning behind point \ref{itm:assumptions-non-trivial} is straight-forward:
+Trying to prove \enquote{$ \text{false} \Rightarrow \text{properties} $} or \enquote{$ \text{properties} \Rightarrow \text{properties} $} is pointless.
+
+Point \ref{itm:assumptions-machine-mode} was raised because it is important to note that the assumptions introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
+Recall, that in context of this thesis it is assumed that user-mode is adversarial to machine-mode and compromised completely.
+Constraining user-mode in the assumptions therefore would have contradicted this threat model.
+
+Lastly, we hope that the assumptions established in context of this thesis can serve as a verification target for \glspl{os} or compilers.
+This is expressed in point \ref{itm:assumptions-verifiable}.
+If one was to write a collection of interrupt handlers for an \gls{os}, these assumptions might be used to verify that each rule given by these assumptions is implemented by handlers.
+This would grant the absence of information flow related bugs in context of the information flow properties as proposed in section \ref{sec:ifc-properties}.
+This, however, presupposes that it is actually possible to verify programs against these properties.
+As part of this thesis, we cannot give guarantees on the feasibility of this undertaking.
+Yet, we try to allow for it.
+
 These steps constitute an interactive prove-refine loop that is depicted in figure \ref{fig:ver-process}.
 This loop is entered by running nuXmv in order to prove the absence of any \gls{ifc} violations.
 If, however, there is such a violation, the model will be refined either by a fix or by a refinement of the architecture or by a refinement of the assumptions implementing rules to secure usage of the architecture.
