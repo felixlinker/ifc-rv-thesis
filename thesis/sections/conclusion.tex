@@ -44,12 +44,10 @@ In a non-research scenario one can assume that development would be more straigh
 Due to the exponential blow-up of binary encoded state spaces, there are no guarantees that this approach scales well to realistic and complete architectures.
 However, there are two reasons which make seem likely that this approach does indeed scale.
 Firstly, the proofs here were ran on a small machine and didn't take much time.
-Secondly, in section \ref{sec:discuss-observations} it was discussed that bit-wise tracking of information flow might be dropped, i.e. there is room for performance improvements.
+Secondly, in sections \ref{sec:per-bit-tracking} it was discussed that bit-wise tracking of information flow might be dropped, i.e. there is room for performance improvements.
 All of this gives good reasons to believe that our approach is indeed \textit{viable} and could be applied to other architectures with reasonable effort.
 
-\todo[inline]{Bridge}
-
-In section \ref{sec:verify-spec} four design goals were discussed that were initially introduced in \cite{Reid17}.
+In addition to these self-imposed goals, it was also decided in section \ref{sec:verify-spec} to adopt the four design goals that were initially introduced in \cite{Reid17}.
 These were defined to apply to high level properties for specifications and list as follows:
 \begin{displaycquote}[pp.88:2-3]{Reid17}
     The central design challenge we face is to create a set of properties that:

@@ -16,17 +16,18 @@ What is the \textit{actual} sense of security that can be guaranteed?
 At this point, the class of vulnerabilities covered by these properties cannot be defined strictly.
 However, the canaries these properties have been tested against in section \ref{sec:canaries}, exemplify this class of vulnerabilities.
 Assessing the results of the approach to formally verify higher level properties of the MINRV8 architecture shall be subject of this section.
-We will cover three aspects of our work:
+We will cover four aspects of our work:
 \begin{itemize}
     \item Scope, i.e. what are the limits of our results,
-    \item Trustworthiness, i.e. whether our results are sound, and
-    \item General observations.
+    \item Trustworthiness, i.e. whether our results are sound,
+    \item whether the model could have been implemented more abstractly, and
+    \item if there are alternatives to tracking information on a per-bit basis.
 \end{itemize}
+
+Whereas the topics of the scope and trustworthiness of our work touch more general aspects of our work, the two latter questions reflect on the methodology of this thesis and will elaborate other possible approaches to our subject.
 
 \section{Scope}
 \label{sec:scope}
-
-\todo[inline]{Introduction}
 
 \subsection{Architecture}
 \label{sec:discuss-arch}
@@ -296,12 +297,7 @@ But it is unclear
 \end{enumerate*}
 We mark this problem as future work.
 
-\section{General Observations}
-\label{sec:discuss-observations}
-
-\todo[inline]{Bridge}
-
-\subsection{Abstract Model}
+\section{Abstract Model}
 
 One might ask, why it was decided to simulate all flows of information through the model of the MINRV8 architecture and indeed: In scope of this thesis, the actual content of registers is not mandatory, i.e. the actual contents of registers could be removed from the model such that only information flow tracking labels are tracked.
 Register values do play a role when memory is indexed, but this could likely be abstracted by non-deterministically choosing a memory location to be targeted by loads and stores.
@@ -321,7 +317,8 @@ However, secondly, working with concrete values has two benefits which might bec
 
 With these two reasons at hand and the overall goal of this thesis to implement a prototype for a methodology to verify \glspl{isa}, we find that having modelled register values as opposed to abstractly tracking information flow labels only improves on the significance of our results.
 
-\subsection{Per-Bit Information Flow Tracking}
+\section{Per-Bit Information Flow Tracking}
+\label{sec:per-bit-tracking}
 
 Another issue is that in chapter \ref{chp:results} it was mentioned that counter-examples never involved flows of information where the bit-wise labels of values in the architecture was critical.
 In other words: for this thesis, tracking only one bit for confidentiality and one bit for integrity for each register and memory address would suffice.

@@ -306,9 +306,7 @@ These changes manage to introduce a vulnerability to the MINRV8 architecture.
 If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv manages to find a counter-example for all three information flow properties.
 These, again, are discussed in the appendix (cf. \ref{sec:cexs-cache-vuln}).
 
-\todo[inline]{Fix text flow}
-
-One distinction from the original cache-poisoning attack to these counter-examples is that here, the attacker can't set the attacked memory region to be cacheable in the first place.
+One distinction from the original cache-poisoning attack to the adaption that has been implemented here is that the attacker can't set the attacked memory region to be cacheable in the first place since user-mode lacks the capabilities to do so.
 This difference does not play a major role since the attack can take place nonetheless if some memory region happens to be locked down to user-mode and is set to be write-back-cacheable, still this weakens the attack to some degree.
 
 What can be done to mitigate this attack?
@@ -372,6 +370,10 @@ However, when pushing to or popping from the stack, the stack-pointer automatica
 Additionally, whenever the stack-pointer is in- or decremented and thereby crosses the boundary of a memory region or the memory as a whole, the architecture also ensures that it wraps around inside its memory region.
 It might be a threat to some architectures having the stack-pointer move into unsafe memory regions by repeatedly pushing to or popping from it, yet, this aspect is not relevant to the SYSRET vulnerability which is why it was decided to rule these vulnerabilities out by definition.
 
+In the case of the original SYSRET vulnerability, a specially crafted value must have been placed into a special register to trigger an exception during the \lstinline{SYSRET} instruction.
+In case of the MINRV8 architecture, no such special mechanisms are given.
+Therefore, the vulnerability can only triggered by an external interrupt here but this does not conflict with the core idea of the SYSRET vulnerability.
+
 An \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither read- nor writable to user-mode.
 This, as usual, ensures that the information flow properties are not violated by some obvious initial condition.
 
@@ -427,12 +429,6 @@ These two parts follow the same structure as the first part of the \smv{SP_BANK}
 
 All these assumptions, however, do not ensure that the architecture models all information flow properties.
 Similar to the SYSRET vulnerability, there is a stream of instructions that violates each of these properties which will be discussed in the appendices' section \ref{sec:cexs-sysret}.
-
-\todo[inline]{Fix flow of text}
-
-In the case of the SYSRET vulnerability, a specially crafted value must have been placed into a special register to trigger an exception during the \lstinline{SYSRET} instruction.
-In case of the MINRV8 architecture, no such special mechanisms are necessary.
-Here, the vulnerability is triggered by an external interrupt which goes along with the core idea of the SYSRET vulnerability nicely.
 
 \paragraph{Mitigations}
 

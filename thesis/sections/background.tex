@@ -885,7 +885,10 @@ $ P $ performs an integer division with remainder for a natural number \lstinlin
 Intuitively speaking, $ \hat{P} $ is an under-approximation (or abstraction) of $ P $ if for every part of $ P $ there is a corresponding part of $ \hat{P} $ whose effects are logically entailed by the original part.
 Vice versa, $ P $ is an over-approximation of $ \hat{P} $.
 An example for an over-approximation of $ P $ in snippet \ref{snpt:over-p} and an example for an under-approximation of in snippet \ref{snpt:under-p}.
-For abstracting $ P $ to $ \hat{P} $ a couple of lines were removed whilst all other were left untouched.
+For abstracting $ P $ to $ \hat{P} $ a couple of lines were removed whilst all other were left untouched\footnote{%
+    Note, that formally, under- and over-approximations are defined via control flow graphs.
+    The intuition here is that a control flow graph $ G $ over-approximates another control-flow graph $ G' $ if $ G $ can be embedded into $ G' $, i.e. $ G $ resembles the same kind of control flow as $ G' $ but has fewer locations, i.e. $ G $ abstracts from $ G' $.
+}.
 
 \begin{figure}
     \centering
