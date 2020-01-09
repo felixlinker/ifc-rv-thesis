@@ -1,16 +1,21 @@
-\chapter{Assumption Related Counter-Examples}
+\chapter{Counter-Examples to Information Flow Properties}
+
+\section{Assumption Related Counter-Examples}
 \label{app:cexs}
 
-\todo[inline]{Introduce and fix flow of text}
+In this section, the counter-examples associated with the assumptions which resulted from the prove-refine loop as presented in section \ref{sec:assumptions} will be presented.
+The structure of section \ref{sec:assumptions} will be adopted, i.e. counter-examples will be presented in order of the three groups of mode-boundary crossing related, memory related and memory privilege related assumptions.
 
 \paragraph{Mode-boundary crossing related assumptions}
+There are two mode-boundary crossing related assumptions: \smv{SAN_ON_CALL} and \smv{CLR_ON_RET}, demanding from machine-mode to sanitize registers when being called from user-mode and clearing registers when returning control to user-mode.
+
 Without assuming \smv{SAN_ON_CALL} nuXmv manages to find two counter-examples.
 One for property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and one for \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}).
 The traces for both counter-examples are depicted in tables \ref{tbl:cex-mem-i-soc} and \ref{tbl:cex-csr-i-soc} respectively.
 Table \ref{tbl:cex-no-leak-cor} illustrates a counter-example for the \smv{NO_LEAK} (\ref{itm:prop-no-leak}) property when not assuming \smv{CLR_ON_RET}.
 
 \begin{example}
-    The format of these tables illustrating counter-example traces will be used frequently throughout this thesis to illustrate counter-examples.
+    The format of these tables illustrating counter-example traces will be used frequently to illustrate counter-examples.
     To introduce it, table \ref{tbl:cex-mem-i-soc} will be explained in detail now.
     The first row of the table gives the processor's initial state.
     Each subsequent row of the table represents an instruction being executed and shows the values that have changed in result of this instruction.
@@ -79,7 +84,9 @@ As such, we express sufficient techniques to combat vulnerabilities of this kind
 \end{table}
 
 \paragraph{Memory related assumptions}
-The three counter-examples involved in this two assumptions are rather straight-forward as well.
+As for mode-boundary crossing related assumptions, there are two memory related assumptions \smv{NO_PUBLIC_READS} and \smv{NO_PUBLIC_WRITES} that prohibit machine-mode to either read from or write to memory that is also accessible to user-mode.
+
+The three counter-examples involved in this two assumptions are straight-forward as well.
 If machine-mode is allowed to load arbitrary words from public memory nuXmv gives a counter-example to the properties \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) where some or all memory is untrusted in the initial state, machine-mode in the next step decides to load some word from an untrusted source in memory and then uses that as target address of a \minrv{Store} instruction or to write a \gls{csr} with.
 These counter-examples are illustrated in table \ref{tbl:cex-mem-i-npw} and \ref{tbl:cex-csr-i-npw} respectively.
 On the other hand, if machine-mode is allowed to store arbitrary words into public memory, a simple counter-example to the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) is that machine-mode simply stores a secret into public memory which is then loaded by user-mode as illustrated by the trace in table \ref{tbl:cex-no-leak-npw}.
@@ -113,6 +120,10 @@ Yet, as shown in the last paragraph, this assumption taken alone, does not ensur
 \end{table}
 
 \paragraph{Memory privilege related assumptions}
+Lastly, the four memory privilege related assumptions will be considered now.
+In general, these express that machine-mode must ensure that no malicious data lies and no secrets remain in memory or cache memory or cache of a region to be locked down to user-mode.
+The assumptions \smv{SAN_ON_CLASSIFICATION} and \smv{CLR_ON_DECLASSIFICATION} ensure this for the actual memory and \smv{SAN_CACHE_ON_CLASSIFICATION} and \smv{CLR_CACHE_ON_DECLASSIFICATION} for the cache.
+
 The counter-examples when not assuming \smv{SAN_ON_CLASSIFICATION} for properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} (cf. tables \ref{tbl:cex-csr-i-socl}, \ref{tbl:cex-mem-i-socl}) - as usual - work analogously and illustrate exactly what has been given as intuition for this assumption in the introduction of this paragraph.
 In each counter-example, at least one memory region initially is writable for user-mode and contains untrusted data.
 Machine-mode changes the privilege settings of that memory region making it non-writable to user-mode and then loads and uses a machine-word which is untrusted violating the respective integrity related property.
@@ -146,7 +157,7 @@ Machine-mode does clear its registers before giving control back to user-mode, y
     \caption{Counter-examples for \smv{CLR_ON_DECLASSIFICATION} and \smv{SAN_ON_CLASSIFICATION}}
 \end{table}
 
-This time around, the counter-examples given by nuXmv are not completely straight forward.
+Coming to the assumptions that constrain interaction with cache, the counter-examples given by nuXmv are not completely straight forward.
 As a start, consider the counter-examples generated when not assuming \smv{SAN_CACHE_ON_DECLASSFICATION} for the \smv{MEMORY_OP_INTEGRITY} property in table \ref{tbl:cex-mem-i-scocl}.
 In the first instruction, machine-mode sets memory region one to be inaccessible by user-mode which does not violate assumption \minrv{SAN_ON_CLASSIFICATION} since all memory provides trusted values.
 In the next instruction, machine-mode decides to load a word from memory which happens to be untrusted.
@@ -211,14 +222,18 @@ Therefore, this architectural mitigation does not suffice and cache needs to be 
     \label{tbl:cex-no-leak-inval-trans}
 \end{table}
 
-\chapter{Canary Related Counter-Examples}
+\section{Canary Related Counter-Examples}
 \label{app:cexs-canaries}
 
-\section{Cache Poisoning Attack on x86}
+In section \ref{sec:canaries}, two vulnerabilities were purposefully added to the model of the MINRV8 architecture in order to test both the information flow properties and the assumptions that resulted from the prove-refine loop as presented in chapter \ref{chp:results}.
+In this section, the counter-examples that were found by nuXmv when the respective modifications were put into effect will be presented.
+
+\subsection{Cache Poisoning Attack on x86}
 \label{sec:cexs-cache-vuln}
 
+When the cache poisoning attack discussed in section \ref{sec:cache-poisoning} was injected into the model, all information flow properties were violated.
 As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
-We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) in detail now.
+The counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) will be introduced in detail now.
 Initially, user-mode executes a \minrv{Store} instruction which is not reflected in memory.
 Then, it reads from a \gls{csr} to put a trusted value into register 0.
 Interestingly, user-mode thereby aids machine-mode in sanitizing the registers since now, all registers contain trusted values.
@@ -265,10 +280,10 @@ Yet still, user-mode can gain access to the confidential word in cache as no acc
     \label{tbl:cex-cache-vuln}
 \end{table}
 
-\section{The SYSRET Vulnerability}
+\subsection{The SYSRET Vulnerability}
 \label{sec:cexs-sysret}
 
-Here, only the integrity-related properties shall be covered as only these are relevant to the SYSRET vulnerability.
+For the SYSRET vulnerability as presented in section \ref{sec:sysret}, only the integrity-related properties were considered as only these are relevant to the SYSRET vulnerability.
 The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.
 A new feature is used to visualize the two stack-pointers.
 It has already been mentioned that the architecture supports two stack-pointers being indexed by \minrv{0} and \minrv{1}.
