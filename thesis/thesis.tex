@@ -133,6 +133,20 @@
 
 \addbibresource{references.bib}
 
+\newenvironment{abstract}{%
+    \begingroup
+    \chapter*{\centering Abstract}
+}{%
+    \endgroup
+}
+
+\newenvironment{acknowledgements}{%
+    \begingroup
+    \chapter*{\centering Acknowledgements}
+}{%
+    \endgroup
+}
+
 \begin{document}
 
 \begin{titlepage}
@@ -172,7 +186,9 @@
     \input{preface/abstract.tex}
 \end{abstract}
 
-\input{preface/acknowledgements.tex}
+\begin{acknowledgements}
+    \input{preface/acknowledgements.tex}
+\end{acknowledgements}
 
 \newpage
 

@@ -1,5 +1,5 @@
-\section{Assumption Related Counter-Examples}
-\label{sec:cexs}
+\chapter{Assumption Related Counter-Examples}
+\label{app:cexs}
 
 \todo[inline]{Introduce and fix flow of text}
 
@@ -211,10 +211,10 @@ Therefore, this architectural mitigation does not suffice and cache needs to be 
     \label{tbl:cex-no-leak-inval-trans}
 \end{table}
 
-\section{Canary Related Counter-Examples}
-\label{sec:cexs-canaries}
+\chapter{Canary Related Counter-Examples}
+\label{app:cexs-canaries}
 
-\subsection{Cache Poisoning Attack on x86}
+\section{Cache Poisoning Attack on x86}
 
 As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
 We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) in detail now.
@@ -264,7 +264,7 @@ Yet still, user-mode can gain access to the confidential word in cache as no acc
     \label{tbl:cex-cache-vuln}
 \end{table}
 
-\subsection{The SYSRET Vulnerability}
+\section{The SYSRET Vulnerability}
 
 Here, only the integrity-related properties shall be covered as only these are relevant to the SYSRET vulnerability.
 The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.

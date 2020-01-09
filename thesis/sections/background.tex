@@ -1,14 +1,14 @@
 %!TEX root = ../thesis.tex
 
-\section{Background}
-\label{sec:background}
+\chapter{Background}
+\label{chp:background}
 
 In the introduction, the core motivation of this thesis was given which is to formally verify \glspl{isa} by model checking information flow control properties.
 However, the methodology of this thesis has not been made clear.
 At this point, it is not tractable to introduce this in detail.
 Instead, the background of this thesis will be set up first.
 
-The first two sections \ref{sec:verify-spec} and \ref{sec:ifc} will introduce the foundational work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
+The first two sections \ref{sec:verify-spec} and \ref{sec:bg-ifc} will introduce the foundational work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 Following up on this, the actual subject of verification, \glspl{isa}, and the technical details of the verification process will be outlined.
 There will be not only an introduction to common \glspl{isa}, especially RISC-V, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a threat-model (section \ref{sec:ecosystem}).
 Then, a general explanation of what model checking is will be given, concluding with the description of the nuXmv model checker that will be used in this thesis (section \ref{sec:model-checking}).
@@ -20,7 +20,7 @@ In each of these subsections , a collection of \glspl{isa} or model checkers res
 
 As a final part of the background, in section \ref{sec:sum-background}, a summary of all aforementioned sections will be given which will finally allow for a outline of this thesis's methodology.
 
-\subsection{Formal Verification of Specifications}
+\section{Formal Verification of Specifications}
 \label{sec:verify-spec}
 
 As already introduced, the work of \citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} focusses on verifying specifications, in particular \glspl{isa}, against high level properties.
@@ -78,7 +78,7 @@ This lies in the nature of the properties taken from the natural language specif
 This thesis attempts to fill this gap and proposes a new way of verifying architectural specifications which will apply to multiple processor transitions.
 The work in this thesis therefore also is subject to the same requirements that have been imposed on the high-level properties in \cite{Reid17}.
 
-\subsection{Information Flow Control}
+\section{Information Flow Control}
 \label{sec:bg-ifc}
 
 In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors verify an implementation of the ARM TrustZone architecture by statically type-checking an information flow policy.
@@ -308,7 +308,7 @@ To achieve this, it must be tackled how such an information flow policy as propo
 \end{enumerate*}, i.e. how can the two concepts of information flow tracking and control be implemented using a model checker?
 \todo{Do I answer above questions? -> yes, but make explicit in sec. 4}
 
-\subsection{RISC-Architectures}
+\section{RISC-Architectures}
 \label{sec:riscs}
 
 \citetitle{Patterson13} defines the term \gls{isa} as follows:
@@ -345,7 +345,7 @@ Using a \gls{risc} architecture will allow for implementing an architecture in s
 Although choosing a \gls{risc} architecture as a target of verification already facilitates an easier implementation of the this thesis' approach, verifying a complete architecture still might be out of scope to be verified as part of a master thesis.
 Introducing more than one \gls{risc} architectures will allow us to choose parts to exclude in the verification model without harming our results.
 
-\subsubsection{Arm}
+\subsection{Arm}
 
 The ARM architecture knows three \textit{profiles}:
 \begin{itemize}
@@ -383,7 +383,7 @@ Additionally, there is a \gls{pc}, a dedicated \gls{sp} and some exception link 
 A general purpose register is used as the standard \gls{lr}.
 Furthermore, there are 32 64- or 128-bit registers for floating point and vector arithmetic and a collection of \glspl{csr} that hold status information of the architecture.
 
-\subsubsection{MIPS}
+\subsection{MIPS}
 
 As opposed to the ARM architecture, the MIPS architecture does not only support a smaller range of registers, it also provides fewer features by standard, i.e. without extensions.
 It is introduced in \citetitle{MIPS} \cite{MIPS} as: \textcquote[p.21]{MIPS}{based on a fixed-length, regularly encoded instruction set \textelp{which} uses a load/store data model, in which all operations are performed on operands in processor registers, and main memory is accessed only by load and store instructions}.
@@ -397,7 +397,7 @@ Whereas in case of the latter, customizability is only given by choosing differe
 Certain features can be left out which is called \textit{subsetting} of the architecture.
 Additionally to that, MIPS allows to extend the architecture by user defined instructions, compressed instructions, enhanced media processing, enhanced geometry processing, smart card or object interaction, signal processing, multi threading, \gls{os} virtualization, vector arithmetic and an extensions aimed specifically at microcontrollers.
 
-\subsubsection{RISC-V}
+\subsection{RISC-V}
 \label{sec:bg-riscv}
 
 RISC-V was originally presented in a technical report in May 2011 \cite{RiscVISA-org} and has undergone many changes since then.
@@ -468,7 +468,7 @@ Similarly to the MIPS architecture, the first of these general purpose registers
 Also, there is no dedicated \gls{lr} or \gls{sp}.
 RISC-V supports up to 4096 \glspl{csr}.
 
-\subsubsection{Summary}
+\subsection{Summary}
 
 In the last the sections, it was shown that the ARM, MIPS, and RISC-V architectures implement the three main properties of \cite{Hennessy12} characterizing \gls{risc} architectures: a small and uniformly encoded instruction set, a large and uniform register file and a load/store architecture.
 Whereas the ARM architecture supported customizability only by a list of extensions and MIPS added user defined instructions and allowed subsetting its core specification, RISC-V took the idea of customizability and made it part of the core idea of the architecture.
@@ -476,7 +476,7 @@ RISC-V supports the most simple yet fully specified processor in form of the RV3
 It was this degree of customizability and simplicity that led to the decision to use RISC-V as a target of verification.
 There are no major features RISC-V lacks in that are crucial to the concept of a \gls{risc} architecture.
 
-\subsection{The Ecosystem of an ISA}
+\section{The Ecosystem of an ISA}
 \label{sec:ecosystem}
 
 \glspl{isa} are embedded in a larger context.
@@ -497,7 +497,7 @@ With these boundaries in mind, it must be decided what will be incorporated in t
     \label{fig:ecosystem}
 \end{figure}
 
-\subsubsection{Microarchitectures}
+\subsection{Microarchitectures}
 \label{sec:microarchs}
 
 When an \gls{isa} is implemented in a chip, the layout and design of this chip is often times called \textit{microarchitecture}.
@@ -526,7 +526,7 @@ This thesis, however, is not about verifying how pipelining can be implemented c
 Additionally, aspects of the functional correctness of an implementation towards the \gls{isa} are served adequately by existing methods:
 In \cite{Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher level properties in \cite{Zhang15, Beatty94, Berezin98, Trippel19} or against their actual specifications in form of an \glspl{isa} in \cite{Burch94, Reid16, RISCV-formal}.
 
-\subsubsection{Virtual Memory}
+\subsection{Virtual Memory}
 \label{sec:virtual-memory}
 
 Virtual memory is usually managed by \glspl{os} and mostly serves two purposes: \textcquote[p.428]{Patterson13}{to allow efficient and safe sharing of memory along multiple programs \textelp{} and to remove the programming burdens of small, limited amount of main memory.}
@@ -550,7 +550,7 @@ With this research in mind, it was decided to not include virtual memory address
 Mechanisms that provide isolation between memory regions will be modelled, however, the model does not benefit from a simulation of virtual memory addresses.
 Addresses will be treated as physical ones throughout this thesis.
 
-\subsubsection{Threat Model}
+\subsection{Threat Model}
 \label{sec:threat-model}
 
 \todo{Es ist anzunehmen, dass information flow zwischen den modes stattfindet; verifiziere nicht, ob das passiert, sondern wie man das verhindern könnte}
@@ -599,7 +599,7 @@ Even if it could be assumed that the hardware your computer is running on accura
 \todo{Give reference and reasoning}
 In this threat model, timing channels are excluded.
 
-\subsection{Model Checking}
+\section{Model Checking}
 \label{sec:model-checking}
 
 Model checking is a technique that falls into the domain of formal verification.
@@ -650,7 +650,7 @@ These other two model checkers are called SPIN and SPACER.
 By introducing three model checkers, we want to give a feel for all the different flavors of model checkers and be able to argue for why nuXmv was chosen over others.
 However, this section does not intend to perform an thorough analysis of contemporary model checkers.
 
-\subsubsection{SPIN}
+\subsection{SPIN}
 \label{sec:spin}
 
 SPIN (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker which has been originally developed by Bell Labs and made freely available since the nineties.
@@ -809,7 +809,7 @@ This would massively contradict the key idea of SPIN of simple models being \tex
 In this case, we'd have skipped the whole step of abstracting from some computational model that has distributed components running in parallel.
 Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing SPIN.
 
-\subsubsection{\muZ{} \& SPACER}
+\subsection{\muZ{} \& SPACER}
 \label{sec:spacer}
 
 \muZ{} is a Datalog-engine that provides querying fixed points with constraints and has been proposed in \cite{Hoder11}.
@@ -976,7 +976,7 @@ In case of a property failing to be verified, no counterexamples are given but S
 \muZ{} itself can be configured to give a more detailed result however this would still not include a \textit{trace of derivations}.
 For SPACER or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
 
-\subsubsection{nuXmv}
+\subsection{nuXmv}
 \label{sec:nuxmv}
 
 nuXmv \cite{Cavada14} is a symbolic model checker that is able to model check invariants, \gls{ltl} and \gls{ctl} formulas.
@@ -1238,7 +1238,7 @@ To have this algorithm terminate also for negative instances, i.e. where the pro
 Such an algorithm needs to construct bounded counter-examples for \smv{q_new}-like properties and look for repeated states in which \smv{q} is false.
 If a trace is found where such a state appears at least twice, there also is a trace in which this state occurs infinitely often thus disproving \smv{q} since no $ k $ in accordance to the lemma can be found.
 
-\subsection{Summary \& Methodology}
+\section{Summary \& Methodology}
 \label{sec:sum-background}
 
 The goal of this thesis is to evaluate an approach to formally verifying \glspl{isa} against higher-level information flow properties using a model checker.
@@ -1254,17 +1254,17 @@ We adopt the requirements to these properties from \cite{Reid17}, i.e. these pro
     \end{itemize}
 \end{displaycquote}
 
-To achieve this, we will investigate the RISC-V architecture in more detail and define as well as implement the MINRV8 architecture in section \ref{sec:arch}.
+To achieve this, we will investigate the RISC-V architecture in more detail and define as well as implement the MINRV8 architecture in chapter \ref{chp:arch}.
 This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load-store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
 A model of this instruction set architecture will be implemented in nuXmv.
 
-As a next step in section \ref{sec:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
+As a next step in chapter \ref{chp:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
 Thereby, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in nuXmv.
 By using nuXmv as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
 When this has been dealt with, the actual \gls{ifc} will be expressed as \gls{ltl} properties.
 These properties will assume the user-mode of the system to be compromised and express that insecure flows of information between machine- and user-mode are impossible.
 
-The results of this verification process will be discussed in section \ref{sec:results}.
+The results of this verification process will be discussed in chapter \ref{chp:results}.
 How will these results look like?
 
 The idea of \gls{ifc} is to express properties like: \enquote{Information must not flow like \dots}.
@@ -1304,5 +1304,5 @@ At some point, a set of respective fixes, architectural changes and assumptions 
     \label{fig:ver-process}
 \end{figure}
 
-This is what will be presented in section \ref{sec:results}.
-From section \ref{sec:discussion} onwards, these results will be discussed, put into context of related work in section \ref{sec:related-work} and finally summarized in section \ref{sec:conclusion}.
+This is what will be presented in chapter \ref{chp:results}.
+From chapter \ref{chp:discussion} onwards, these results will be discussed, put into context of related work in chapter \ref{chp:related-work} and finally summarized in chapter \ref{chp:conclusion}.

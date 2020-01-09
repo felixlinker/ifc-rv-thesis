@@ -1,7 +1,7 @@
 %!TEX root = ../thesis.tex
 
-\section{Architecture}
-\label{sec:arch}
+\chapter{Architecture}
+\label{chp:arch}
 
 In this section, the architecture to be worked with will be developed and implemented.
 It has been mentioned multiple times that the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
@@ -14,7 +14,7 @@ Hence, certain design decisions of both the model and the implementation will on
 
 To conclude, section \ref{sec:arch-summary} will give a summary of what has been achieved here.
 
-\subsection{An Introduction to RISC-V}
+\section{An Introduction to RISC-V}
 \label{sec:risc-v}
 
 The core idea of the RISC-V architecture has already been introduced in section \ref{sec:bg-riscv}.
@@ -34,7 +34,7 @@ In section \ref{sec:rv-priv-arch} each of these parts will be introduced whilst 
 The overall goal of this section is to give a feel for how the RISC-V \gls{isa} works and how a more minimal, RISC-V inspired \gls{isa} could be distilled from it.
 A selection of features to be included in such a minimal architecture will be discussed in section \ref{sec:risc-v-selection}.
 
-\subsubsection{The Base Integer Instruction Set}
+\subsection{The Base Integer Instruction Set}
 \label{sec:rv-base-int-isa}
 
 \paragraph{Integer arithmetic and Boolean instructions}
@@ -85,7 +85,7 @@ Abstractions other than from code, i.e. by routines implemented using jumps and 
 
 Only the platform management instructions give a hint on the complexity that is offered by the RISC-V architecture to allow abstracting processing done on the core.
 
-\subsubsection{The Privileged Architecture}
+\subsection{The Privileged Architecture}
 \label{sec:rv-priv-arch}
 
 The basis of the privileged architecture is formed by the three levels of privilege: machine-, supervisor- and user-mode.
@@ -384,7 +384,7 @@ The only exception to this are other interrupts which are handled before any exc
 RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
 If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{xepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
 
-\subsubsection{Feature Selection}
+\subsection{Feature Selection}
 \label{sec:risc-v-selection}
 
 From what what has been introduced of the RISC-V architecture, a selection of features to include in the MINRV8 architecture will now be made.
@@ -427,7 +427,7 @@ This leaves MINRV8 with the following, very simple interrupt/exception handling 
     \item Return from trap handler
 \end{enumerate}
 
-\subsection{The MINRV8 Architecture}
+\section{The MINRV8 Architecture}
 \label{sec:minrv8}
 
 The architecture that will be model checked in this thesis is a minimal, RISC-V-inspired 8-bit architecture and shall be named MINRV8 from now on.
@@ -543,7 +543,7 @@ In the implementation, it was decided to model the stream of instructions to the
 This makes a model of jump and branch instructions or executable memory pointless since input variables can not be constrained.
 A more thorough discussion of this problem will be given in section \ref{sec:discuss-arch} where the scope of the MINRV8 architecture will be analyzed - both in terms of what it tries to achieve and what it actually is capable of representing, i.e. how close it is to real-life architectures.
 
-\subsection{Implementation of MINRV8 in nuXmv}
+\section{Implementation of MINRV8 in nuXmv}
 \label{sec:model-implementation}
 
 With the MINRV8 \gls{isa} being set up, this section will present its implementation in nuXmv.
@@ -562,7 +562,7 @@ It should, however, be noted that the macro processing engine pyexpander \cite{p
 nuXmv is certainly not the most low-level language imaginable, e.g. SMT certainly comes with less features to aid programmers, however programming nuXmv still lead to many redundancies in the codebase.
 pyexpander in principle serves the same purpose as the C-preprocessor but is much more powerful and allowed to get rid of most aforementioned redundancies.
 
-\subsubsection{Core Functionality}
+\subsection{Core Functionality}
 \label{sec:implementation-core}
 
 \paragraph{Variables}
@@ -652,7 +652,7 @@ It does not mark an error, should the current privilege level not suffice to wri
 No exception will be generated - the memory simply will not be written.
 The same is true for read privileges and \smv{regs} on a \minrv{Load}.
 
-\subsubsection{Caching}
+\subsection{Caching}
 \label{sec:implementation-caching}
 
 The cache is implemented as its own module that gets instantiated by the main module and increases the complexity of the memory's and registers' transition relation.
@@ -698,7 +698,7 @@ In general (i.e. when \minrv{regs[1] mod 4 != regs[2] mod 4}\footnote{%
 If furthermore the memory region targeted by \minrv{regs[2]} is set to be cacheable as well, the read in the second line will overwrite changes of the first instruction which is why the cache content must first be written to memory.
 Therefore, if the cache holds some non persisted values of write-back-cacheable memory regions and either the cache's target changes or the \gls{pmacfg} attributes change such that the cache is not write-back-cacheable anymore, the content of the cache will be written to memory as well.
 
-\subsection{Summary}
+\section{Summary}
 \label{sec:arch-summary}
 
 In this section, the core of the RISC-V \gls{isa} was introduced from which the MINRV8 architecture was derived (cf. section \ref{sec:risc-v}).

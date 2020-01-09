@@ -1,10 +1,10 @@
 %!TEX root = ../thesis.tex
 
-\section{Related Work}
-\label{sec:related-work}
+\chapter{Related Work}
+\label{chp:related-work}
 
 As related work, we will consider seven papers - one of which will be investigated in detail.
-Since this work was founded both on \citetitle{Reid17} \cite{Reid17} and \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} but both papers have been introduced in section \ref{sec:background} extensively, we won't consider them again in this section.
+Since this work was founded both on \citetitle{Reid17} \cite{Reid17} and \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} but both papers have been introduced in chapter \ref{chp:background} extensively, we won't consider them again in this section.
 However, we will make an extensive comparison to the paper \citetitle{BradfieldS16} \cite{BradfieldS16} by \citeauthor{BradfieldS16} since this work is closest to ours.
 
 The remaining six papers will be introduced as a group.
@@ -45,7 +45,7 @@ The authors propose a simple security policy involving two rules:
 \end{displaycquote}
 
 Whereas the first can not be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to the integrity property \ref{itm:prop-mem-i} which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
-The exception of bound-checks is implicitly modelled by the \smv{SAN_ON_*} assumptions in section \ref{sec:results} which mandate from machine-mode to sanitize register of spurious values before using them.
+The exception of bound-checks is implicitly modelled by the \smv{SAN_ON_*} assumptions in chapter \ref{chp:results} which mandate from machine-mode to sanitize register of spurious values before using them.
 Such a sanitization might be implemented by boundary-checking.
 Here, machine-mode can only sanitize registers by clearing them, e.g. by using the shift left instruction \minrv{Sll}.
 This is not critical for our results since if an actual value ever was to be relevant for an attack, nuXmv could have chosen to let machine-mode load this exact value via an \minrv{Loadi} instruction.
@@ -89,7 +89,7 @@ These capabilities allow processes to perform given actions on a given range of 
 The development of CHERI was accompanied by formal methods and proofs to enhance the trust in this system.
 The CHERI architecture is an attempt to equip an architecture with strong mechanisms of controlling information flow such that the trust in it is very high from the beginning, supported by formal proofs that certain desirable properties hold for this architecture.
 
-\subsection{Model Checking Instruction Set Architectures}
+\section{Model Checking Instruction Set Architectures}
 \label{sec:related-model-checking}
 
 The work of \citeauthor{BradfieldS16} in \citetitle{BradfieldS16} \cite{BradfieldS16} comes closest to what has been attempted in this thesis.
@@ -126,7 +126,7 @@ In contrast, regarding the first issue, in our work we not only proposed more ge
 Regarding the second issue of verifying the x86 architecture to not meet the specification, in our work we took a more moderate approach of verifying mitigations to the SYSRET vulnerability.
 Instead of proving the absence of the SYSRET vulnerability, we opted to prove that the mitigations of either disabling interrupts when executing the SYSRET instruction or changing the stack-pointer by hardware are effective (cf. sec. \ref{sec:sysret}).
 
-\subsection{Summary}
+\section{Summary}
 
 Seven papers were considered as related work.
 Find an overview of all papers in table \ref{tbl:related-work}.

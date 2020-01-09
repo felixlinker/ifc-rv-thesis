@@ -1,15 +1,15 @@
 %!TEX root = ../thesis.tex
 
-\section{Conclusion}
-\label{sec:conclusion}
+\chapter{Conclusion}
+\label{chp:conclusion}
 
 Find an overview of this thesis as a whole in figure \ref{fig:overview}.
 As a first step, the MINRV8 architecture inspired by the RISC-V architecture was defined and implemented in nuXmv in section \ref{sec:minrv8}.
-In section \ref{sec:ifc}, we developed information flow semantics and three information flow properties forming an information flow control in spirit of the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
+In chapter \ref{chp:ifc}, we developed information flow semantics and three information flow properties forming an information flow control in spirit of the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 The information flow semantics were used to augmented the model of the MINRV8 by information flow tracking.
-In section \ref{sec:results} we introduced eight assumptions that, when implemented software running in machine-mode such as \glspl{os}, guarantee the absence of vulnerabilities covered by aforementioned information flow properties.
+In chapter \ref{chp:results} we introduced eight assumptions that, when implemented software running in machine-mode such as \glspl{os}, guarantee the absence of vulnerabilities covered by aforementioned information flow properties.
 We evaluated our model, the properties and the assumptions by showing that taken together, they manage to detect both the cache poisoning \cite{Wojtczuk09} and the SYSRET vulnerability \cite{Dunlap19}.
-Finally in section \ref{sec:discussion}, we discussed the limitations and the scope of our work and reflected whether our methodology is trustworthy.
+Finally in chapter \ref{chp:discussion}, we discussed the limitations and the scope of our work and reflected whether our methodology is trustworthy.
 
 \begin{figure}
     \centering
@@ -31,7 +31,7 @@ We discussed another case where model checking was applied to architectural spec
 However, this approach was flawed, did not use model checking to its full potential and implemented a very limited model
 In \cite{BradfieldS16}, the properties only took one transition in the state spaces into consideration whereas in this work we proved properties touching traces of possibly infinite length.
 Additionally, in \cite{BradfieldS16}, the model only comprised instructions related to mode-transitioning whereas here, we implemented a more or less complete set of basic \gls{risc} instructions.
-This, taken together with the discussion of other related work in section \ref{sec:related-work} shows that this work is \textit{supplemental}.
+This, taken together with the discussion of other related work in chapter \ref{chp:related-work} shows that this work is \textit{supplemental}.
 
 What is left to show is that this work is \textit{viable}.
 All proofs were run on a laptop equipped with an Intel Core i7-7500U CPU with 8GB of RAM.
@@ -78,7 +78,7 @@ Finally, we give an outlook on future work:
     \item[Executable memory] First and foremost, the model could be enhanced by a model of executable memory to more closely resemble modern architectures.
     This was discussed extensively in section \ref{sec:discuss-arch}.
     \item[MMU] In light of \cite{KhakpourSD13} a model of an \gls{mmu} could be implemented to make use of information flow tracking on user-mode level.
-    This was discussed in section \ref{sec:related-work}.
+    This was discussed in chapter \ref{chp:related-work}.
     \item[Machine-generated model] The model of the architecture that was implemented by hand in this thesis could be generated from existing machine-readable architectural specifications.
     For example, there are machine-readable versions of the ARM architecture; both \cite{Reid17,Fox02} either used or developed machine-readable specifications that might be used for this endeavor.
     For RISC-V, there also is a formal specification available \cite{RiscvSpecFormal}.

@@ -1,10 +1,10 @@
 %!TEX root = ../thesis.tex
 
-\section{Discussion}
-\label{sec:discussion}
+\chapter{Discussion}
+\label{chp:discussion}
 
 In section \ref{sec:ifc-properties}, a set of \gls{ifc} properties based on the work in \cite{Ferraiuolo17} has been introduced; we will refer to these properties as the set $ P $.
-These properties were model checked, the main result of which was a set of rules $ R $ as presented in the previous section \ref{sec:results} .
+These properties were model checked, the main result of which was a set of rules $ R $ as presented in the previous chapter \ref{chp:results} .
 What is the consequence of this?
 The formal achievement of this thesis can be summarized as follows:
 \begin{quote}
@@ -23,12 +23,12 @@ We will cover three aspects of our work:
     \item General observations.
 \end{itemize}
 
-\subsection{Scope}
+\section{Scope}
 \label{sec:scope}
 
 \todo[inline]{Introduction}
 
-\subsubsection{Architecture}
+\subsection{Architecture}
 \label{sec:discuss-arch}
 
 MINRV8 is meant to be a reasonable abstraction of a real-world RISC-V architecture from a security standpoint.
@@ -161,7 +161,7 @@ The implementation of the MINRV8 architecture abstracted from real-world archite
 
 This leaves us with good reasons to assume that programs considered by nuXmv, i.e. the set of programs quantified over when running proofs, is sufficiently close to the set of \enquote{real} programs of the MINRV8 architecture including jumps and branches.
 
-\subsubsection{Assumptions}
+\subsection{Assumptions}
 
 \todo{Mention these goals in introduction/background}
 
@@ -252,7 +252,7 @@ These two examples stress that the precise phrasing of the assumptions is critic
 While it would be sufficient to find a stronger precondition for these assumptions in existing code-bases, it is non-trivial whether such preconditions are easy to find or whether the assumptions might be rephrased such that they still grant the absence of information flow related bugs but are easier to verify in programs.
 This topic, though, can't be handled as part of this thesis and as such marks future work.
 
-\subsection{Trustworthiness}
+\section{Trustworthiness}
 \label{sec:trustworthiness}
 
 Verification processes must not be arbitrary.
@@ -265,7 +265,7 @@ But what does \textit{trustworthy} mean?
 Here, we will skip the aspect of technical soundness of this thesis, i.e. the question of whether the work presented in this thesis is without errors.
 In consequence, the degree of trustworthiness of this thesis is determined by whether the results of the verification process actually enhance the confidence in the correctness of the MINRV8 architecture, i.e. rather than asking whether what we did was correct, we ask: did we do the \textit{right} thing?
 
-A possible issue with verification is to make circular arguments (an example for this will be given in section \ref{sec:related-work}).
+A possible issue with verification is to make circular arguments (an example for this will be given in chapter \ref{chp:related-work}).
 Verification engineers do not start their work out of nowhere.
 They usually have a feel for what they attempt to verify and have some vulnerabilities in mind they try to tackle.
 If the actual work of modeling a prototype and implementing a verification procedure is influenced by this too strongly, one might object:
@@ -314,12 +314,12 @@ But it is unclear
 \end{enumerate*}
 We mark this problem as future work.
 
-\subsection{General Observations}
+\section{General Observations}
 \label{sec:discuss-observations}
 
 \todo[inline]{Bridge}
 
-\subsubsection{Abstract Model}
+\subsection{Abstract Model}
 
 One might ask, why it was decided to simulate all flows of information through the model of the MINRV8 architecture and indeed: In scope of this thesis, the actual content of registers is not mandatory, i.e. the actual contents of registers could be removed from the model such that only information flow tracking labels are tracked.
 Register values do play a role when memory is indexed, but this could likely be abstracted by non-deterministically choosing a memory location to be targeted by loads and stores.
@@ -339,9 +339,9 @@ However, secondly, working with concrete values has two benefits which might bec
 
 With these two reasons at hand and the overall goal of this thesis to implement a prototype for a methodology to verify \glspl{isa}, we find that having modelled register values as opposed to abstractly tracking information flow labels only improves on the significance of our results.
 
-\subsubsection{Per-Bit Information Flow Tracking}
+\subsection{Per-Bit Information Flow Tracking}
 
-Another issue is that in section \ref{sec:results} it was mentioned that counter-examples never involved flows of information where the bit-wise labels of values in the architecture was critical.
+Another issue is that in chapter \ref{chp:results} it was mentioned that counter-examples never involved flows of information where the bit-wise labels of values in the architecture was critical.
 In other words: for this thesis, tracking only one bit for confidentiality and one bit for integrity for each register and memory address would suffice.
 Initially, it was decided to track labels bit-wise because \begin{enumerate*}[label=\alph*)]
     \item we followed the approach of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} which tracked information flow bit-wise as well,

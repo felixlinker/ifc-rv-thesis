@@ -1,7 +1,7 @@
 \NeedsTeXFormat{LaTeX2e}
 \ProvidesClass{securem}
 
-\LoadClass{article}
+\LoadClass{book}
 \RequirePackage{amsmath}
 \RequirePackage{amsthm}
 \RequirePackage{amssymb}

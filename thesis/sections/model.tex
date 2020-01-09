@@ -1,7 +1,7 @@
 %!TEX root = ../thesis.tex
 
-\section{Information Flow Control}
-\label{sec:ifc}
+\chapter{Information Flow Control}
+\label{chp:ifc}
 
 With an architecture implemented in nuXmv, the only thing left to specify information flow properties about this architecture or its model respectively is to define how information is tracked in the model.
 The general idea of information flow tracking will be adopted from \cite{Ferraiuolo17} which has been presented in section \ref{sec:bg-ifc}.
@@ -20,7 +20,7 @@ In section \ref{sec:ifc-model}, we will adopt the type system rules to instructi
 Section \ref{sec:ifc-implementation} then explains how information was tracked in nuXmv.
 Finally, in section \ref{sec:ifc-properties} the information flow properties that constitute the information flow control itself will be given.
 
-\subsection{Information Flow Semantics for Instructions}
+\section{Information Flow Semantics for Instructions}
 \label{sec:ifc-model}
 
 In order to apply aforementioned type system rules of \cite{Ferraiuolo17} to instructions, the idea behind each rule will be investigated next to generate information flow semantics for instructions from those.
@@ -300,7 +300,7 @@ More on this in section \ref{sec:ifc-properties}.
     \label{fig:ifc-semantics}
 \end{figure}
 
-\subsection{Implementation of Information Flow Tracking}
+\section{Implementation of Information Flow Tracking}
 \label{sec:ifc-implementation}
 
 In order to implement the information flow tracking semantics described in section \ref{sec:ifc-model} we define a binary representation of the lattice of security labels given by $ \Sigma $ and $ \sqcup $.
@@ -414,7 +414,7 @@ Certain parts of the architectural state might be for example confidential but t
 In other words, the \lstinline[language=SMV,mathescape]{$\dots$_conf} and \lstinline[language=SMV,mathescape]{$\dots$_integrity} variables mirror the architectural part of implementation as described in section \ref{sec:model-implementation}.
 The domain of confidentiality and the domain of integrity of the MINRV8 architecture are tracked in addition to simulating the pure computational world where variables implementing the information flow tracking change in parallel to their counterparts in the computational world.
 
-\subsection{Information Flow Properties}
+\section{Information Flow Properties}
 \label{sec:ifc-properties}
 
 Finally, the information flow properties constituting the information flow control will be defined now.
@@ -505,7 +505,7 @@ The domain of confidentiality has yet been left out so we will introduce one fin
     \end{lstlisting}
 \end{enumerate}
 
-\subsection{Summary}
+\section{Summary}
 
 \todo[inline]{Write}
 

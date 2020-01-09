@@ -1,7 +1,7 @@
 %!TEX root = ../thesis.tex
 
-\section{Results}
-\label{sec:results}
+\chapter{Results}
+\label{chp:results}
 
 This section will cover the results of the verification process as it was described in section \ref{sec:sum-background}.
 Our main finding is that there are 8 assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the 8 assumptions that will be introduced in subsequent sections are in place.
@@ -22,12 +22,12 @@ In the field of software development, this term refers to bugs that are added to
 These canaries mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
 The results of these tests will finally be presented in section \ref{sec:canaries}.
 
-\subsection{Assumptions}
+\section{Assumptions}
 
 Technically, \smv{INIT} constraints and assumptions serve the same purpose: They limit the state spaces that will be searched for property violations.
 Conceptually, however, these two concepts should be distinguished.
 
-\subsubsection{Initial Constraints}
+\subsection{Initial Constraints}
 
 In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
 Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
@@ -50,7 +50,7 @@ As \smv{MPP} is cleared on return from a trap handler and \smv{MIE} being high i
 
 The second constraint sets up caching errorless, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
-\subsubsection{Property Assumptions}
+\subsection{Property Assumptions}
 \label{sec:assumptions}
 
 \todo{Pick up point of introduction, i.e. distinction between INIT and other assumptions by concepts}
@@ -96,7 +96,7 @@ These assumptions can be grouped into three categories:
 Find an overview of all these assumptions in table \ref{tbl:assumptions-overview}.
 Each row represents one assumption and each column one property.
 A check mark denotes that the respective assumption is critical for the respective property, i.e. there exists a counter-example proving the property to be false if the assumption at hand is not assumed.
-These counter-examples are given in detail in appendix \ref{sec:cexs} and will be skipped here.
+These counter-examples are given in detail in appendix \ref{app:cexs} and will be skipped here.
 
 Note that each of the assumptions is critical for at least one property.
 This shows that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} $} as opposed to only \enquote{$ \text{assumptions} \Rightarrow \text{properties} $} since \enquote{$ \neg \text{assumptions} \Rightarrow \neg \text{properties} $}.
@@ -261,13 +261,13 @@ It must clear or sanitize regions accordingly, depending on the previous access 
     \end{lstlisting}
 \end{figure}
 
-\subsection{Canaries}
+\section{Canaries}
 \label{sec:canaries}
 
 In this section, it will be presented how the model of the MINRV8 architecture was altered in order to implement real-world attacks to the Intel x86 architecture.
 By default, the MINRV8 architecture is not vulnerable to these attacks, however, making the architecture vulnerable will put the approach of this thesis to formally verify an instruction set architecture to a test.
 
-\subsubsection{Cache Poisoning Attack on x86}
+\subsection{Cache Poisoning Attack on x86}
 
 The cache poisoning attack\footnote{%
     The name \enquote{cache poisoning attack} is not official.
@@ -344,7 +344,7 @@ It should be part of future work, though, to implement a complete model of the R
     \label{tbl:cex-cache-vuln}
 \end{table}
 
-\subsubsection{The SYSRET Vulnerability}
+\subsection{The SYSRET Vulnerability}
 \label{sec:sysret}
 
 The so called \textit{SYSRET vulnerability} to the intel x86 architecture is listed as vulnerability \textit{CVE-2012-0217} by the \textit{Common Vulnerabilities and Exposures} database (CVE\textsuperscript{\textregistered}) \cite{SYSRET-vuln} and allegedly has also been found by Rafal Wojtczuk \cite{SYSRETFreeBSD,SYSRETDebian,SYSRETCert}.
