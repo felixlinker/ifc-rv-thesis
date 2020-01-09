@@ -13,8 +13,12 @@ Taken together with aforementioned assumptions these patches mark a fixpoint of 
 
 This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints.
 
-\todo{Wurden arch.-ref. eingeführt?}
-Since only assumptions and no architectural refinements were introduced to the model, it was also tested how the results would change when canaries are introduced to the architecture.
+Note that only assumptions and no architectural refinements were introduced to the model\footnote{%
+    It was tested whether two assumptions could be replaced by one architectural mitigation.
+    It turned out, however, that this architectural refinement did not manage to rule out the respective vulnerability.
+    This is discussed at the end of appendix \ref{app:cexs}.
+}.
+It therefore was also tested how the results would change when canaries are introduced to the architecture.
 The term \enquote{canary} refers to the birds used in coal mines to indicate a loss of oxygen.
 In the field of software development, this term refers to bugs that are added to code bases deliberately in order to test detection mechanisms.
 These canaries mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
@@ -24,19 +28,21 @@ The results of these tests will finally be presented in section \ref{sec:canarie
 
 Technically, \smv{INIT} constraints and assumptions serve the same purpose: They limit the state spaces that will be searched for property violations.
 Conceptually, however, these two concepts should be distinguished.
-
-\subsection{Initial Constraints}
-
 In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
 Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
 Consequently, these constraints were introduced during the prove-refine loop as fixes to the model.
+Assumptions on the other hand are not part of the model in a technical sense but mark a result of the verification of the architecture: Each assumptions constitutes a rule for e.g. \gls{os} or compiler engineers to obey in order to write or generate non-vulnerable code.
 
-The former aspect of validity is guaranteed by constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
+\subsection{Initial Constraints}
+
+Validity of the counter-examples was guaranteed by 13 \smv{INIT} constraints that can be grouped into four categories.
+Firstly, two groups of constraint guarantee that counter-examples are not false upfront.
+By constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
 If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv returns a trivial counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register.
 
-The aspect of the initial state complying with the specification is guaranteed by two constraints.
-The first is rather simple and is depicted in the following snippet:
+Secondly, two more group of constraints ensures the initial state to comply with the specification is guaranteed.
+The first is rather simple, given by a single constraint and depicted in the following snippet:
 \begin{lstlisting}[
     language=smv,
     caption={\gls{mstatus} \smv{INIT} constraint for the model}
@@ -46,12 +52,10 @@ The first is rather simple and is depicted in the following snippet:
 This constraint ensures that the interrupt handling mechanisms are set up correctly as mandated by the RISC-V specification (cf. section \ref{sec:rv-priv-arch} and figure \ref{fig:interrupt-handling}).
 As \smv{MPP} is cleared on return from a trap handler and \smv{MIE} being high implies that no interrupt is being handled at the moment, \smv{MPP} must be low.
 
-The second constraint sets up caching errorless, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
+The last group of constraints sets up caching errorless, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
 \subsection{Property Assumptions}
 \label{sec:assumptions}
-
-\todo{Pick up point of introduction, i.e. distinction between INIT and other assumptions by concepts}
 
 \begin{table}
     \centering
@@ -101,7 +105,6 @@ This shows that \enquote{$ \text{assumptions} \Leftrightarrow \text{properties} 
 
 \paragraph{Mode-boundary crossing related assumptions}
 As can be seen in table \ref{tbl:assumptions-overview}, there are two properties related to mode-boundary crossing.
-\todo{Refernce to threat model and example of direct passing of information}
 Mode-boundary crossing related here refers to vulnerabilities that violate a property at execution of the \smv{Ecall} or \smv{Mret} instruction.
 
 The first of these is called \smv{SAN_ON_CALL} and mandates from machine-mode to not use \textit{dangerous} instructions before having cleared the registers from any untrusted data when entering machine- from user-mode.
@@ -300,7 +303,7 @@ However, the basic idea can still be implemented by following changes to the mod
 
 These changes manage to introduce a vulnerability to the MINRV8 architecture.
 If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv manages to find a counter-example for all three information flow properties.
-These are depicted in table \ref{tbl:cex-cache-vuln}.
+These, again, are discussed in the appendix (cf. \ref{sec:cexs-cache-vuln}).
 
 \todo[inline]{Fix text flow}
 
@@ -316,31 +319,6 @@ One the one hand, the specification states that cacheability settings can be mod
 One the other hand, it also states that \gls{pmp} attributes (including access privileges) are checked in \textit{parallel} to \glspl{pma} (defining cacheability), i.e. regardless of cacheability settings, and always trap at privilege violations \cite[44-45]{RiscVISAP}.
 This indicates that neither would a privilege mode other than machine-mode be able to set any memory region cacheable nor would it be able to read from cache of memory regions it otherwise does not have access to.
 It should be part of future work, though, to implement a complete model of the RISC-V specification which would verify whether RISC-V is actually not susceptible to this attack vector.
-
-\begin{table}
-    \begin{subtable}{\textwidth}
-        \centering
-        \input{../results/CACHE-VULN/MEMORY-OP-INTEGRITY.tex}
-        \caption{\smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i})}
-        \label{tbl:cex-mem-i-cache-vuln}
-    \end{subtable}
-
-    \begin{subtable}{\textwidth}
-        \centering
-        \input{../results/CACHE-VULN/CSR-INTEGRITY.tex}
-        \caption{\smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i})}
-        \label{tbl:cex-csr-i-cache-vuln}
-    \end{subtable}
-
-    \begin{subtable}{\textwidth}
-        \centering
-        \input{../results/CACHE-VULN/NO-LEAK.tex}
-        \caption{\smv{NO_LEAK} (\ref{itm:prop-no-leak})}
-        \label{tbl:cex-no-leak-cache-vuln}
-    \end{subtable}
-    \caption{Counter-examples for the Cache Vulnerability}
-    \label{tbl:cex-cache-vuln}
-\end{table}
 
 \subsection{The SYSRET Vulnerability}
 \label{sec:sysret}
@@ -447,7 +425,7 @@ These two parts follow the same structure as the first part of the \smv{SP_BANK}
 \end{figure}
 
 All these assumptions, however, do not ensure that the architecture models all information flow properties.
-Similar to the SYSRET vulnerability, there is a stream of instructions that violates each of these properties.
+Similar to the SYSRET vulnerability, there is a stream of instructions that violates each of these properties which will be discussed in the appendices' section \ref{sec:cexs-sysret}.
 
 \todo[inline]{Fix flow of text}
 

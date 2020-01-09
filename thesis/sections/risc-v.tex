@@ -379,10 +379,10 @@ An exception to this is $ x\text{status}.x\text{IE} $ which still is set to 0 me
 Finally, note that exceptions are handled as soon as they occur.
 This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
 The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
-% Source: https://stackoverflow.com/a/56402079/7194995
-\todo{Stack overflow reference?}
 RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
-If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{xepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention.
+If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{xepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention\footnote{
+    While not being a citable source, credit should be given to stack overflow user Baard who pointed this out to us (cf. \url{https://stackoverflow.com/a/56402079/7194995}).
+}.
 
 \subsection{Feature Selection}
 \label{sec:risc-v-selection}
@@ -554,7 +554,7 @@ In analogy to this, section \ref{sec:implementation-core} will describe how the 
 In each of these section, the variables and their corresponding types will be stated declared as part of the modules after which the transition relation for each of the respective variables will be outlined.
 
 The goal of this section is not to give a full description of the whole implementation but to give an overall understanding of the core ideas behind it\footnote{%
-    If the full implementation is of interest, the repository containing it is accessible via: https://github.com/felixlinker/ifc-rv-thesis
+    If the full implementation is of interest, the repository containing it is accessible via: \url{https://github.com/felixlinker/ifc-rv-thesis}
 }.
 The implementation includes work-arounds for certain downsides of nuXmv, and generalizations to ease the implementation as a whole.
 All these aspects are not relevant for the goal of this thesis.

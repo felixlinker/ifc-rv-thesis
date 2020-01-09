@@ -306,7 +306,6 @@ To achieve this, it must be tackled how such an information flow policy as propo
     \item the labels can be tracked throughout the architecture by a model checker, and
     \item the policy can be controlled by the model checker.
 \end{enumerate*}, i.e. how can the two concepts of information flow tracking and control be implemented using a model checker?
-\todo{Do I answer above questions? -> yes, but make explicit in sec. 4}
 
 \section{RISC-Architectures}
 \label{sec:riscs}
@@ -553,9 +552,6 @@ Addresses will be treated as physical ones throughout this thesis.
 \subsection{Threat Model}
 \label{sec:threat-model}
 
-\todo{Es ist anzunehmen, dass information flow zwischen den modes stattfindet; verifiziere nicht, ob das passiert, sondern wie man das verhindern könnte}
-\todo{privelege escalation vulnerabilities}
-
 Now that two concepts that touch most architectures have been ruled out, namely sub-architectural hardware mechanisms or virtual memory, this section will give a positive description of what \textit{will} be part of the model.
 This includes the question of the threat model of the higher level properties to be verified.
 
@@ -596,7 +592,6 @@ Even if it could be assumed that the hardware your computer is running on accura
     Without going into details on this research, the approach of this thesis still is an important addition to this research as it is more general, i.e. implementation independent whereas hardware verification by its very nature is implementation dependent.
 }.
 
-\todo{Give reference and reasoning}
 In this threat model, timing channels are excluded.
 
 \section{Model Checking}
@@ -1191,10 +1186,9 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
 
 Whereas SPIN was problematic because its input language didn't match the needs of this thesis, and SPACER or \muZ{} were problematic because there output does not match the needs of this thesis, nuXmv delivers in both aspects.
 The traces generated as counter-examples serve as illustration what specifically went wrong on a property.
-\todo{Example with while-loop}
 The input language allows to implement modules that are limited in the description of the transition relation itself\footnote{%
     Since transitions are constrained by propositional logic and expressions without loops only, there can be issues if complex transitions should be expressed.
-    For example, in section \ref{sec:ifc} we will consider a situation where for the transition of a bit vector the first bit that is high needs to be found.
+    For example, in section \ref{sec:ifc-model} we will consider a situation where for the transition of a bit vector the first bit that is high needs to be found.
     In other programming languages, one would simply iterate over all bits of the vector and break the loop on the first high bit.
     However, when constraining the transition relation, there are no loops.
     This left us with the need to implement this search for the first high bit as a sequence of nested \smv{( ? : )} expressions resembling the binary search tree for the respective bit.
@@ -1272,7 +1266,7 @@ The results of this verification process will be discussed in chapter \ref{chp:r
 How will these results look like?
 
 The idea of \gls{ifc} is to express properties like: \enquote{Information must not flow like \dots}.
-Whenever nuXmv is asked: \enquote{Does this model of the MINRV8 allow for such flows of information?}, it will either respond with yes giving a sequence of instructions that violate the information flow property or respond with no.
+Whenever nuXmv is asked: \enquote{Does this model of the MINRV8 architecture allow for such flows of information?}, it will either respond with yes giving a sequence of instructions that violate the information flow property or respond with no.
 If the response happens to be a counter-example, the following questions:
 \begin{enumerate}
     \item \label{itm:counter-ex-validity}

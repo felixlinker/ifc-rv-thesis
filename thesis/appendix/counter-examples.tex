@@ -215,6 +215,7 @@ Therefore, this architectural mitigation does not suffice and cache needs to be 
 \label{app:cexs-canaries}
 
 \section{Cache Poisoning Attack on x86}
+\label{sec:cexs-cache-vuln}
 
 As usual, the traces for \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) as depicted in tables \ref{tbl:cex-mem-i-cache-vuln} and \ref{tbl:cex-csr-i-cache-vuln} are highly similar.
 We will introduce the counter-example to property \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) in detail now.
@@ -265,6 +266,7 @@ Yet still, user-mode can gain access to the confidential word in cache as no acc
 \end{table}
 
 \section{The SYSRET Vulnerability}
+\label{sec:cexs-sysret}
 
 Here, only the integrity-related properties shall be covered as only these are relevant to the SYSRET vulnerability.
 The counter-examples illustrating this are depicted in table \ref{tbl:cex-sysret}.
