@@ -66,13 +66,15 @@ In this implementation, \citeauthor{Fox02} models two views on the ARM architect
 If for a given list of instructions or a given list of steps in the micro-architecture, no corresponding run of the opposite world can be found, either the micro-architecture or the \gls{isa} must be flawed.
 This work was picked up by \citeauthor{KhakpourSD13} in \citetitle{KhakpourSD13} \cite{KhakpourSD13}.
 The authors here extend the implementation of \citeauthor{Fox02} proving three isolation properties of user- and machine-mode:
-User-mode processes must only depend on process-accessible-resources, processes must only modify those memory regions they can access by a given \gls{mmu} configuration and user-mode-processes must only execute code by calling machine-mode through a trap.
+User-mode processes must only depend on process-accessible-resources, processes must only modify those memory regions they can access by a given \gls{mmu} configuration and user-mode processes must only execute code by calling machine-mode through a trap.
 The first of these is a non-interference property.
-\todo{Explain non-interference better}
-In general, non-interference properties state that a given system (in this case: user-mode-processes) must not be influenced by certain values (in this case: non-user-mode-process accessible resources).
-They are generally stated in the following form: whenever two initial states of the system agree on a list of selected values, the respective final states must also agree on these values.
+Non-interference properties were introduced in \cite{GoguenMeseguer82} and can be best summarized as:
+\begin{displaycquote}[p.11]{GoguenMeseguer82}
+    one group of users, using a certain set of commands, is \underline{noninterfering} with another group of users if what the first group does with those has commands has no effect on what the second group of users can see.
+\end{displaycquote}
+Here, think of these two groups of users as two user-mode processes.
 This is an indirect way of expressing information flow properties.
-As opposed to formalize: \enquote{information from source $ X $ must not flow to sink $ T $}, directly, non-interference properties state that \enquote{information from any illegitimate source must not flow to any sink}, hence must not be able to interfere computation.
+As opposed to formalize: \enquote{information from source $ X $ must not flow to sink $ T $}, directly, non-interference properties state that \enquote{information from any illegitimate source must not flow to any sink}, hence must not be able to interfere computation in any way.
 
 In contrast to the work of this thesis, \citeauthor{KhakpourSD13} achieve to distinguish between multiple user-mode processes and in this way tackle a more broad problem.
 In our work, we only consider the scenario of user-mode attacking machine-mode and not user-mode attacking different user-mode processes.
