@@ -1053,74 +1053,78 @@ Invariants specify that something (i.e. the respective next-expression) must be 
     \def\figscale{0.4}
     \begin{subfigure}[b]{\subfigw}
         \centering
-        \includegraphics[scale=\figscale]{figures/module.png}
-        \caption{nuXmv module}
-    \end{subfigure}
-    \begin{subfigure}[b]{\subfigw}
-        \centering
         \includegraphics[scale=\figscale]{figures/transition-system.png}
         \caption{Transition system}
-    \end{subfigure}
-    \begin{subfigure}[b]{\subfigw}
-        \centering
-        \includegraphics[scale=\figscale]{figures/ctl-interpretation.png}
-        \caption{\gls{ctl} interpretation}
-        \label{fig:ctl-int}
+        \label{fig:trans-sys}
     \end{subfigure}
     \begin{subfigure}[b]{\subfigw}
         \centering
         \includegraphics[scale=\figscale]{figures/ltl-interpretation.png}
         \caption{\gls{ltl} interpretation}
+        \label{fig:ltl-int}
     \end{subfigure}
+
+    \begin{center}
+        \begin{subfigure}[b]{\subfigw}
+            \centering
+            \includegraphics[scale=\figscale]{figures/ctl-interpretation.png}
+            \caption{\gls{ctl} interpretation}
+            \label{fig:ctl-int}
+        \end{subfigure}
+    \end{center}
     \caption{nuXmv modules illustrated}
 \end{figure}
 
-\todo{Reference whole figure}
-
 \gls{ltl} on the other hand is a temporal logic and as such supports the specification of properties over time.
 Both, \gls{ltl} and \gls{ctl}, will be introduced semi-formally here as presented in the \citetitle{nuXmv} \cite{nuXmv}.
-Interpretations and models of an \gls{ltl} formula are infinite execution paths of a system, or in the context of nuXmv.
-\todo{Example}
-Let $ T = (t_1, t_2, \dots) $ be such an execution path.
+Interpretations and models of an \gls{ltl} formula are infinite execution paths of a state transition system that in context of nuXmv is given by a module.
+A state transition system comprises a set of states and a transition relation amongst them with some dedicated initial states.
+Such a state can be understood as an assignment to the variables of the nuXmv module that is resembled by the transition system.
+An illustration of a transition system is given in figure \ref{fig:trans-sys}.
+The transition system comprises two initial states $ s_0 $ and $ s_0' $.
+The set of all initial states is given by the set of all assignments satisfying all \smv{INIT} constraints.
+Given a state $ s $, the set of its successor states is given by the set of states $ \{ s^+ \mid s $ and $ s^+ $ satisfy all \smv{TRANS} constraints $ \} $.
+
+Such an execution path now is an infinitely long trace of states $ T = (t_1, t_2, \dots) $ such that $ t_1 $ is an initial state, $ t_1 $ and $ t_2 $ satisfy all \smv{TRANS} constraints, etc.
+Intuitively, one can depict some execution as a random walk in the transition system starting at an initial state, i.e. some run of the system.
+Two example execution paths are depicted in figure \ref{fig:ltl-int}.
+
 The most simple form of an \gls{ltl} formula again is a next-expression \smv{p}.
 $ T $ models \smv{p} in \gls{ltl} if \smv{p} is true in $ t_1 $.
 Furthermore, there are five main temporal operators.
-\gls{ltl} formulas are defined syntactically and semantically in the usual, recursive way:
-\todo{truly inductive definition}
+\gls{ltl} formulas are defined syntactically and semantically in the usual, recursive way where $ \psi, \psi' $ are some \gls{ltl} formula:
 \begin{description}
-    \item[Next] \lstinline[language=smv,mathescape=true]{$ \varphi := $ X p}: $ T $ models $ \varphi $ if \smv{p} is true in $ t_2 $.
-    \item[Globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ G p}: $ T $ models $ \varphi $ if \smv{p} is true for \textit{all} $ t_i $, $ 1 \leq i $.
-    \item[Finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ F p}: $ T $ models $ \varphi $ if \smv{p} is true for \textit{some} $ t_i $, $ 1 \leq i $.
-    \item[Until] \lstinline[language=smv,mathescape=true]{$ \varphi := $ p U p'}: $ T $ models $ \varphi $ if \smv{p} is true in $ t_1 $ to $ t_i $, $ 1 \leq i $, and at $ t_{i + 1} $, \smv{p'} is true.
-    \item[Releases] \lstinline[language=smv,mathescape=true]{$ \varphi := $ p V p'}: $ T $ models $ \varphi $ if \smv{p'} holds in $ t_1 $ to $ t_i $, $ 1 \leq i $, and in $ t_i $ also \smv{p} is true.
-    Alternatively, $ i $ might not be bounded, i.e. \smv{p} then is never and \smv{p'} globally true.
+    \item[Next] \lstinline[language=smv,mathescape=true]{$ \varphi := $ X $ \psi $}: $ T $ models $ \varphi $ if $ \psi $ is true in $ t_2 $, i.e. $ \psi $ holds in the \textit{next} state.
+    \item[Globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ G $ \psi $}: $ T $ models $ \varphi $ if $ \psi $ is true for \textit{all} $ t_i $, $ 1 \leq i $, i.e. $ \psi $ is \textit{always} true.
+    \item[Finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ F $ \psi $}: $ T $ models $ \varphi $ if $ \psi $ is true for \textit{some} $ t_i $, $ 1 \leq i $, i.e. $ \psi $ is true at \textit{some point} in future.
+    \item[Until] \lstinline[language=smv,mathescape=true]{$ \varphi := \psi $ U $ \psi' $}: $ T $ models $ \varphi $ if $ \psi $ is true in $ t_1 $ to $ t_i $, $ 1 \leq i $, and at $ t_{i + 1} $, $ \psi' $ is true, i.e. $ \psi $ is true \textit{until} $ \psi' $ becomes true.
+    \item[Releases] \lstinline[language=smv,mathescape=true]{$ \varphi := \psi $ V $ \psi' $}: $ T $ models $ \varphi $ if $ \psi' $ holds in $ t_1 $ to $ t_i $, $ 1 \leq i $, and in $ t_i $ also $ \psi $ is true.
+    Alternatively, $ i $ might not be bounded, i.e. $ \psi $ then is never and $ \psi' $ globally true.
+    This means that $ \psi' $ is true \textit{at least until} $ \psi $ becomes true (which also might be never).
 \end{description}
 
-When an \gls{ltl} specification \smv{p} is checked by nuXmv, it is verified that \smv{p} is true for \textit{all} infinitely long execution paths of the transition system given by the main module.
+When an \gls{ltl} specification \smv{p} is checked by nuXmv, it is verified that \smv{p} is true for \textit{all} execution paths of the transition system given by the main module.
 Consequently, an invariant \smv{p} can also be expressed as the \gls{ltl} formula \smv{G p}.
 
 Additionally, there are analogous operators for the past.
 \smv{Y p} and \smv{Z p} are the past-version of \smv{X} with the distinction that \smv{Y} is false at $ t_1 $ and \smv{Z} is true at $ t_1 $.
 The \enquote{Historically} operator \smv{H p} is the counterpart to \smv{G} and the \enquote{Once} operator \smv{O p} is the counterpart to \smv{F}.
 
-\todo{Grafik für LTL}
-
 \gls{ctl} formulas share much of the idea of \gls{ltl} formulas but they differ in the interpretations and models for formulas.
 Whereas in \gls{ltl} an interpretation of a formula is a infinitely long execution path of a transition system, in \gls{ctl} an interpretation of a formula is a transition system itself or more specifically: the unwinded transition relation of a transition system as a tree (hence the name computation \textit{tree} logic).
-Therefore, it is straightforward how \gls{ctl} formulas are checked by nuXmv: it is checked whether the transition system unwinded as a tree for some fixed initial state models the formula.
-Again, the most simple form of a \gls{ctl} formula is a next-expression \smv{p}.
-To illustrate the models-relation for \gls{ctl}, consider the example tree depicted in figure \ref{fig:ctl-int}.
-Such a tree $ T $ models \smv{p} is \smv{p} is true in state $ x_0 $.
+Therefore, it is straightforward how \gls{ctl} formulas are checked by nuXmv: it is checked whether the transition system unwinded as a tree models the formula.
+Consider the example tree depicted in figure \ref{fig:ctl-int}.
 
-\todo{truly inductive definition}
-The temporal operators supported by \gls{ctl} are the following:
+Again, the most simple form of a \gls{ctl} formula is a next-expression \smv{p}.
+Such a tree $ T $ models \smv{p} if \smv{p} is true in the root state $ x_0 $ of $ T $.
+The operators supported by \gls{ctl} are again defined inductively for some \gls{ctl} formula $ \psi $:
 \begin{description}
-    \item[Exists globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EG p}: $ T $ models $ \varphi $ if there exists an infinite path $ (x_0, \dots) $ in $ T $ such that \smv{p} is true for all $ x_i $ on the path.
-    \item[Exists next state] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EX p}: $ T $ models $ \varphi $ if there exists a next state $ x_i $ to $ x_0 $ such that \smv{p} is true in $ x_i $.
-    \item[Exists finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EF p}: $ T $ models $ \varphi $ if \smv{p} is true in some $ x_i $
-    \item[For all globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AG p}: $ T $ models $ \varphi $ if for all infinite paths $ (x_0, \dots) $ in $ T $, \smv{p} is true in $ x_i $.
-    \item[For all next state] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AX p}: $ T $ models $ \varphi $ if for all successor states $ x_i $ of $ x_0 $, \smv{p} is true in $ x_i $.
-    \item[For all finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AF p}: $ T $ models $ \varphi $ if for all infinite paths $ (x_0, \dots) $ there is any $ x_i $ such that \smv{p} is true in $ x_i $.
+    \item[Exists globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EG $ \psi $}: $ T $ models $ \varphi $ if there exists an infinite path $ (x_0, \dots) $ in $ T $ such that $ \psi $ is true for all $ x_i $ on the path.
+    \item[Exists next state] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EX $ \psi $}: $ T $ models $ \varphi $ if there exists a next state $ x_i $ to $ x_0 $ such that $ \psi $ is true in $ x_i $.
+    \item[Exists finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ EF $ \psi $}: $ T $ models $ \varphi $ if $ \psi $ is true in some $ x_i $
+    \item[For all globally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AG $ \psi $}: $ T $ models $ \varphi $ if for all infinite paths $ (x_0, \dots) $ in $ T $, $ \psi $ is true in $ x_i $.
+    \item[For all next state] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AX $ \psi $}: $ T $ models $ \varphi $ if for all successor states $ x_i $ of $ x_0 $, $ \psi $ is true in $ x_i $.
+    \item[For all finally] \lstinline[language=smv,mathescape=true]{$ \varphi := $ AF $ \psi $}: $ T $ models $ \varphi $ if for all infinite paths $ (x_0, \dots) $ there is any $ x_i $ such that $ \psi $ is true in $ x_i $.
 \end{description}
 
 It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and \smv{F} are adopted to \gls{ctl} by existentially and universally quantifying each.
