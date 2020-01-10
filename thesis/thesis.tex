@@ -147,6 +147,9 @@
     \endgroup
 }
 
+% No page numbers on ToC
+\addtocontents{toc}{\protect\thispagestyle{empty}}
+
 \begin{document}
 
 \begin{titlepage}
@@ -181,8 +184,6 @@
     \end{multicols}
 \end{titlepage}
 
-\newpage
-
 \pagestyle{empty}
 \begin{abstract}
     \input{preface/abstract.tex}
@@ -192,15 +193,9 @@
     \input{preface/acknowledgements.tex}
 \end{acknowledgements}
 
-\newpage
-
 \tableofcontents
 
-\newpage
-
 \printnoidxglossary[type=acronym]
-
-\newpage
 
 \pagestyle{plain}
 \setcounter{page}{1}
