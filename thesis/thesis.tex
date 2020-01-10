@@ -1,4 +1,4 @@
-\documentclass{book}
+\documentclass[headings=standardclasses]{scrbook}
 \usepackage[utf8]{inputenc}
 \usepackage[inline]{enumitem}
 \usepackage{csquotes}
@@ -53,6 +53,7 @@
 
 \input{defs/listings.tex}
 
+\setkomafont{descriptionlabel}{\normalfont\bfseries}
 \setacronymstyle{long-short}
 \makenoidxglossaries
 \input{defs/acronyms.tex}
@@ -62,20 +63,6 @@
 \hyphenation{im-ple-ment-ed ap-pro-xi-ma-ti-on}
 
 \addbibresource{references.bib}
-
-\newenvironment{abstract}{%
-    \begingroup
-    \chapter*{\centering Abstract}
-}{%
-    \endgroup
-}
-
-\newenvironment{acknowledgements}{%
-    \begingroup
-    \chapter*{\centering Acknowledgements}
-}{%
-    \endgroup
-}
 
 % No page numbers on ToC
 \addtocontents{toc}{\protect\thispagestyle{empty}}
@@ -115,19 +102,16 @@
 \end{titlepage}
 
 \pagestyle{empty}
-\begin{abstract}
-    \input{preface/abstract.tex}
-\end{abstract}
-
-\begin{acknowledgements}
-    \input{preface/acknowledgements.tex}
-\end{acknowledgements}
+\renewcommand{\chapterpagestyle}{empty}
+\input{preface/abstract.tex}
+\input{preface/acknowledgements.tex}
 
 \tableofcontents
 
 \printnoidxglossary[type=acronym]
 
 \pagestyle{plain}
+\renewcommand{\chapterpagestyle}{plain}
 \setcounter{page}{1}
 
 \part{Introduction}
