@@ -482,10 +482,34 @@ We therefore make aforementioned assumptions to show that \textit{given} such me
 With both stack-pointer related assumptions, \smv{SP_BANK} and \smv{SP_SAFETY}, nuXmv manages to verify that the architecture does not violate integrity information flow properties.
 The same is true for the modification of the architecture where the stack-pointer is selected automatically by the architecture and the assumptions \smv{SP_BANK} and \smv{SP_SAFETY} are dropped.
 
-\todo{Summary}
+\section{Summary}
+
+In this chapter, the results to the prove-refine loop were presented:
+\begin{itemize}
+    \item 23 fixes were applied to the model of the MINRV8 architecture,
+    \item four categories of \smv{INIT} constraints were set up, and most importantly
+    \item eight assumptions were phrased that were verified to grant the absence of information flow property violations.
+\end{itemize}
+
+These assumptions are visualized in figure \ref{fig:ifc-assumptions} that again takes inspiration from digital timing diagrams.
+The eight assumptions introduced in section \ref{sec:assumptions} constrain streams of instructions to always resemble the following properties:
+Whenever machine-mode is called from user-mode by the \minrv{Ecall} instruction or there is an external interrupt, machine-mode must not use memory or \gls{csr} related instructions in the area colored in yellow until some form of a sanitization procedure (\smv{SAN}) has been completed which leads to the integrity labels of inputs to these instructions being high after the sanitization procedure.
+This property is made stable by the \smv{NO_PULIC_READS} and \smv{SAN_(CACHE)_ON_CLASSIFICATION} assumptions which ensure that no malicious data is loaded from memory or cache as long as machine-mode has control.
+If any of these are not assumed, the inputs to memory or \gls{csr} related instructions might become low e.g. somewhere in the orange colored area of the second row.
+
+In general, during execution of a trap handler in machine-mode, confidential data will be handled and therefore, the confidentiality labels of the registers become high at some point.
+The \smv{CLR_ON_RET} assumption then enforces that before the \minrv{Mret} instruction is executed by machine-mode to hand back control to user-mode, a procedure to clear the contents of the registers must be executed (\smv{CLR}) after which no other confidential data may be loaded into registers.
+This window is colored in green.
+The assumptions \smv{NO_PUBLIC_WRITES} and \smv{CLR_(CACHE)_ON_DECLASSIFICATION} again make this property stable after the registers have been cleared and control has been returned to user-mode, leaving it no room to circumvent the clearing of registers.
+Again, the orange colored area of the first row shows where user-mode might be able to load secrets from memory or cache if these assumptions were not in place.
 
 \begin{figure}
     \centering
     \includegraphics[width=\textwidth]{figures/assumptions.png}
     \caption{Assumptions visualized}
+    \label{fig:ifc-assumptions}
 \end{figure}
+
+Two aspects were examined to strengthen these assumptions: it was shown that \enquote{assumptions $ \Leftrightarrow $ properties} as not assuming a single one of these leads to the failure of at least one information flow property and two canaries, the deliberate insertion of vulnerabilities into the model, were tested.
+It was discussed that it is possible to find both the cache poisoning \cite{Wojtczuk09} and the SYSRET vulnerabilies \cite{SYSRET-vuln,Dunlap19} to the x86 architecture can be modelled such that they apply to a slightly adjusted version of the MINRV8 architecture and can be found without any manual intervention.
+The information flow properties and the assumptions did not need to be adjusted such that nuXmv would return a trace illustrating the respective vulnerability.
