@@ -165,3 +165,28 @@ Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our 
     \caption{An overview of related work}
     \label{tbl:related-work}
 \end{table}
+
+With this overview at hand, we can come back to the discussion postponed in section \ref{sec:discuss-requirements} whether our work is \textit{supplemental} to related work.
+In this discussion, we will consider four references: the work of \citeauthor{Reid17} in \cite{Reid17}, of \citeauthor{Fox02} in \cite{Fox02} and of \cite{BradfieldS16} in \citeauthor{BradfieldS16}.
+Only the work of these authors is in direct competition to ours as all authors consider the verification of \gls{isa} specifications in a static context against higher level properties.
+The work of \citeauthor{Nienhuis19} \cite{Nienhuis19} was excluded from this discussion since this work did not consider the verification but the development of an \gls{isa}.
+
+The most critical addition to the work of \cite{Reid17} and \cite{Fox02} is that here, we consider non-redundant verification of specifications.
+\cite{Reid17} verified the machine-readable specification of the Arm architecture against higher-level properties that stem from the natural language specification of the Arm architecture.
+He restricted his work to the verification of the most critical parts of the natural language specification when it comes to security thereby striving to give programmers a \textit{concise} set of rules, nevertheless this aspect relies on redundancies between the machine-readable and natural language specification of the Arm architecture.
+The same applies to \cite{Fox02}.
+He verified that the micro-architecture, i.e. the actual implementation of the \gls{isa}, agrees with the \gls{isa} itself.
+In comparison to both \cite{Reid17} and \cite{Fox02}, our work verifies the MINRV8 architecture against truly independent properties, i.e. information flow properties.
+These do not stem from the specification itself but from the information flow semantics and common sense.
+Yet, by our methodology we still managed to achieve a sense of completeness, i.e. we can argue that no properties were missed as every part of the architecture was either covered by the information flow semantics or the properties.
+Additionally, this makes our approach more architecture-independent then those of \cite{Reid17} and \cite{Fox02}.
+Our work could not be carried over to other architectures without adaptions, however, many parts of our work should be relatively stable - especially the properties themselves.
+
+In addition to this, we enhance on the work of \cite{Reid17} by considering an unbounded number of transitions as opposed to a single transition only (cf. \ref{sec:verify-spec}) and on the work of \cite{Fox02} by not relying on an interactive theorem prover but nuXmv where the proofs do not require manual intervention.
+
+Finally, an extensive comparison should be made to the work in \cite{BradfieldS16}, the only case where model checking was applied to architectural specifications.
+Yet unfortunately, this approach was flawed, did not use model checking to its full potential and implemented a very limited model.
+In \cite{BradfieldS16}, the properties again only took one transition in the state spaces into consideration whereas in this work we proved properties touching traces of possibly infinite length.
+Also, their model only comprised instructions related to mode-transitioning whereas here, we implemented a more or less complete set of basic \gls{risc} instructions.
+And finally, the approach of \cite{BradfieldS16} was not only limited to the SYSRET vulnerability, it also attempted to verify that x86 architecture violates its own specification as the authors did not take into account that verifying specifications is a trade-off between changing the architecture and defining requirements that must be met by software running on it.
+All in all, this shows that our work is \textit{supplemental}.

@@ -18,58 +18,6 @@ Finally in chapter \ref{chp:discussion}, we discussed the limitations and the sc
     \label{fig:overview}
 \end{figure}
 
-In the introduction, we set three other goals: it was claimed that the approach presented as part of this thesis is \textit{viable}, i.e. feasible, realistic and generalizable, \textit{relevant}, i.e. it is able to detect issues, and \textit{supplemental}, i.e. it enhances on related work.
-
-We were able to show the the implementation of the MINRV8 architecture models the property \enquote{assumptions $ \Leftrightarrow $ properties}.
-This was put to a test by showing that said implementation does violate the properties as presented in section \ref{sec:ifc-properties} when it is exposed to the cache poisoning or SYSRET vulnerability.
-In other words: it was shown that the three properties \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK} cover at least vulnerabilities related to the cache poisoning or SYSRET vulnerability.
-This marks the main result of this thesis and shows that this work is \textit{relevant}.
-Furthermore, mitigations to these vulnerabilities can be verified using the same model.
-It must be decided on a case by case basis whether a given violation of the information flow properties actually marks a vulnerability of the architecture leaving it with the need to be altered or marks a feature the risks of which must be controlled in software.
-To achieve this, a novel approach of using model checking for verifying architectural specifications was used.
-We discussed another case where model checking was applied to architectural specifications in \ref{sec:related-model-checking} \cite{BradfieldS16}.
-However, this approach was flawed, did not use model checking to its full potential and implemented a very limited model
-In \cite{BradfieldS16}, the properties only took one transition in the state spaces into consideration whereas in this work we proved properties touching traces of possibly infinite length.
-Additionally, in \cite{BradfieldS16}, the model only comprised instructions related to mode-transitioning whereas here, we implemented a more or less complete set of basic \gls{risc} instructions.
-This, taken together with the discussion of other related work in chapter \ref{chp:related-work} shows that this work is \textit{supplemental}.
-
-What is left to show is that this work is \textit{viable}.
-All proofs were run on a laptop equipped with an Intel Core i7-7500U CPU with 8GB of RAM.
-It is safe to say, that these are very moderate hardware requirements.
-Proofs were conducted per property.
-None of these proofs took more than 60s.
-While we can give no clear count of working hours spent on this thesis, all of it was developed and written by a single person in no more than eight months.
-During this time, this person did not solely work on this thesis.
-In a non-research scenario one can assume that development would be more straight forward since it would not include the definition of an architecture.
-Due to the exponential blow-up of binary encoded state spaces, there are no guarantees that this approach scales well to realistic and complete architectures.
-However, there are two reasons which make seem likely that this approach does indeed scale.
-Firstly, the proofs here were ran on a small machine and didn't take much time.
-Secondly, in sections \ref{sec:per-bit-tracking} it was discussed that bit-wise tracking of information flow might be dropped, i.e. there is room for performance improvements.
-All of this gives good reasons to believe that our approach is indeed \textit{viable} and could be applied to other architectures with reasonable effort.
-
-In addition to these self-imposed goals, it was also decided in section \ref{sec:verify-spec} to adopt the four design goals that were initially introduced in \cite{Reid17}.
-These were defined to apply to high level properties for specifications and list as follows:
-\begin{displaycquote}[pp.88:2-3]{Reid17}
-    The central design challenge we face is to create a set of properties that:
-    \begin{itemize}
-        \item express the major guarantees that programmers depend on;
-        \item are concise so that architects can easily review and remember the entire set of properties;
-        \item are stable so that architectural extensions don't invalidate large numbers of rules;
-        \item and that describe the architecture differently from existing specification to reduce the risk of common-mode failure.
-    \end{itemize}
-\end{displaycquote}
-
-These objectives are met by our work:
-\begin{itemize}
-    \item The assumptions guarantee programmers of \glspl{os} and compilers that programs adhering to these do not violate basic information flow properties.
-    \item Both assumptions and properties are small in number and short and can be expressed in intuitive natural language, hence concise.
-    \item The properties itself are completely architecture independent and as such stable.
-    The assumptions are architecture dependent and rely on both instructions available and concrete semantics of these instructions.
-    However, we feel subjectively that only basic mechanics are used and predict that the assumptions in a practical environment of an architecture subject to change should be relatively stable as well.
-    \item The premise of information flow tracking on instruction level is to describe the architecture from a different point of view.
-    It is therefore obvious that there is very little risk of common-mode failure.
-\end{itemize}
-
 Finally, we give an outlook on future work:
 \begin{description}
     \item[Executable memory] First and foremost, the model could be enhanced by a model of executable memory to more closely resemble modern architectures.
