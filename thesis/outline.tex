@@ -1,4 +1,4 @@
-\documentclass{securem}
+\documentclass{article}
 \usepackage[a4paper]{geometry}
 \usepackage[utf8]{inputenc}
 \usepackage{enumitem}
@@ -7,6 +7,11 @@
 \usepackage[hidelinks]{hyperref}
 \usepackage{syntax}
 \usepackage[euler]{textgreek}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amssymb}
+\usepackage{listings}
+\usepackage{lstautogobble}
 \usetikzlibrary{positioning,calc,graphs}
 
 \setlength{\grammarindent}{8em}
@@ -14,6 +19,8 @@
 % fonts
 \usepackage{tgpagella}
 \usepackage{courier}
+
+\input{defs/listings.tex}
 
 \newcommand{\muZ}{{\textmu}Z}
 
@@ -64,7 +71,7 @@ We will use the base integer instruction set, the standard extension for user-le
 nuXmv \cite{Cavada14} is a symbolic model checker a predecessor of which was introduced in \textit{NuSMV: A New Symbolic Model Checker} \cite{Cimatti2000}.
 nuXmv extends NuSMV with new data types being integers and reals and enhances on its SMT-based model checking techniques.
 
-nuXmv can check \gls{ltl} formulas, \gls{ctl} formulas, invariants and \gls{psl} formulas for unbounded models.
+nuXmv can check LTL formulas, CTL formulas, invariants and PSL formulas for unbounded models.
 An example of such a model is given in snippet \ref{snpt:nuxmv}.
 The input language to nuXmv knows modules as the highest tier language objects.
 An entry point to a nuXmv file is given by the module called \texttt{main}.
@@ -108,7 +115,7 @@ nuXmv will try to prove that each specified formula (in this case an invariant) 
 \end{lstlisting}
 
 We will use nuXmv to describe the model we want to check the information flow for.
-We will build a custom model of the RISC-V architecture in the nuXmv input language and phrase properties about information flow for this model in either \gls{ltl}, CTL or as invariants.
+We will build a custom model of the RISC-V architecture in the nuXmv input language and phrase properties about information flow for this model in either LTL, CTL or as invariants.
 
 \section{Project Plan}
 
