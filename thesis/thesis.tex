@@ -110,9 +110,12 @@
 
 \printnoidxglossary[type=acronym]
 
+% The following commands will apply to the last page of the list of acronyms
+% Therefore set thispagestyle to be empty and start pages with -1 so that page of first part is number 1
+\thispagestyle{empty}
 \pagestyle{plain}
 \renewcommand{\chapterpagestyle}{plain}
-\setcounter{page}{1}
+\setcounter{page}{-1}
 
 \part{Introduction}
 \input{sections/introduction.tex}
