@@ -342,7 +342,7 @@ Whereas in the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} tracking of
 \section{Requirements}
 \label{sec:discuss-requirements}
 
-In the introduction, three goals were set for this thesis: it was claimed that the approach presented as part of this thesis is \textit{viable}, i.e. feasible, realistic and generalizable, \textit{relevant}, i.e. it is able to detect issues, and \textit{supplemental}, i.e. it enhances on related work.
+In the introduction, three goals were set for this thesis: it was claimed that the approach presented as part of this thesis is \textit{viable}, i.e. feasible, realistic and generalizable, \textit{effective}, i.e. it is able to detect issues, and \textit{supplemental}, i.e. it enhances on related work.
 
 All proofs were run on a laptop equipped with an Intel Core i7-7500U CPU and 8GB of RAM.
 It is safe to say, that these are very moderate hardware requirements.
@@ -360,7 +360,7 @@ All of this gives good reasons to believe that our approach is indeed \textit{vi
 To discuss the \textit{relevance} of this work, recall that in section \ref{sec:assumptions} it was shown that the implementation of the MINRV8 architecture models the property \enquote{assumptions $ \Leftrightarrow $ properties}.
 This was put to a test by exposing the implementation to the cache poisoning or SYSRET vulnerability where it was found that it then does violate the properties as presented in section \ref{sec:ifc-properties}.
 In other words: it was shown that the three properties \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK} cover at least vulnerabilities related to the cache poisoning or SYSRET vulnerability without any manual intervention besides changing the architecture itself.
-This marks the main result of this thesis and shows that this work is \textit{relevant}.
+This marks the main result of this thesis and shows that our approach to verifying \glspl{isa} is \textit{effecitve}.
 Furthermore, mitigations to these vulnerabilities can be verified using the same model.
 It must be decided on a case by case basis whether a given violation of the information flow properties actually marks a vulnerability of the architecture leaving it with the need to be altered or marks a feature the risks of which must be controlled in software.
 
