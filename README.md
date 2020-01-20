@@ -19,7 +19,7 @@ In order to run the proofs you will need to install nuXmv (cf. https://nuxmv.fbk
 
 nuXmv is a very lightweight language that has very few features to make life of programmers easier.
 Therefore I used the `pyexpander` macro engine to make the model more flexible and less redundant.
-You will need to preprocess the model with `expander3.py -s`.
+You will need to preprocess the model with `expander.py -s`.
 
 Additionally, the model supports dynamic assumptions and optional extensions.
 These can be enabled by setting corresponding variables to `True`.
@@ -41,7 +41,7 @@ File/Folder             | Description
 ----------------------- | -----------
 `README.md`             | You are reading this file
 `trace-bmc.template`    | Template file that holds commands for nuXmv to run proofs; must be preprocessed with `pyexpander`
-`trace.ps1`             | PowerShell-script that runs proofs, e.g. invokes `expander3.py` and handles templating
+`trace.ps1`             | PowerShell-script that runs proofs, e.g. invokes `expander.py` and handles templating
 `model/min-rv.smv`      | The actual model
 `model/partial/`        | Other auxiliary proofs and helper files
 `results/`              | nuXmv traces mapped to HTML and LaTeX tables

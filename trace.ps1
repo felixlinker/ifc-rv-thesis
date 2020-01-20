@@ -102,7 +102,7 @@ $localAssumptions = $Assumptions | Where-Object {
 }
 $expr = ($localAssumptions + $Options `
     | ForEach-Object { "$PSItem=True" }) -join ";"
-expander3.py -s --eval=$expr $header $In `
+expander.py -s --eval=$expr $header $In `
     | Out-File -Encoding ascii $preprocessed
 
 if ($Dry) {
@@ -127,7 +127,7 @@ foreach ($prop in $Props) {
         "CMD='$($Cmd)'"
     ) -join ";"
     $expr = $expr.Replace("\", "/")
-    expander3.py -s --eval=$expr $CmdFile | Out-File -encoding ascii $replaced_cmd
+    expander.py -s --eval=$expr $CmdFile | Out-File -encoding ascii $replaced_cmd
 
     # Run nuXmv
     $delta = unixTime
