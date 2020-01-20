@@ -3,23 +3,36 @@ $# Set up global variables
 $py(
 import math
 
+# Word length of the architecture
 XLEN=8
+# Size (in words) of the first memory region; it ranges from addresses 0 to
+# REGION0_SIZE - 1. In total, there are two memory regions. The second one
+# ranges from REGION0_SIZE to MEM_SIZE - 1.
 REGION0_SIZE=2
+# Number of registers available
 REG_NUM=4
+# Size of memory
 MEM_SIZE=4
+# Size of addresses
 MEM_ADDR_LEN=int(math.log(MEM_SIZE, 2))
 )
 
-$# Available extensions
+$# Available extensions; extensions alter the behavior of the model. They are
+$# completely implemented by the preprocessor. For a detailed description, what
+$# each of them does, confer the pyexpander directives that reference the
+$# respective variable.
 $default(
-    SP_AUTOBANK=False,
-    CACHE_VULN=False,
-    SP_ENABLE=False,
-    MPRV=False,
-    CACHE_INVALIDATE_ON_TRANS=False,
+    SP_AUTOBANK=False,                  # switch SP by hardware
+    CACHE_VULN=False,                   # cache poisoning vulnerability
+    SP_ENABLE=False,                    # enable SP
+    MPRV=False,                         # privilege checks as if MPRV in RISC-V is set
+    CACHE_INVALIDATE_ON_TRANS=False,    # cache gets invalidate on privilege mode transition
 )
 
-$# Available assumptions
+$# Available assumptions; these are handled by the preprocessor as well. The
+$# preprocessor computes a conjunction of all assumptions that are set to true
+$# plus a final TRUE as a guard when no assumptions are true. All assumptions
+$# must close with a & for the concatenation to work.
 $default(
     SP_SAFETY=False,
     SP_BANK=False,
@@ -63,12 +76,15 @@ $macro(extend_sup_integrity, w)
         : 0h_FF)\
 $endmacro
 
+-- constrain a value v to fall in the range [l, h]
 $macro(clamp, v, l, h)
     (min(max(($v), $l), $h))\
 $endmacro
+-- Calculate a memory address from some register given by `source`
 $macro(read_addr, source)
     (toint(unsigned(regs[$source])) mod $MEM_SIZE)\
 $endmacro
+-- Check if a memory address given by `source` can be read in the current state
 $macro(can_load, source)
     (priv
     $if(MPRV)
@@ -83,6 +99,8 @@ $macro(can_load, source)
             : pmpcfg1.read
         ))
 $endmacro
+-- Check if a memory address given by `target` can be written to in the current
+-- state
 $macro(can_write, target)
     (priv
     $if(MPRV)
@@ -100,35 +118,49 @@ $endmacro
 
 MODULE cache_line(main_module)
     VAR
+        -- Address the cache line points to
         addr : 0..$(MEM_SIZE - 1);
+        -- Is the cache line valid?
         valid : boolean;
+        -- Value of the cache line
         line : signed word[$XLEN];
+        -- Confidentiality labels of the value
         conf : unsigned word[$XLEN];
+        -- Integrity labels of the value
         integrity : unsigned word[$XLEN];
 
     DEFINE
+        -- Variables "imported" from the main module
         __priv := main_module.priv;
         __op := main_module.op;
         __mem_addr := main_module.mem_addr;
         __rs2 := main_module.rs2;
         regs := main_module.regs;
+        -- Is the memory region targeted by the cache line set to be uncached?
         __un := (addr < $REGION0_SIZE
             ? main_module.pmacfg0.uncached
             : main_module.pmacfg1.uncached);
+        -- Does the current instruction target an uncached memory region?
         __target_un := (__mem_addr < $REGION0_SIZE
             ? main_module.pmacfg0.uncached
             : main_module.pmacfg1.uncached);
+        -- Does the current instruction target a write-trough-cacheable region?
         __target_wt := (__mem_addr < $REGION0_SIZE
             ? main_module.pmacfg0.write_through
             : main_module.pmacfg1.write_through);
+        -- Does the current instruction target a write-back-cacheable region?
         __target_wb := (__mem_addr < $REGION0_SIZE
             ? main_module.pmacfg0.write_back
             : main_module.pmacfg1.write_back);
+        -- Does the current instruction target a write-protected-cacheable region?
         __target_wp := (__mem_addr < $REGION0_SIZE
             ? main_module.pmacfg0.write_protected
             : main_module.pmacfg1.write_protected);
 
+        -- Does the current instruction target the cached memory address?
         __hit := __mem_addr = addr;
+        -- Read the cache: either return its value or the respective memory
+        -- address's value if either not hit or not valid.
         __read := (__hit & valid ? line : main_module.memory[__mem_addr]);
         __read_conf := (__hit & valid
             ? conf
@@ -137,8 +169,10 @@ MODULE cache_line(main_module)
             ? integrity
             : main_module.memory_integrity[__mem_addr]);
 
+        -- Should the cache be filled in this cycle because of a read?
         __read_fill_condition := __op = LOAD & !__target_un & (__target_wb -> !valid | !__hit)
             $if(not CACHE_VULN) & main_module.can_load $endif;
+        -- Should the cache be filled in this cycle because of a write?
         __write_fill_condition := __op = STORE
             $if(not CACHE_VULN) & main_module.can_write $endif
             & (__target_wb | (__target_wt & __hit));
@@ -148,50 +182,73 @@ MODULE cache_line(main_module)
             -- Invalidate cache on mode-transition
             __priv != next(__priv): FALSE;
         $endif
+        -- Stable on trap
         main_module.do_trap: valid;
         -- Invalidate cache when cache gets disabled
         next(__un): FALSE;
+        -- Set valid if filled
         __read_fill_condition | __write_fill_condition: TRUE;
         -- write invalidate condition
         __op = STORE & __target_wp
             $if(not CACHE_VULN) & main_module.can_write $endif: FALSE;
+        -- Otherwise stable
         TRUE: valid;
     esac;
 
     TRANS next(addr) = case
+        -- Stable on trap
         main_module.do_trap: addr;
+        -- Update on fill
         __read_fill_condition | __write_fill_condition: __mem_addr;
+        -- Otherwise stable
         TRUE: addr;
     esac;
 
+    -- Value an label updates
     $for(var in ["line", "conf", "integrity"])
         $# All variables but line get their information flow labels from
         $# accordingly named sources
         $py(suffix=f"_{var}" if var != "line" else "")
         TRANS next($var) = case
+            -- Stable on trap
             main_module.do_trap: $var;
+            -- Read from memory on fill + read
             __read_fill_condition: main_module.memory${suffix}[__mem_addr];
+            -- Read from register on fill + write
             __write_fill_condition: main_module.regs${suffix}[__rs2];
+            -- Stable otherwise
             TRUE: $var;
         esac;
     $endfor
 
+-- pmpcfg for one memory region
 MODULE pmpcfg_module(base_reg)
     DEFINE
+        -- Memory region is locked
         locked := bool(base_reg[3:3]);
+        -- Memory region is executable to user-mode (not used)
         execute := bool(base_reg[2:2]);
+        -- Memory region is writable to user-mode
         write := bool(base_reg[1:1]);
+        -- Memory region is readable to user-mode
         read := bool(base_reg[0:0]);
 
+-- pmacfg for one memory region
 MODULE pmacfg_module(base_reg)
     DEFINE
+        -- Memory region is uncacheable
         uncached := base_reg[1:0] = 0b_00;
+        -- Memory region is write-trough-cacheable
         write_through := base_reg[1:0] = 0b_01;
+        -- Memory region is write-back-cacheable
         write_back := base_reg[1:0] = 0b_10;
+        -- Memory region is write-protected-cacheable
         write_protected := base_reg[1:0] = 0b_11;
 
+-- The implementation of the MINRV8 architecture
 MODULE main
     VAR
+        -- Current privilege mode; TRUE encodes machine-, FALSE user-mode
         priv : boolean;
         csrs : array 0..1 of unsigned word[$XLEN];
         regs : array 0..$(REG_NUM - 1) of signed word[$XLEN];
@@ -202,21 +259,34 @@ MODULE main
         memory_integrity : array 0..$(MEM_SIZE - 1) of unsigned word[$XLEN];
         cache : cache_line(self);
         $if(SP_ENABLE)
+            -- Currently active stack pointer
             sp_sel : 0..1;
+            -- Stack pointer values
             sp : array 0..1 of 0..$(MEM_SIZE - 1);
         $endif
 
     DEFINE
+        -- Bit-masks to set individual bits of csrs read- or writeable. Bit i
+        -- of csr j is read-/writeable to mode x if (x -> mask[j][i]).
         __csrs_read_privs := [ 0h_0F, 0h_00 ];
         __csrs_write_privs := [ 0h_FF, 0h_FF ];
+        -- Privilege mode enlarged to word-size
         __priv_vec := (priv ? 0h_FF : 0h_00);
+        -- Constant confidentiality/integrity labels of the csrs
         __csrs_conf := [ 0h_0F, 0h_00 ];
         __csrs_integrity := [ 0h_FF, 0h_FF ];
+        -- mstatus is the first csr
         mstatus := csrs[0];
+        -- pmacfg is conded in the upper half of mstatus
         pmacfg := mstatus[7:4];
+        -- pmpcfg is in the second csr
         pmpcfg := csrs[1];
 
     DEFINE
+        -- These guards can be used to set individual bits of mstatus to be not
+        -- writable by software. The high_guard is used with the CSRRC and the
+        -- low_guard with the CSRRS instruction. Currently, only MEIP is set to
+        -- be not writable by software.
         __mstatus_high_guard := 0b_00001000;
         __mstatus_low_guard := 0b_11110111;
         MPP := mstatus[0:0];
@@ -224,6 +294,7 @@ MODULE main
         MIE := mstatus[2:2] | word1(!priv);
         MEIP := mstatus[3:3];
 
+        -- Is there a trap in the current cycle?
         do_trap := (op = ECALL) | (bool(MIE) & bool(MEIP));
 
     -- MIE = 1 means that we are *not* handling an exception; then MPP is set to
@@ -239,14 +310,26 @@ MODULE main
     DEFINE
         __init_high := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
         __init_low := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
+    -- If architecture start in machine-mode, registers contain integrous data
     INIT priv -> regs_integrity = __init_high;
+    -- If architecture starts in user-mode, registers do not contain
+    -- confidential data
     INIT !priv -> regs_conf = __init_low;
+    -- Initially, if memory region 0 is not readable by user-mode, it does not
+    -- contain confidential data
     INIT pmpcfg0.read -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00;
+    -- Initially, if memory region 0 is only writable by machine-mode, it must
+    -- not contain malicious data
     INIT !pmpcfg0.write -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF;
+    -- Same for memory 1...
     INIT pmpcfg1.read -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
     INIT !pmpcfg1.write -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
+    -- Initially, the cache can only be valid if it targets a memory region that
+    -- is cacheable
     INIT cache.valid -> (cache.addr < $REGION0_SIZE & !pmacfg0.uncached)
         | ($REGION0_SIZE <= cache.addr & !pmacfg1.uncached);
+    -- Initially, if the cache is valid and targets a memory region that is not
+    -- write-back cacheable, the content of the memory and cache must align
     INIT cache.valid
         & (
             (cache.addr < $REGION0_SIZE & !pmacfg0.write_back)
@@ -254,6 +337,7 @@ MODULE main
         ) -> cache.line = memory[cache.addr]
             & cache.conf = memory_conf[cache.addr]
             & cache.integrity = memory_integrity[cache.addr];
+    -- Same restrictions as for labels of memory regions but for cache
     INIT
         pmpcfg0.read & cache.addr < $REGION0_SIZE & cache.valid
         -> cache.conf = 0h_00;
@@ -267,15 +351,23 @@ MODULE main
         !pmpcfg1.write & $REGION0_SIZE <= cache.addr & cache.valid
         -> cache.integrity = 0h_FF;
     $if(SP_ENABLE and not SP_AUTOBANK)
+        -- If the architecture starts in privileged mode, set the stack pointer
+        -- to point to a safe memory region initially
         INIT priv -> (sp[sp_sel] < $REGION0_SIZE
             ? !pmpcfg0.write & !pmpcfg0.read
             : !pmpcfg1.write & !pmpcfg1.read);
     $endif
     $if(SP_ENABLE and SP_AUTOBANK)
+        -- If, however, the hardware changes the stack pointer, sp[1] is
+        -- associated with machine-mode and sp[0] with user-mode so select the
+        -- appropriate one on startup.
         INIT priv <-> sp_sel = 1;
     $endif
 
+    -- Stream of instructions; some of the arguments might be ignored
+    -- - depending on the instruction itself.
     IVAR
+        -- Instruction itself
         op : {
             $if(SP_ENABLE)
                 SPSEL, SPSET, PUSH, POP,
@@ -283,9 +375,13 @@ MODULE main
             LOAD, STORE, LOADI, ADD, SUB, AND, OR, MOV, SLT, SLL, SRA,
             ECALL, MRET, CSRRS, CSRRC
         };
+        -- Destination register
         rd : 0..$(REG_NUM - 1);
+        -- First source register
         rs1 : 0..$(REG_NUM - 1);
+        -- Second source register
         rs2 : 0..$(REG_NUM - 1);
+        -- Signal for a pending external interrupt
         m_external_interrupt : unsigned word[1];
     DEFINE
         csr_rs := rs1 mod 2;
@@ -309,18 +405,24 @@ MODULE main
     $if(SP_ENABLE)
         TRANS next(sp_sel) = case
             $if(SP_AUTOBANK)
+                -- Stack pointer is selected by hardware if SP_AUTOBANK is
+                -- given
                 next(!priv): 0;
                 next(priv): 1;
             $else
+                -- Stack pointer is selected by SPSEL
                 do_trap | !priv: sp_sel;
                 op = SPSEL: rs1 mod 2;
                 TRUE: sp_sel;
             $endif
         esac;
 
+        -- Stack pointer transitions for sp[0] and sp[1]
         $for(i in range(0, 2))
             TRANS next(sp)[$i] = case
+                -- Stable on trap
                 do_trap | $i != sp_sel: sp[$i];
+                -- Machine-mode writes to stack pointer
                 priv & op = SPSET: mem_addr;
                 -- for PUSH and POP ensure that stack wraps around in region
                 op = PUSH & can_write_sp: case
@@ -331,49 +433,72 @@ MODULE main
                     sp[$i] < $REGION0_SIZE: (sp[$i] - 1 < 0 ? $REGION0_SIZE - 1 : sp[$i] - 1);
                     TRUE: (sp[$i] - 1 < $REGION0_SIZE ? $MEM_SIZE - 1 : sp[$i] - 1);
                 esac;
+                -- Stable otherwise
                 TRUE: sp[$i];
             esac;
         $endfor
     $endif
 
-    -- mstatus
-    -- Scale m_external_interrupt to a bitmask
     DEFINE
         csr_write_mask := __csrs_write_privs[csr_rs] -> __priv_vec;
+        -- Scale m_external_interrupt to a bitmask and shift it such that
+        -- m_external_interrupt is at the position for MEIP
         __meip_input := resize(m_external_interrupt, $XLEN) << 3;
+    -- Always write mstatus with whether an external interrupt is pending and...
     TRANS next(mstatus) = (__meip_input | (do_trap
+        -- ... if there is a trap, either by an external interrupt or by some
+        -- other condition...
         ?   pmacfg                  -- preserve pmacfg
             :: 0b_00                -- MEIP := 0 and MIE := 0
             :: MIE                  -- MPIE := MIE
             :: word1(priv)          -- MPP := priv
+        -- If no trap is being taken...
         : case
+            -- On MRET, restore MIE from MPIE and write MPIE with 1 and MPP with
+            -- 0, i.e. user-mode; rest is stable
             priv & op = MRET: mstatus[7:3] :: MPIE :: 0b_10;
+            -- If mstatus is not being targeted by a CSR instruction, it is stable
             csr_rs != 0: mstatus;
+            -- mstatus is being targeted by a CSR instruction: write it
+            -- accordingly but only where it can be written given overall guards
+            -- and the capabilities of the current privilege mode
             op = CSRRC: mstatus & (unsigned(regs[rs2]) | !csr_write_mask | __mstatus_high_guard);
             op = CSRRS: mstatus | (unsigned(regs[rs2]) & csr_write_mask & __mstatus_low_guard);
-            -- on a trap return, set MPIE to 1 and MPP to user mode
+            -- Stable otherwise
             TRUE: mstatus;     -- do nothing on all others ops that do not trap
         esac));
 
     TRANS next(pmpcfg) = case
+            -- Stable on a trap or if not targeted
             do_trap | csr_rs != 1: pmpcfg;
+            -- Write to the register but only at the bits the current privilege
+            -- mode has the capabilities for and if the respective memory region
+            -- is not locked
             op = CSRRC: pmpcfg & (unsigned(regs[rs2]) | !csr_write_mask | (
                 (pmpcfg1.locked ? 0h_F : 0h_0) :: (pmpcfg0.locked ? 0h_F : 0h_0)
             ));
             op = CSRRS: pmpcfg | (unsigned(regs[rs2]) & csr_write_mask & (
                 (pmpcfg1.locked ? 0h_0 : 0h_F) :: (pmpcfg0.locked ? 0h_0 : 0h_F)
             ));
+            -- Stable otherwise
             TRUE: pmpcfg;
         esac;
 
     DEFINE
         csr_read_mask := __csrs_read_privs[csr_rs] -> __priv_vec;
 
-    -- register transitions
+    -- register transitions as demanded by the instruction semantics detailled
+    -- in the thesis
     $for(i in range(0, REG_NUM))
+        -- next(regs)[$i] is unconstrained if the current instruction is LOADI
+        -- and $i is the targeted register. This effectively leads to nuXmv
+        -- choosing a random value for next(regs)[$i] which encodes the
+        -- immediate value loaded.
         TRANS (rd = $i & op = LOADI & !do_trap)
             | (next(regs)[$i] = case
+                -- Stable if not targeted or a trap occurs
                 rd != $i | do_trap: regs[$i];
+                -- Execute the respective instructions...
                 $if(SP_ENABLE)
                     op = POP & can_load_sp: memory[sp[sp_sel]];
                 $endif
@@ -392,10 +517,13 @@ MODULE main
                 op = SLL: regs[rs1] << $clamp("toint(regs[rs2])", 0, XLEN);
                 op = SRA: regs[rs1] >> $clamp("toint(regs[rs2])", 0, XLEN);
                 op = CSRRS | op = CSRRC: signed(csrs[csr_rs] & csr_read_mask);
+                -- Stable otherwise
                 TRUE: regs[$i];
             esac);
     $endfor
 
+    -- Transitions for the confidentiality and integrity labels of the registers
+    -- happen analogously to those of the ordinary registers.
     $for(i in range(0, REG_NUM))
         TRANS next(regs_conf)[$i] = case
             do_trap: regs_conf[$i];
@@ -496,6 +624,7 @@ MODULE main
         $endfor
     $endfor
 
+    -- Heart of the CSR_INTEGRITY property (for re-use)
     $macro(CSR_INTEGRITY)
         (
             priv & op in { CSRRS, CSRRC }
@@ -503,6 +632,7 @@ MODULE main
         )
     $endmacro
 
+    -- Heart of the MEMORY_OP_INTEGRITY property (for re-use)
     $macro(MEMORY_OP_INTEGRITY)
         (
             priv & op in { LOAD, STORE }
@@ -510,6 +640,7 @@ MODULE main
         )
     $endmacro
 
+    -- Implement all assumptions as a macro; documentation is given in thesis
     $macro(assumptions)
         $if(CLR_ON_RET)
             G (
@@ -617,7 +748,6 @@ MODULE main
     -- model is syntactically correct without starting expensive proofs.
     LTLSPEC NAME SYNTAX_CANARY := TRUE;
 
-    -- The following properties about information leakage are incremental:
     -- Confidential information can never leak into user mode
     LTLSPEC NAME NO_LEAK := $assumptions() -> G (priv | (
         regs_conf[0] = 0h_00
@@ -626,10 +756,10 @@ MODULE main
         & regs_conf[3] = 0h_00
     ));
 
-    -- Control and status registers are only written with machine-mode
-    -- controlled values
+    -- Control and status registers are only written with integrous data
     LTLSPEC NAME CSR_INTEGRITY :=
         $assumptions() -> G $CSR_INTEGRITY();
 
+    -- Memory operations are only performed with integrous target addresses
     LTLSPEC NAME MEMORY_OP_INTEGRITY :=
         $assumptions() -> G $MEMORY_OP_INTEGRITY();
