@@ -22,6 +22,7 @@ The result of this are eight assumptions that grant the absence of any informati
 These results are tested by showing that our approach can detect the cache poisoning [3] and SYSRET vulnerabilities [4,5] applying to the x86 architecture without any manual intervention besides the implementation of the vulnerabilities.
 
 For a more thorough introduction, I direct the reader to the thesis itself.
+Compiled versions of the thesis can be found in the [release tab](https://github.com/felixlinker/ifc-rv-thesis/releases).
 
 ## Tools used & setup
 
