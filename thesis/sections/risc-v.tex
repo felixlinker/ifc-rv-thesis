@@ -4,15 +4,15 @@
 \label{chp:arch}
 
 In this section, the architecture to be worked with will be developed and implemented.
-It has been mentioned multiple times that the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
-In order to derive a simpler version of the RISC-V architecture, which will be called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
+As mentioned multiple times, the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
+To derive a simpler version of the RISC-V architecture, which will be called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
 This introduction will be concluded by a summary that mentions which parts will be adopted and which parts will be left out in the development of the MINRV8 architecture.
 
 Consequently, in section \ref{sec:minrv8}, the MINRV8 architecture will be introduced.
 The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv which is presented in section \ref{sec:model-implementation}.
-Hence, certain design decisions of both the model and the implementation will only make sense once both have been introduced.
+Hence, certain design decisions of both the model and the implementation will only be sensible once both have been introduced.
 
-To conclude, section \ref{sec:arch-summary} will give a summary of what has been achieved here.
+To conclude, section \ref{sec:arch-summary} will give a summary of what has been achieved in this chapter.
 
 \section{An Introduction to RISC-V}
 \label{sec:risc-v}
@@ -22,7 +22,7 @@ The base integer instruction set comprises instruction of four categories: integ
 The instructions that are available to the RISC-V architecture specifically, will be introduced in section \ref{sec:rv-base-int-isa} subsequently.
 
 Afterwards, the privileged architecture of RISC-V will be introduced which can be divided into three parts:
-The specification of\dots
+The specification of:
 \begin{enumerate}
     \item Three levels of privilege
     \item Memory attributes
@@ -38,14 +38,14 @@ A selection of features to be included in such a minimal architecture will be di
 \label{sec:rv-base-int-isa}
 
 \paragraph{Integer arithmetic and Boolean instructions}
-The base integer instruction set provides instructions for plus and minus, integer comparisons and the Boolean operators \rv{And}, \rv{Or} and \rv{Xor}.
+The base integer instruction set provides instructions for addition and subtraction, integer comparisons and the Boolean operators \rv{And}, \rv{Or} and \rv{Xor}.
 Most of these instructions are implemented in two version: a register version (or R-type instruction) and an immediate version (or I-type instruction).
 In the first case the two operands are given as registers and in the second case one operand is given as register and the other as an immediate value read from memory.
 In either case the value is stored in a destination register.
 
 These basic instructions are all side effect free besides from advancing the program counter which means that if the destination register is x0, each of them encodes a no-operation instruction.
 This makes them particularly easy to analyze.
-However, as a side-effect, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
+However, as a bonus, this means that there is no built-in support for overflow checks via flags in some dedicated \gls{csr}.
 There also is no special instruction to handle this.
 
 \paragraph{Memory operations}
@@ -71,7 +71,6 @@ Branches on the other hand are intended to control program flow, e.g. to impleme
 RISC-V is agnostic about the details of calling conventions for routines, e.g. how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
 
 \paragraph{Platform management instructions}
-The last type of instructions to be looked at are platform management instructions.
 The RISC-V manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions performing operations that potentially need some form of privilege.
 Examples for the former category are straight forward.
 RISC-V knows instructions to read or write complete \glspl{csr} but also knows operations to modify single bits only.
@@ -95,7 +94,7 @@ Also, memory attributes rely on these levels of privilege as they define which m
 
 This basis of the privileged architecture is controlled by the \gls{mstatus} register which is the core of machine-mode.
 This register controls both parts of the memory attributes and interrupt and exception handling.
-There are more \glspl{csr} in the RISC-V architecture that will be introduced where necessary, however, note that the \gls{mstatus} register is the most important of all \glspl{csr}.
+There are more \glspl{csr} in the RISC-V architecture that will be introduced when necessary, however, note that the \gls{mstatus} register is the most important of all \glspl{csr}.
 
 In this section, the aforementioned concepts will be introduced subsequently while respective parts of the \gls{mstatus} register will be discussed whenever applicable.
 
@@ -167,7 +166,7 @@ To keep things simple, the focus of this thesis lies on secure embedded systems\
 This means that the architecture to be worked with supports two modes: user- and machine-mode.
 Machine-, supervisor- and user-mode do not simply form a linear order of privilege attributes of code execution.
 They differ in the concepts that are available to them and therefore must be handled separately.
-However, as the focus will lie on secure embedded systems, many parts of the specification which are about supervisor solely will be left out.
+However, as the focus will lie on secure embedded systems, many parts of the specification which are about supervisor-mode solely will be left out.
 Supervisor-mode will be handled wherever it fits in the bigger picture but not on its own.
 
 \paragraph{Memory Attributes}
@@ -179,7 +178,7 @@ RISC-V offers two ways to configure physical memory: \glspl{pma} and \gls{pmp}.
 Examples for such \enquote{inherent properties} are supported access types, whether a region of memory supports memory access ordering or and cacheability.
 Depending on the implementation, these attributes might be hardwired for certain regions (or all) or modifiable by software.
 In general, \glspl{pma} constrain possible interactions with physical memory.
-\glspl{pma} tell software what kind of behavior they can expect from a physical region of memory.
+\glspl{pma} can be accessed by software to determine what kind of behavior it can expect from a physical region of memory.
 
 The \gls{pmp} setup serves as another layer of \textit{protection} for regions of memory.
 This makes it similar to virtual memory.
@@ -199,7 +198,7 @@ If a \gls{pmp} entry is locked, not only can its contents not be changed anymore
 }, the permissions setup in the entry also are applied to machine-mode.
 
 Another way of enforcing \gls{pmp} checks onto machine-mode is to set the MPRV bit in the \gls{mstatus} register.
-This bit is only available if at least two privilege modes are supported otherwise it is hardwired to zero.
+This bit is only available if more than one privilege mode is supported otherwise it is hardwired to zero.
 If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that has was preempted by taking the trap.
 
 Additionally, the \gls{mstatus} register supports the MXR field that allows to read executable memory regions.
@@ -236,8 +235,8 @@ The specification mentions the example of the floating-point extension in which 
 \end{figure}
 
 For the sake of simplicity, we will assume that every exception causes a trap.
-As we will not implement any floating-point arithmetic extension, the specification does not demand from us to handle exceptions otherwise and doing so does not serve any purpose at this point.
-In following paragraphs, an introduction to the control flow of dealing with interrupts will be given.
+As we will not implement any floating-point arithmetic extension, the specification does not demand from us to handle exceptions differently and doing so does not serve any purpose at this point.
+In the following paragraphs, an introduction to the control flow of dealing with interrupts will be given.
 Said control flow is depicted in figure \ref{fig:interrupt-handling} and follows these general steps:
 \begin{enumerate}
     \item If an interrupt or exception is pending, determine the privilege mode to take the trap
@@ -245,7 +244,7 @@ Said control flow is depicted in figure \ref{fig:interrupt-handling} and follows
     \item Take the trap
     \item Return from trap handler
 \end{enumerate}
-Interrupt handling can be understood as a generalized form of exception handling as exception handling in principle works the same but has fewer steps.
+Interrupt handling can be understood as a generalized form of exception handling since exception handling in principle works the same but has fewer steps.
 
 \begin{figure}
     \centering
@@ -262,7 +261,7 @@ Such an alert will be given by a timer interrupt.
 Software interrupts can be set pending by software running on the same \gls{hart} with equal or higher privilege than the targeted privilege mode.
 Software interrupts have no predefined semantics and thus can be used by programmers or system designers in every imaginable way.
 
-Each of these categories of interrupts can target any privilege-mode resulting in a total of 6 interrupts available to the platform in our case (or 9 if supervisor-mode is supported).
+Each of these categories of interrupts can target any privilege-mode resulting in a total of six interrupts available to the platform in our case (or nine if supervisor-mode is supported).
 These interrupt-types are associated with indices in the range from $ 0_{10} $ to $ 11_{10} $, also called interrupt code\footnote{%
     The reader might have noticed that these are more indices than needed to encode all interrupts available - even if supervisor-mode is present.
     Indices 2, 6 and 10 currently are reserved.
@@ -285,8 +284,7 @@ Similar to the \gls{mip} register, each bit field of \gls{mideleg} corresponds t
 Exceptions also have an exception code assigned and thus, fields of \gls{medeleg} correspond to these codes.
 An interrupt or exception can only be delegated to modes equally or higher privileged than the mode the interrupt or exception was targeting originally.
 For example, if an interrupt is targeting supervisor-mode it must be handled by machine-mode or can optionally be delegated to supervisor-mode but can not be handled by user-mode.
-For each mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $, there are respective counterparts to machine-mode registers such as \gls{mip}.
-E.g., if an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and becomes writable.
+For each mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $, there are respective counterparts to machine-mode registers such as \gls{mip}, e.g., if an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and becomes writable.
 Otherwise it appears to be hardwired to zero.
 From now on, registers related to interrupt and exception handling will be introduced for some arbitrary mode $ x $.
 
@@ -435,7 +433,7 @@ A secure embedded system that implements the RV32E, i.e. base integer instructio
 The reasoning behind the architecture and which features will be included was given in section \ref{sec:risc-v-selection}.
 In this section, the architecture itself will be introduced and briefly specified.
 
-MINRV8 supports 4 general purpose registers and has two privilege modes: machine- and user-mode.
+MINRV8 supports four general purpose registers and has two privilege modes: machine- and user-mode.
 Besides this, it has 4-bytes of readable and writeable memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies all remaining addresses, i.e. 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with \minrv{And} and \minrv{Or}, a \minrv{Mov} instruction to move a word from one register to another, a comparison instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.

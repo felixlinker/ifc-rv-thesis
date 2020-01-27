@@ -53,11 +53,11 @@ We claim that approach that will be developed in the course of this thesis is
 \end{itemize}
 
 As a proof of concept, this approach will be applied to the RISC-V architecture using the model checker nuXmv.
-RISC-V is a young and open-source \gls{isa} that has first been published in 2011 \cite{RiscVISA-org}.
+RISC-V is a recent and open-source \gls{isa} that has first been published in 2011 \cite{RiscVISA-org}.
 A basic architecture inspired by the RISC-V architecture will be modelled in nuXmv.
 nuXmv is a general purpose model checker that supports different specification languages and verification algorithms.
 Additionally, using nuXmv allows for enhancing on the approach proposed by \citeauthor{Reid17} in a key aspect:
-In his work, \citeauthor{Reid17} focused on higher lever properties to verify the ARM \gls{isa} against that were limited to making specifications about a single transition of the processor only, i.e. that only take the pre- and post-state of a single cycle of the processor into account.
+In his work, \citeauthor{Reid17} focused on higher lever properties that were limited to making specifications about a single transition of the processor only, i.e. that only take the pre- and post-state of a single cycle of the processor into account.
 nuXmv on the other hand allows to consider infinite sequences of instructions, i.e. sequences of processor-transitions, of unbounded length.
 
 This thesis is structured as follows:
@@ -65,7 +65,7 @@ In chapter \ref{chp:background}, the background of this thesis will be introduce
 This includes both key papers of \citeauthor{Reid17} and \citeauthor{Ferraiuolo17} as well as \glspl{isa} and model checkers.
 An introduction to \gls{risc} architectures and their ecosystem will be discussed concluding with a threat model for this thesis.
 After this, model checkers will be explained.
-At the end of this section, the methodology of this thesis will be discussed in more detail.
+At the end of this chapter, the methodology of this thesis will be discussed in more detail.
 
 In chapter \ref{chp:arch}, the RISC-V architecture and a new, minimal, RISC-V-inspired architecture called MINRV8 will be introduced.
 Following up on this, it will be described how the MINRV8 architecture was implemented in nuXmv.
@@ -90,6 +90,6 @@ These rules will be:
 \end{itemize}
 
 Secondly, this approach will be applied to the MINRV8 to give a prototype.
-This prototype will be able to detect both the cache poisoning and the SYSRET vulnerability the x86 architecture is and was susceptible to.
+This prototype will be able to detect both the cache poisoning and the SYSRET vulnerability the x86 architecture was or is susceptible to.
 Whereas the cache poisoning attack was an actual vulnerability to the x86 architecture, the SYSRET vulnerability affected e.g. \glspl{os} running on Intel's version of the x86 architecture.
 Therefore, the latter vulnerability is a prime example why verifying \glspl{isa} must also take into account software running on it, hence, it is taken into account that not every vulnerability can be fixed in hardware.
