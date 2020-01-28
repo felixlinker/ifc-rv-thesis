@@ -4,7 +4,7 @@
 \label{chp:results}
 
 This section will cover the results of the verification process as it was described in section \ref{sec:sum-background}.
-Our main finding is that there are eight assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} can not be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the eight assumptions that will be introduced in subsequent sections are in place.
+Our main finding is that there are eight assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} cannot be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the eight assumptions that will be introduced in subsequent sections are in place.
 
 Additionally, roughly 23 bug fix patches\footnote{%
     The number of 23 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
@@ -15,33 +15,34 @@ This section is grouped as follows: section \ref{sec:assumptions} will introduce
 
 Note that only assumptions and no architectural refinements were introduced to the model\footnote{%
     It was tested whether two assumptions could be replaced by one architectural mitigation.
-    It turned out, however, that this architectural refinement did not manage to rule out the respective vulnerability.
+    It turned out, that this architectural refinement did not manage to rule out the respective vulnerability.
     This is discussed at the end of appendix \ref{app:cexs}.
 }.
 It therefore was also tested how the results would change when canaries are introduced to the architecture.
-The term \enquote{canary} refers to the birds used in coal mines to indicate a loss of oxygen.
-In the field of software development, this term refers to bugs that are added to code bases deliberately in order to test detection mechanisms.
+The term \enquote{canary} refers to birds historically used in coal mines to indicate a loss of oxygen.
+In the field of software development, this term refers to bugs that are added to code bases deliberately to test detection mechanisms.
 These canaries mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
 The results of these tests will finally be presented in section \ref{sec:canaries}.
 
 \section{Assumptions}
+\label{sec:assumptions}
 
 Technically, \smv{INIT} constraints and assumptions serve the same purpose: They limit the state spaces that will be searched for property violations.
 Conceptually, however, these two concepts should be distinguished.
 In the model, \smv{INIT} constraints are used to limit the search of the state space to \textit{valid} counter-examples only.
-Validity here means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
+Validity in this context means, that properties are not false to begin with and that the initial state of the architecture complies with the specification.
 Consequently, these constraints were introduced during the prove-refine loop as fixes to the model.
 Assumptions on the other hand are not part of the model in a technical sense but mark a result of the verification of the architecture: Each assumptions constitutes a rule for e.g. \gls{os} or compiler engineers to obey in order to write or generate non-vulnerable code.
 
 \subsection{Initial Constraints}
 
 Validity of the counter-examples was guaranteed by 13 \smv{INIT} constraints that can be grouped into four categories.
-Firstly, two groups of constraint guarantee that counter-examples are not false upfront.
+Firstly, two groups of constraints guarantee that counter-examples are not false upfront.
 By constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
 If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv returns a trivial counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register.
 
-Secondly, two more group of constraints ensures the initial state to comply with the specification is guaranteed.
+Secondly, two more groups of constraints ensures the initial state to comply with the specification is guaranteed.
 The first is rather simple, given by a single constraint and depicted in the following snippet:
 \begin{lstlisting}[
     language=smv,
@@ -55,7 +56,6 @@ As \smv{MPP} is cleared on return from a trap handler and \smv{MIE} being high i
 The last group of constraints sets up caching errorless, i.e. if the cache is valid, it can only point to an address of a region that is cacheable and must match that addresses content unless the respective region is set to be write-back-cacheable.
 
 \subsection{Property Assumptions}
-\label{sec:assumptions}
 
 \begin{table}
     \centering
@@ -147,14 +147,14 @@ Both assumptions \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} are similar to each othe
 Both were introduced under the label of being \textit{mode-boundary crossing related}, which means that both assumptions are about information flow tracking labels when changing privilege mode - more precisely: both are about the labels of register contents.
 The relation of these two assumptions, however, also characterizes a pattern that can also be recognized for subsequent groups of assumptions.
 It turned out that for every integrity related assumption, such as \smv{SAN_ON_CALL}, there was a similar confidentiality related assumption such as \smv{CLR_ON_RET}.
-This can be easily seen in table \ref{tbl:assumptions-overview}.
+This can be seen easily in table \ref{tbl:assumptions-overview}.
 In alternating rows, two groups of assumptions can be distinguished: those which are relevant to the properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} and those which are relevant to the property \smv{NO_LEAK}.
 Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
 Whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
 
 \paragraph{Memory related assumptions}
 Two assumptions about memory reads and writes join the ranks of these groups, namely \smv{NO_PUBLIC_READS} and \smv{NO_PUBLIC_WRITES} which are formally given in snippet \ref{snpt:no-public-reads} and \ref{snpt:no-public-writes} respectively.
-These two assumptions don't express more than the title says; they require machine-mode to never read from or write to public memory.
+These two assumptions do not express more than the title says; they require machine-mode to never read from or write to public memory.
 As such, they directly extend the mode-boundary related assumptions.
 At first, it was ensured that machine-mode neither hands out secrets nor accepts malicious data directly.
 These two assumptions now ensure that the same must not happen by a detour into memory.
@@ -190,7 +190,7 @@ The four assumptions that have been introduced up to this point seem to cover al
 However, these are not enough to ensure that the MINRV8 architecture implements all information flow properties subject to this thesis.
 Whereas the two memory related properties covered the group of actions by machine-mode where information directly is given to or taken from user-mode, it is also possible to transmit information indirectly via memory by writing it to or reading it from safe memory regions but then changing the attributes of respective memory regions.
 The two assumptions \smv{SANITIZE_ON_DECLASSIFICATION} and \smv{CLR_ON_DECLASSIFICATION} counter issues arising from these vectors.
-The former assumption demands from machine-mode to ensure that a memory region does not contain malicious information when its set to be publicly inaccessible.
+The former assumption demands from machine-mode to ensure that a memory region does not contain malicious information when it is set to be publicly inaccessible.
 This assumption is formalized in snippet \ref{snpt:san-on-classify}.
 The latter demands from machine-mode to always ensure that a memory region does not contain confidential information when its made publicly accessible.
 This assumption is formalized in snippet \ref{snpt:clr-on-declassify}.
@@ -306,8 +306,8 @@ These changes manage to introduce a vulnerability to the MINRV8 architecture.
 If assuming all assumptions introduced in section \ref{sec:assumptions}, nuXmv manages to find a counter-example for all three information flow properties.
 These, again, are discussed in the appendix (cf. \ref{sec:cexs-cache-vuln}).
 
-One distinction from the original cache-poisoning attack to the adaption that has been implemented here is that the attacker can't set the attacked memory region to be cacheable in the first place since user-mode lacks the capabilities to do so.
-This difference does not play a major role since the attack can take place nonetheless if some memory region happens to be locked down to user-mode and is set to be write-back-cacheable, still this weakens the attack to some degree.
+One distinction from the original cache-poisoning attack to the adaption that has been implemented is that the attacker cannot set the attacked memory region to be cacheable in the first place since user-mode lacks the capabilities to do so.
+This difference does not play a major role since the attack can take place nonetheless if some memory region happens to be locked down to user-mode and is set to be write-back-cacheable, this still weakens the attack to some degree.
 
 What can be done to mitigate this attack?
 Obviously, the vulnerability purposefully introduced to the architecture could be dropped.
@@ -328,13 +328,13 @@ To our knowledge, the most concise and freely available explanation of the vulne
 The x86 architecture provides multiple ways to switch between privilege modes.
 In principle, these ways work analogously to how the MINRV8 architecture changes privilege modes: either an interrupt/exception leads to the privilege escalation or a dedicated instruction is executed that changes privilege mode, e.g. \minrv{Ecall} in case of the MINRV8 architecture.
 In general, when changing the privilege mode, the \lstinline{RIP} register, which is the \gls{pc} equivalent for x86 architectures, and the stack-pointer are set to the respective version of the targeted privilege-mode.
-The designers of the architecture, however, found that parts of the normal privilege mode changing routines could be left out in some scenarios to improve performance.
+The designers of the architecture found that parts of the normal privilege mode changing routines could be left out in some scenarios to improve performance.
 One of this routines to be left out was changing the stack-pointer by hardware.
 These performance improvements are implemented in the \lstinline{SYSCALL} instruction which makes a cheap transition to high-privilege mode by for instance not changing the stack-pointer by hardware.
 In consequence, there is the analogous \lstinline{SYSRET} instruction to return control back to user-mode which also does not set the stack-pointer.
 However, if an interrupt handler invoked by the \lstinline{SYSCALL} instruction intends to use the stack-pointer, it must first set the stack-pointer up accordingly and afterwards set it back to user-mode\footnote{%
-    There are more than two privilege modes provided by the x86 architecture and they also have different names than the privilege modes of the MINRV8 architecture, however, the SYSRET vulnerability only touches two privilege modes with have the same purpose as user- and machine-mode in the case of the MINRV8 architecture.
-    Therefore, in this context, the terms user-mode and machine-mode will also be used to talk about the x86 architecture.
+    There are more than two privilege modes provided by the x86 architecture and they also have different names than the privilege modes of the MINRV8 architecture, however, the SYSRET vulnerability only touches two privilege modes which have the same purpose as user- and machine-mode of the MINRV8 architecture.
+    Therefore, in this context, the terms user-mode and machine-mode can also be used to talk about the x86 architecture.
 } before executing the \lstinline{SYSRET} instruction.
 
 When \lstinline{SYSRET} restores the user-mode's context, it reads the \lstinline{RIP} value from the \lstinline{RCX} register which is used to store the original value of the \lstinline{RIP} register during interrupt handling.
@@ -372,7 +372,7 @@ It might be a threat to some architectures having the stack-pointer move into un
 
 In the case of the original SYSRET vulnerability, a specially crafted value must have been placed into a special register to trigger an exception during the \lstinline{SYSRET} instruction.
 In case of the MINRV8 architecture, no such special mechanisms are given.
-Therefore, the vulnerability can only triggered by an external interrupt here but this does not conflict with the core idea of the SYSRET vulnerability.
+Therefore, the vulnerability can only triggered by an external interrupt but this does not conflict with the core idea of the SYSRET vulnerability.
 
 An \smv{INIT} constraint was added to the model ensuring that when the architecture starts in machine-mode, the currently active stack-pointer points to a memory region that is neither read- nor writable to user-mode.
 This, as usual, ensures that the information flow properties are not violated by some obvious initial condition.
@@ -384,7 +384,7 @@ Firstly, in lines \ref{ln:sp-call-start}-\ref{ln:sp-call-end}, it is assumed tha
 Alternatively, machine-mode also might not use these instructions at all until it returns control back to user-mode.
 Secondly, in lines \ref{ln:sp-return-start}-\ref{ln:sp-return-end}, whenever machine-mode hands control back to user-mode the prior instruction must have selected a stack-pointer that is user-mode controllable.
 This assumption is the most critical to the SYSRET vulnerability.
-These two assumptions closely resemble the assumptions \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} as shown in section \ref{sec:assumptions}, snippets \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
+These two assumptions closely resemble the assumptions \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} as shown in section \ref{sec:assumptions} and snippets \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret} respectively.
 
 Thirdly, in lines \ref{ln:sp-sel-start}-\ref{ln:sp-sel-end}, machine-mode is also not allowed to use the \minrv{Push} or \minrv{Pop} instructions when it \textit{selects} a stack-pointer pointing to a user-mode-controlled region.
 This ensures that machine-mode not deliberately decides to use a bad stack-pointer.
@@ -454,7 +454,7 @@ In AMD's implementation of the x86 architecture, when setting the \lstinline{RIP
 
 The other mitigation modifies the architecture.
 The stack-pointer extension of the MINRV8 architecture was altered such that the two stack-pointers are assigned to privilege-modes and switched by hardware.
-Whenever the architecture changes into machine-mode, \smv{sp_sel} is set to \smv{1} and whenever it changes into user-mode \smv{sp_sel} is set to \smv{0}.
+Whenever the architecture changes into machine-mode, \smv{sp_sel} is set to 1 and whenever it changes into user-mode \smv{sp_sel} is set to 0.
 Furthermore, the \minrv{Spsel} instruction is disabled.
 Therefore, with this modification to the architecture the assumptions \smv{SP_BANK} and \smv{SP_SAFETY} can be dropped.
 However, new assumptions and \smv{INIT} constraints must be introduced.

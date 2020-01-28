@@ -45,7 +45,7 @@ In his paper, \citeauthor{Reid17} gives a list of requirements for such cross-cu
     \begin{itemize}
         \item express the major guarantees that programmers depend on;
         \item are concise so that architects can easily review and remember the entire set of properties;
-        \item are stable so that architectural extensions don't invalidate large numbers of rules;
+        \item are stable so that architectural extensions do not invalidate large numbers of rules;
         \item and that describe the architecture differently from existing specification to reduce the risk of common-mode failure.
     \end{itemize}
 \end{displaycquote}
@@ -564,7 +564,7 @@ In a sense, privilege modes play a similar role to virtual memory.
 Both concepts are used by \glspl{os} in very fundamental ways and therefore are relevant for the security of a system as a whole.
 Yet, hardware only supports the foundation for virtual memory, i.e. address translation and the possibility to set properties of memory regions, whereas privilege levels and interrupts are systems offered to the \gls{os} and implemented in the hardware completely.
 \glspl{os} use memory management systems to offer virtual memory to applications but rely on privilege levels to function at all.
-While it was argued that verification of virtual memory systems should be targeted at \glspl{os} the same can not be said for the verification of privilege levels.
+While it was argued that verification of virtual memory systems should be targeted at \glspl{os} the same cannot be said for the verification of privilege levels.
 Thus, this thesis will focus on the mechanics of privilege levels in the process of verification.
 
 This links back to \cite{Reid17}; recall that one goal of this work was to \textcquote[p.88:2]{Reid17}{express the major guarantees that programmers depend on}.
@@ -719,7 +719,7 @@ Both atomic data types and complex data types are very close to the data types o
 Snippet \ref{snpt:spin-output} shows the output when verifying snippet \ref{snpt:spin-exm} with SPIN where it is assumed that latter snippet was written into a file called \lstinline{mutex_flaw.pml}.
 The lines of the output are structured as follows: at the beginning of each line, a step index indicating the progress of all processes can be seen, whilst \lstinline{proc X (NAME)} indicates the process that has made progress by its ID and name.
 The rest of the line \lstinline{line X ... [CODE]} shows the code executed by the process along with the corresponding line number in the source file\footnote{%
-    In this case, line numbers don't fully align with snippet \ref{snpt:spin-exm} but this is not relevant here.
+    In this case, line numbers do not fully align with snippet \ref{snpt:spin-exm} but this is not relevant here.
 }.
 Notice, how processes 0 and 1 progress completely independently from each other, executing code on a line by line basis where each step of any process counts as a state transition of the whole model.
 
@@ -1025,7 +1025,7 @@ Variables can be of type boolean, integer range, a custom enumeration, bit vecto
 
     This module uses an \smv{IVAR} - \textit{input variable} - declaration; a language construct that has not yet been introduced.
     Input variables have the characteristic that they are \enquote{read-only}.
-    Technically, every variable is read-only since they can not be assigned directly but only constrained.
+    Technically, every variable is read-only since they cannot be assigned directly but only constrained.
     \smv{IVAR} variables, however, are \enquote{read-only} because they cannot be used in \smv{INIT} constraints or inside \smv{next(...)} expressions.
     In other words, the transition of input variables appears to be completely random as it is completely unconstrained and as such can take any value in any step.
     In this case, the input variable to the module signals whether a pedestrian just pressed the button indicating the desire to cross the road.
@@ -1250,7 +1250,7 @@ We adopt the requirements to these properties from \cite{Reid17}, i.e. these pro
     \begin{itemize}
         \item express the major guarantees that programmers depend on;
         \item \textelp{be} concise so that architects can easily review and remember the entire set of properties;
-        \item \textelp{be} stable so that architectural extensions don't invalidate large numbers of rules;
+        \item \textelp{be} stable so that architectural extensions do not invalidate large numbers of rules;
         \item \textelp{} describe the architecture differently from existing specification to reduce the risk of common-mode failure.
     \end{itemize}
 \end{displaycquote}

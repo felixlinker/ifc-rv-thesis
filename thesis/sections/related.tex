@@ -4,7 +4,7 @@
 \label{chp:related-work}
 
 As related work, we will consider seven papers - one of which will be investigated in detail.
-Since this work was founded both on \citetitle{Reid17} \cite{Reid17} and \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} but both papers have been introduced in chapter \ref{chp:background} extensively, we won't consider them again in this section.
+Since this work was founded both on \citetitle{Reid17} \cite{Reid17} and \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} but both papers have been introduced in chapter \ref{chp:background} extensively, we will not consider them again in this section.
 However, we will make an extensive comparison to the paper \citetitle{BradfieldS16} \cite{BradfieldS16} by \citeauthor{BradfieldS16} since this work is closest to ours.
 
 The remaining six papers will be introduced as a group.
@@ -44,7 +44,7 @@ The authors propose a simple security policy involving two rules:
     \textit{No instruction can be generated from I/O inputs}, and \textit{No I/O inputs and spurious values based on propagated inputs can be used as pointers unless they are bound-checked and added to an authentic pointer}.
 \end{displaycquote}
 
-Whereas the first can not be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to the integrity property \ref{itm:prop-mem-i} which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
+Whereas the first cannot be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to the integrity property \ref{itm:prop-mem-i} which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
 The exception of bound-checks is implicitly modelled by the \smv{SAN_ON_*} assumptions in chapter \ref{chp:results} which mandate from machine-mode to sanitize register of spurious values before using them.
 Such a sanitization might be implemented by boundary-checking.
 Here, machine-mode can only sanitize registers by clearing them, e.g. by using the shift left instruction \minrv{Sll}.
@@ -110,7 +110,7 @@ With this methodology, the authors manage to correctly find that Intel's version
 On the one hand, we find it to be unfair to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} clearly does not have the same scope as ours - their paper only comprises five pages.
 On the other hand, we find that the work in \cite{BradfieldS16} is lacking in two, key aspects.
 First and foremost, the problem of a circular argument in verification as discussed in section \ref{sec:trustworthiness} fully applies to this work.
-The authors don't use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restrict their model to instructions of which they know these are relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
+The authors do not use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restrict their model to instructions of which they know these are relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
     With the property's encoding, the authors miss the original intent of the work: to verify the absence of SYSRET-\textit{like} vulnerabilities.
     By only considering general protection fault, a potentially huge class of other vulnerabilities is ruled out by assumption.
 }.

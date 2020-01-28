@@ -109,7 +109,7 @@ We would expect the order of instructions to be executed to look something like:
 \end{enumerate}
 Where \minrv{Load, Add, Store} are the instructions located at addresses \minrv{X} to \minrv{Z} and \minrv{Load, Mov, Slt} the instructions located at addresses \minrv{A}, \minrv{B} and \minrv{C} respectively.
 
-However, as input variables can not be constrained in nuXmv, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
+However, as input variables cannot be constrained in nuXmv, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
 \begin{enumerate}
     \item First environment call: \lstinline[language=minrv8,mathescape=true]{Ecall, Load, Add, Store, $\dots$, Mret}
     \item Return: \lstinline[language=minrv8,mathescape=true]{Load, Mov}
@@ -235,7 +235,7 @@ With such a mechanism in place, machine-mode could not be fooled into using the 
 
 These two examples stress that the precise phrasing of the assumptions is critical for both how realistic the assumptions are and how well they might be suited to serve as target for verification of actual code-bases.
 While it would be sufficient to find a stronger precondition for these assumptions in existing code-bases, it is non-trivial whether such preconditions are easy to find or whether the assumptions might be rephrased such that they still grant the absence of information flow related bugs but are easier to verify in programs.
-This topic, though, can't be handled as part of this thesis and as such marks future work.
+This topic, though, cannot be handled as part of this thesis and as such marks future work.
 
 \section{Trustworthiness}
 \label{sec:trustworthiness}
@@ -375,7 +375,7 @@ These were defined to apply to high level properties for specifications and list
     \begin{itemize}
         \item express the major guarantees that programmers depend on;
         \item are concise so that architects can easily review and remember the entire set of properties;
-        \item are stable so that architectural extensions don't invalidate large numbers of rules;
+        \item are stable so that architectural extensions do not invalidate large numbers of rules;
         \item and that describe the architecture differently from existing specification to reduce the risk of common-mode failure.
     \end{itemize}
 \end{displaycquote}
