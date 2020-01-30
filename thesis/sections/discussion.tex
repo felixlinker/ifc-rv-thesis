@@ -4,7 +4,7 @@
 \label{chp:discussion}
 
 In section \ref{sec:ifc-properties}, a set of \gls{ifc} properties based on the work in \cite{Ferraiuolo17} has been introduced; the set of these properties will be referred to as $ P $.
-These properties were model checked, the main result of which was a set of rules $ R $ as presented in the previous chapter \ref{chp:results} .
+These properties were model checked, the main result of which was a set of rules $ R $ as presented in the previous chapter \ref{chp:results}.
 What is the consequence of this?
 The formal achievement of this thesis can be summarized as follows:
 \begin{quote}
@@ -16,10 +16,10 @@ What is the \textit{actual} sense of security that can be guaranteed?
 At this point, the class of vulnerabilities covered by these properties cannot be defined strictly.
 However, the canaries these properties have been tested against in section \ref{sec:canaries}, exemplify this class of vulnerabilities.
 Assessing the results of the approach to formally verify higher level properties of the MINRV8 architecture shall be subject of this section.
-We will cover four aspects of our work:
+We will cover five aspects of our work:
 \begin{itemize}
     \item Scope, i.e. what are the limits of our results,
-    \item Trustworthiness, i.e. whether our results are sound,
+    \item trustworthiness, i.e. whether our results are sound,
     \item whether the model could have been implemented more abstractly,
     \item if there are alternatives to tracking information on a per-bit basis, and finally
     \item whether the results meet the self-imposed requirements as set up in chapter \ref{chp:introduction} and section \ref{sec:sum-background}.
@@ -42,7 +42,7 @@ In summary, the MINRV8 architecture knows three groups of instructions (cf. tabl
 \begin{itemize}
     \item Computational instructions such as \minrv{Mov}, \minrv{And}, \minrv{Add}, etc.
     \item Memory instructions \minrv{Load} and \minrv{Store}
-    \item System instructions \minrv{Ecall}, \minrv{Mret}, \minrv{Csrrs}, \minrv{Csrrc}
+    \item System instructions \minrv{Ecall}, \minrv{Mret}, \minrv{Csrrs}, and \minrv{Csrrc}
 \end{itemize}
 
 A reader, experienced in the field of microcontrollers or computer-architecture in general might wonder why our model does not include:
@@ -73,7 +73,7 @@ nuXmv allows to think of the following options:
 
 The decision towards using input variables as a model of the stream of instructions was made because of two reasons:
 \begin{enumerate*}[label=\alph*)]
-    \item in the prototyping phase of the model, it was quickly found out that using input variables led to significant boosts in performance, and
+    \item in the prototyping phase of the model, it was quickly found that using input variables led to significant boosts in performance, and
     \item using input variable simplified the implementation significantly.
 \end{enumerate*}
 Having used purely either frozen variables or variables would have increased the size of the state space to be traversed by nuXmv and would have introduced the necessity to implement instruction decoding increasing the complexity of the transition relation.
@@ -82,8 +82,7 @@ Furthermore, it would not have allowed for unbounded model checking of the archi
 Yet, using input variables also has some downsides.
 First and foremost, using input variables means that it is pointless to model a \gls{pc} or anything address related like return addresses, a dedicated \gls{lr} or \glspl{csr} such as \gls{mtvec}, the \gls{csr} holding the trap-vector base address, as without a model of executable memory there is nothing addresses could point to.
 Instead, instructions will simply magically appear on each cycle of the processor model.
-This means that the simulation is inaccurate in this regard which in itself is not a problem.
-The model is supposed to be an abstraction.
+This means that the simulation is inaccurate in this regard which in itself is not a problem because the model is supposed to be an abstraction.
 
 \begin{figure}
     \centering
@@ -107,7 +106,7 @@ We would expect the order of instructions to be executed to look something like:
     \item Second environment call: \lstinline[language=minrv8,mathescape=true]{Ecall, Load, Add, Store, $\dots$, Mret}
     \item Second return: \lstinline[language=minrv8,mathescape=true]{Slt, $\dots$}
 \end{enumerate}
-Where \minrv{Load, Add, Store} are the instructions located at addresses \minrv{X} to \minrv{Z} and \minrv{Load, Mov, Slt} the instructions located at addresses \minrv{A}, \minrv{B} and \minrv{C} respectively.
+Where \minrv{Load, Add,} and  \minrv{Store} are the instructions located at addresses \minrv{X} to \minrv{Z} and \minrv{Load, Mov,} and  \minrv{Slt} the instructions located at addresses \minrv{A}, \minrv{B} and \minrv{C} respectively.
 
 However, as input variables cannot be constrained in nuXmv, there is no way to model that the instructions being executed on a trap always are equal, i.e. a valid stream of instructions as a sequence of input variable valuations to the model might be:
 \begin{enumerate}
@@ -117,7 +116,7 @@ However, as input variables cannot be constrained in nuXmv, there is no way to m
     \item Second return: \lstinline[language=minrv8,mathescape=true]{Slt, $\dots$}
 \end{enumerate}
 
-Such a stream of instructions is not realistic without some program modifying the code located at \gls{mtvec} and as such \enquote{shouldn't} be considered when checking the \gls{ifc} properties.
+Such a stream of instructions is not realistic without some program modifying the code located at \gls{mtvec} and as such \enquote{should not} be considered when checking the \gls{ifc} properties.
 One would expect to find the same code after an \minrv{Ecall} instruction being executed since in both cases, an architecture would jump to the respective interrupt handler\footnote{%
     To be precise, one would also need to take vectored interrupts into account (c.f. sec. \ref{sec:rv-priv-arch}) but even then, the issue applies.
 }.

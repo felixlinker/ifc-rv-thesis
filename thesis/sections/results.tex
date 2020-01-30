@@ -154,7 +154,7 @@ Whereas confidentiality related assumptions always constrain flow of information
 
 \paragraph{Memory related assumptions}
 Two assumptions about memory reads and writes join the ranks of these groups, namely \smv{NO_PUBLIC_READS} and \smv{NO_PUBLIC_WRITES} which are formally given in snippet \ref{snpt:no-public-reads} and \ref{snpt:no-public-writes} respectively.
-These two assumptions do not express more than the title says; they require machine-mode to never read from or write to public memory.
+These two assumptions express exactly what the title says; they require machine-mode to never read from or write to public memory.
 As such, they directly extend the mode-boundary related assumptions.
 At first, it was ensured that machine-mode neither hands out secrets nor accepts malicious data directly.
 These two assumptions now ensure that the same must not happen by a detour into memory.
