@@ -3,10 +3,12 @@
 \chapter{Introduction}
 \label{chp:introduction}
 
-This thesis is in the realm of formal verification, i.e. the attempt to verify a system by the use of formal methods such as SAT solvers, interactive theorem provers and model checkers.
+This thesis is in the realm of formal verification, i.e. the attempt to verify a system by the use of formal methods such as SAT solvers\footnote{%
+    Algorithms that can solve the Boolean satisfiability problem, i.e. whether a formula of propositional logic has a model.
+}, interactive theorem provers and model checkers.
 With these tools, formal verification engineers strive to prove the correctness of systems such as general computer programs, \glspl{os}, compilers or hardware designs.
 For a system to be correct means that it complies with a specification.
-Formal verification of a system is the attempt to prove that some system is free of errors, i.e. meets all properties imposed by some specification.
+Formal verification of a system is the attempt to prove that it is free of errors, i.e. meets all properties imposed by some specification.
 \enquote{Specification} here might reference to documents specifying standards of the industry, but it might also refer to more abstract properties like the absence of memory leaks or race conditions in parallel programming.
 Thus, formal verification complements testing.
 The relation between these two approaches often is illustrated by a famous quote of Edsger Dijkstra:
@@ -23,7 +25,7 @@ An intuition for this line of research is given by \citeauthor{Reid17} with the 
 In our everyday life, we rely on everybody to obey the law in their actions.
 If we want to find out whether some action is just (correct), it is checked whether it violates the law.
 The same is done for implementations.
-If we want to check whether some implementation is correct (just), is is checked whether it complies with the respective specification.
+If we want to check whether some implementation is correct (just), it is checked whether it complies with the respective specification.
 However, every law has loopholes.
 Sometimes what \textit{we want} from the law does not align with what it actually says.
 This is because the law is big and complex and some cases get overlooked.

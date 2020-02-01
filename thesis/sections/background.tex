@@ -3,23 +3,22 @@
 \chapter{Background}
 \label{chp:background}
 
-In the introduction, the core motivation of this thesis was given which is to formally verify \glspl{isa} by model checking information flow control properties.
-However, the methodology of this thesis has not been made clear.
-At this point, it is not tractable to introduce this in detail.
-Instead, the background of this thesis will be set up first.
+In the introduction, the core motivation of this thesis was given, which is to formally verify \glspl{isa} by model checking information flow control properties.
+In this section, the background of this thesis will be set up.
 
 The first two sections \ref{sec:verify-spec} and \ref{sec:bg-ifc} will introduce the foundational work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 Following up on this, the actual subject of verification, \glspl{isa}, and the technical details of the verification process will be outlined.
 There will be not only an introduction to common \glspl{isa}, especially RISC-V, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a threat-model (section \ref{sec:ecosystem}).
 Then, a general explanation of model checking will be given, resulting in the description of the nuXmv model checker that will be used in this thesis (section \ref{sec:model-checking}).
 
-In each of these subsections , a collection of \glspl{isa} or model checkers respectively will be touched to \begin{enumerate*}[label=\alph*)]
+In each of these subsections, a collection of \glspl{isa} or model checkers respectively will be touched to \begin{enumerate*}[label=\alph*)]
     \item give a better feel for the field as a whole and
     \item meaningfully argue for one of the presented options to be worked with in this thesis.
 \end{enumerate*}
 However, the sections on \gls{risc} architectures other than RISC-V and model checker other than nuXmv can be skipped by readers that are more interested in the results of this thesis.
 
-As a final part of the background, in section \ref{sec:sum-background}, a summary of all aforementioned sections will be given which will finally allow for a outline of this thesis's methodology.
+As a final part of the background, in section \ref{sec:sum-background}, a summary of all aforementioned sections will be given which will allow for a outline of this thesis's methodology.
+This methodology has been sketched in the introduction but can be given precisely only after the background has been introduced.
 
 \section{Formal Verification of Specifications}
 \label{sec:verify-spec}
@@ -72,7 +71,7 @@ In summary, the aspects of \cite{Reid17} that are relevant for this thesis are:
     \item the paper proposes requirements for properties to verify an \gls{isa} against.
 \end{enumerate}
 
-Additionally, the paper successfully uses its approach for partially verifying the ARM M-Class architecture.
+Additionally, the paper successfully uses its approach to partially verify the ARM M-Class architecture.
 A downside of this work, however, is that it is limited to verifying single processor transactions only.
 This lies in the nature of the properties taken from the natural language specification which only constrain single transitions of the processor.
 
@@ -92,7 +91,7 @@ This use case introduces several novelties to \glspl{hdl} in contrast to program
 In context of this thesis, think of an \gls{hdl} as a programming language with a very specific use case.
 
 \citeauthor{Ferraiuolo17} define an \textit{information flow policy} as a lattice of security labels $ (M, \sqcup, \sqcap) $; with $ \sqsubseteq $ being the partial order on $ M $ as induced by the lattice.
-Intuitively speaking, information labelled with $ a \in M $ is allowed to flow to a sink labelled with $ b \in M $ iff $ a \sqsubseteq b $, i.e. information is always allowed to flow up in the lattice but not down.
+Intuitively speaking, information labelled with $ a \in M $ is allowed to flow to a sink labelled with $ b \in M $ if and only if $ a \sqsubseteq b $, i.e. information is always allowed to flow up in the lattice but not down.
 
 \begin{example}
     To verify an ARM TrustZone implementation, \citeauthor{Ferraiuolo17} introduce four information flow labels $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
@@ -164,7 +163,8 @@ This way, a constant type $ \tau $ of kind $ l $ can be applied to a whole bit v
 
     The variables \lstinline{read} and \lstinline{reg_ns} illustrate the purpose of lifting types to higher kinds.
     Both types \lstinline{world(ns)} and \lstinline{PT} are of kind $ l $, yet they are used to annotate variables that store more than one bit.
-    Because \lstinline{read} is a register with 32 bits, \lstinline{world(ns)} is lifted to \lstinline{i -> world(ns)}, i.e. each element of \lstinline{read} is of the dependent type \lstinline{world(ns)}, and since \lstinline{reg_ns} is an array of 1024 registers of width 1, \lstinline{PT} is lifted to \lstinline{i -> j -> PT}, i.e. each array element is of type \lstinline{j -> PT}, i.e. each array element's bits are of type \lstinline{PT}.
+    Because \lstinline{read} is a register with 32 bits, \lstinline{world(ns)} is lifted to \lstinline{i -> world(ns)}, i.e. each element of \lstinline{read} is of the dependent type \lstinline{world(ns)}.
+    Similarly, since \lstinline{reg_ns} is an array of 1024 registers of width 1, \lstinline{PT} is lifted to \lstinline{i -> j -> PT}, i.e. each array element is of type \lstinline{j -> PT} and  each array element's bits are of type \lstinline{PT}.
 
     In this example, the variable \lstinline{ns} refers to the \textit{security state} of the ARM TrustZone architecture.
     The ARM TrustZone architecture not only knows different privilege but also security states which can either be secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
@@ -335,7 +335,7 @@ The most prominent example of a \gls{cisc} architecture is the x86 architecture 
 
 In this section, three \gls{risc} architectures will be introduced: the ARM architecture, MIPS and RISC-V.
 It will turn out that these architectures can mainly be differentiated by the balance of customizability vs. feature-richness.
-Whereas the RISC-V architecture is most customizable it also supports the fewest features out of the box.
+Whereas the RISC-V architecture is most customizable it also supports the fewest features (not including custom extensions).
 On the other hand, the ARM architecture is very feature-rich but not very much customizable.
 The MIPS architecture strikes a middle-ground of these two extremes.
 
@@ -385,13 +385,13 @@ Furthermore, there are 32 64- or 128-bit registers for floating point and vector
 
 \subsection{MIPS}
 
-As opposed to the ARM architecture, the MIPS architecture does not only support a smaller range of registers, it also provides fewer features by standard, i.e. without extensions.
+As opposed to the ARM architecture, the MIPS architecture supports a smaller range of registers and fewer features by default, i.e. without extensions.
 It is introduced in \citetitle{MIPS} \cite{MIPS} as: \textcquote[p.21]{MIPS}{based on a fixed-length, regularly encoded instruction set \textelp{which} uses a load/store data model, in which all operations are performed on operands in processor registers, and main memory is accessed only by load and store instructions}.
 As for the aspect of a large, uniform register file, MIPS supports 32 32- or 64-bit registers the first of which is hardwired to zero, a \gls{pc} and some \glspl{csr}.
 Contrary to the ARM architecture, there are no dedicated \glspl{lr} or \gls{sp}.
 As indicated by the options for register width, MIPS supports both a 32- and a 64-bit architecture and instruction sets.
 
-MIPS comes with less features out of the box than the ARM architecture; the specification only touches memory interaction including memory virtualization and cache, debugging and the interaction with a standard coprocessor that implements floating point arithmetic.
+MIPS comes with less features (not including custom extensions) than the ARM architecture; the specification only touches memory interaction including memory virtualization and cache, debugging and the interaction with a standard coprocessor that implements floating point arithmetic.
 MIPS, however, is far more customizable than the ARM architecture.
 Whereas in case of the latter, customizability is only given by choosing different extensions, a MIPS processor does not need to implement all features defined in the specification to be MIPS compliant.
 Certain features can be left out which is called \textit{subsetting} of the architecture.
@@ -473,7 +473,7 @@ RISC-V supports up to 4096 \glspl{csr}.
 In the previous sections, it was shown how the ARM, MIPS, and RISC-V architectures implement the three main properties of \cite{Hennessy12} characterizing \gls{risc} architectures: a small and uniformly encoded instruction set, a large and uniform register file and a load/store architecture.
 Whereas the ARM architecture supported customizability only by a list of extensions and MIPS added user defined instructions and allowed subsetting its core specification, RISC-V took the idea of customizability and made it part of the core idea of the architecture.
 RISC-V supports the most simple yet fully specified processor in form of the RV32E.
-It was this degree of customizability and simplicity that led to the decision to use RISC-V as a target of verification.
+It was this degree of customizability and simplicity that led to the decision to use RISC-V as a target of verification in this thesis.
 There are no major features RISC-V lacks in that are crucial to the concept of a \gls{risc} architecture.
 
 \section{The Ecosystem of an ISA}
@@ -544,7 +544,7 @@ Again, it is important that hardware modules that handle address translation wor
 This has been covered in \cite{Dalinger05} and will be left out in this context to keep the target of verification implementation independent.
 It can be verified whether virtual memory management systems \textit{correctly} isolate programs and correctly setup virtual memory.
 This problem, however, falls in the realm of \gls{os} verification and has been touched by \cite{Vaynberg12} in detail.
-The reader is also referenced to the sel4 project \cite{Klein09} in which a complete kernel was formally verified.
+The reader is also referenced to the seL4 project \cite{Klein09} in which a complete kernel was formally verified.
 
 With this research in mind, it was decided not to include virtual memory addresses in the model to be targeted for verification.
 Mechanisms that provide isolation between memory regions will be modelled, however, the model does not benefit from a simulation of virtual memory addresses.
@@ -799,7 +799,7 @@ Yet, this should be the goal as otherwise as shown in snippet \ref{snpt:spin-out
 For an \gls{isa}, one typically would consider the \textit{state} of registers and memory to be the state of the \gls{isa} whilst some instruction advances this state.
 However, for SPIN more complex state transitions would result in us not being able to differentiate architectural states of the \gls{isa} natively since the process implementing the \gls{isa} would change state on each line of code executed.
 This could be circumvented by using the \lstinline{atomic} keyword offered by PROMELA which lets you wrap a group of PROMELA statements such that they're considered as one atomic statement that advances the process state only by one step.
-However, this would lead to a model consisting of one process all of its code being wrapped by one \lstinline{atomic} statement.
+This, though, would lead to a model consisting of one process all of its code being wrapped by one \lstinline{atomic} statement.
 This would massively contradict the key idea of SPIN of simple models being \textit{abstracted} from computationally complex code.
 In this case, we would have skipped the whole step of abstracting from some computational model that has distributed components running in parallel.
 Not only could this lead to performance issues, it also can be safely assumed that the work for this thesis would be cumbersome and might stumble over obstacles induced by abusing SPIN.
@@ -1132,8 +1132,8 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
     Now let \smv{p} be some next expression.
     One has:
     \begin{itemize}
-        \item $ T $ models \smv{AG p} iff for all $ p \in P $, $ p $ models \smv{G p}
-        \item $ T $ models \smv{EG} iff there exists a $ p \in P $ such that $ p $ models \smv{G p}
+        \item $ T $ models \smv{AG p} if and only if for all $ p \in P $, $ p $ models \smv{G p}
+        \item $ T $ models \smv{EG} if and only if there exists a $ p \in P $ such that $ p $ models \smv{G p}
     \end{itemize}
     The same applies to \smv{X} and \smv{F} respectively.
     However, in general, \gls{ltl} and \gls{ctl} do not share the same expressive power and neither is strictly more expressive than the other.
@@ -1186,6 +1186,8 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
     This assumption is supported by the fact that in nuXmv, \gls{ctl} formulas must not reference input variables.
     In other words, this means that one must not rely on input variables whilst verifying a system.
 \end{example}
+
+\subsection{Summary}
 
 Whereas SPIN was problematic because its input language did not match the needs of this thesis, and SPACER or \muZ{} were problematic because their output does not match the needs of this thesis, nuXmv delivers in both aspects.
 The traces generated as counter-examples serve as illustration what specifically went wrong on a property.

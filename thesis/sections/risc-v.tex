@@ -4,12 +4,12 @@
 \label{chp:arch}
 
 In this section, the architecture to be worked with will be developed and implemented.
-As mentioned multiple times, the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
+As mentioned before, the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
 To derive a simpler version of the RISC-V architecture, which will be called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
 This introduction will be concluded by a summary that mentions which parts will be adopted and which parts will be left out in the development of the MINRV8 architecture.
 
 Consequently, in section \ref{sec:minrv8}, the MINRV8 architecture will be introduced.
-The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv which is presented in section \ref{sec:model-implementation}.
+The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv, which is presented in section \ref{sec:model-implementation}.
 Hence, certain design decisions of both the model and the implementation will only be sensible once both have been introduced.
 
 To conclude, section \ref{sec:arch-summary} will give a summary of what has been achieved in this chapter.
@@ -21,7 +21,7 @@ The core idea of the RISC-V architecture has already been introduced in section 
 The base integer instruction set comprises instruction of four categories: integer and bit vector arithmetic, memory operations, control transfer, and platform management.
 The instructions that are available to the RISC-V architecture specifically, will be introduced in section \ref{sec:rv-base-int-isa} subsequently.
 
-Afterwards, the privileged architecture of RISC-V will be introduced which can be divided into three parts:
+Afterwards, the privileged architecture of RISC-V will be introduced, which can be divided into three parts:
 The specification of:
 \begin{enumerate}
     \item Three levels of privilege
@@ -121,7 +121,8 @@ A simple embedded system might be the cheapest to implement and manufacture, how
 A secure embedded system supports some application to be run on it while an \gls{aee} running in machine-mode controls the execution of this application.
 The application communicates to the \gls{aee} via an \gls{abi} that defines the possible interactions between an application and the \gls{aee}.
 
-A system running a Unix-like \gls{os} enhances on this by having an \gls{os} running in supervisor-mode that communicates with multiple applications running in parallel via an \gls{abi} and itself is managed by a \gls{see} which communicates with the \gls{os} via a \gls{sbi}.
+A system running a Unix-like \gls{os} enhances on this by having an \gls{os} running in supervisor-mode.
+This \gls{os} communicates with multiple applications running in parallel via an \gls{abi} and is itself managed by a \gls{see} which communicates with the \gls{os} via a \gls{sbi}.
 The \gls{see} runs in machine-mode.
 
 \begin{figure}
@@ -195,7 +196,7 @@ If a \gls{pmp} entry is locked, not only can its contents not be changed anymore
     System resets may reset an entry - unlocking it.
     However, manufacturers still can decide to hardwire a \gls{pmp} entry, e.g. to make it read-only.
     This, however could also be realized via \glspl{pma}.
-}, the permissions setup in the entry also are applied to machine-mode.
+}, the respective permissions also are enforced on machine-mode.
 
 Another way of enforcing \gls{pmp} checks onto machine-mode is to set the MPRV bit in the \gls{mstatus} register.
 This bit is only available if more than one privilege mode is supported otherwise it is hardwired to zero.
@@ -217,7 +218,7 @@ Volume 1 of the RISC-V specification \cite{RiscVISA} introduces the concept of e
     We use the term \textit{interrupt} to refer to an external event that occurs asynchronously to the current RISC-V thread.
     When an interrupt that must be serviced occurs, some instruction is selected to receive an interrupt exception and subsequently experiences a trap.
 
-    The instruction descriptions in following chapters describe conditions that raise an exception during execution.
+    The instruction descriptions \textelp{} describe conditions that raise an exception during execution.
     Whether and how these are converted into traps is dependent on the execution environment, though the expectation is that most environments will take a \textit{precise} trap when an exception is signaled \textelp{}.
 \end{displaycquote}
 
@@ -319,7 +320,7 @@ On execution of the $x$RET instruction, the architecture will reset the state ac
 \paragraph{Summary}
 In the previous paragraphs, the basic ideas of the three levels of privilege, memory attributes and protection and interrupt and exception handling specified by the privileged architecture of RISC-V \cite{RiscVISAP} were introduced.
 The specification includes even more mechanisms then these, e.g. it was touched that there are timer \glspl{csr} but there is much more.
-However, it was decided to not go into more detail on these as these mechanisms \begin{enumerate*}[label=\alph*)]
+However, these mechanisms are beyond this thesis's scope as they \begin{enumerate*}[label=\alph*)]
     \item often do not introduce new concepts to the architecture as a whole but build up on already introduced ones\footnote{%
         A prominent exception to this is supervisor-mode adding support for virtualization.
     } and
@@ -359,7 +360,7 @@ Summarizing the mechanisms that play into interrupt and exception handling, reca
 These can now be filled with more details:
 \begin{enumerate}
     \item If an interrupt or exception is pending, determine the privilege mode to take the trap by checking the targeted privilege mode and any delegation settings
-    \item If an interrupt is pending, check that interrupts are enabled globally and the specific interrupt is enabled as well
+    \item If an interrupt is pending, check that interrupts are enabled globally and check that the specific interrupt is enabled as well
     \item Take the trap by jumping to to trap base vector and if an interrupt is being serviced take vectoring into account
     \item Return from trap handler
 \end{enumerate}
@@ -413,7 +414,7 @@ There will be no configurable but fixed memory regions but each of these can be 
 The decision towards fixed regions of memory was made during the prototyping phase where we found that dynamic memory regions significantly impacted the performance of the model.
 
 As for interrupts and exceptions, the MINRV8 architecture supports the call to machine-mode exception and external interrupts targeting machine-mode.
-An implementation of more types of interrupts does not serve a clear purpose besides completeness of the model.
+An implementation of more types of interrupts adds additional complexity without serving a clear purpose besides the completeness of the model.
 Therefore, following the decision on supervisor-mode, simplicity was valued over completeness.
 Concerning the interrupt handling routine, it was decided to remove all optional parts from it, i.e. there is no interrupt delegation and there are no vectored interrupts.
 Furthermore, as all interrupts target machine mode, there is no need to check the target of an interrupt or exception initially.
@@ -454,7 +455,8 @@ XOR can be emulated by a combination of \minrv{Sub}\footnote{%
     \minrv{Sub} can be used to implement the bitwise, logical not, i.e. for a bit vector $ x $ of length $ n $, the bitwise, logical not is given by $ 1^n - x $, where $ 1^n $ is the repeated concatenation of bit $ 1 $.
 }, \minrv{And}, and \minrv{Or}, \gls{srl} by \minrv{Sll} with a negative argument to shift the register by, and \gls{csrrw} by \minrv{Csrrs} and \minrv{Csrrc} executed subsequently.
 
-Instructions that have been made redundant are all unsigned variants of computational instructions and load/store instructions of word sizes greater than bytes the latter of which has been made redundant with the decision to limit the word size of MINRV8 to one byte.
+Instructions that have been made redundant are all unsigned variants of computational instructions and load/store instructions of word sizes greater than bytes.
+These load/store instructions have been made redundant with the decision to limit the word size of MINRV8 to one byte.
 
 All this gives strong assurance that the computational model of MINRV8 does not lack in any major part in comparison to RISC-V.
 
@@ -547,16 +549,16 @@ With the MINRV8 \gls{isa} being set up, this section presents its implementation
 Cf. section \ref{sec:nuxmv} for an introduction to this tool.
 The implementation of MINRV8 was split into two modules:
 the first module implements the general mechanisms of the \gls{isa} which include everything but caching which is implemented in a separate module.
-In analogy to this, section \ref{sec:implementation-core} will describe how the main module was implemented and section \ref{sec:implementation-caching} explain the implementation of the module related to caching.
+In analogy to this, section \ref{sec:implementation-core} will describe how the main module was implemented and section \ref{sec:implementation-caching} will explain the implementation of the module related to caching.
 In each of these section, the variables and their corresponding types will be stated declared as part of the modules after which the transition relation for each of the respective variables will be outlined.
 
 The goal of this section is not to give a full description of the whole implementation but to give an overall understanding of the core ideas behind it\footnote{%
     If the full implementation is of interest, the repository containing it is accessible via: \url{https://github.com/felixlinker/ifc-rv-thesis}
 }.
-The implementation includes work-arounds for certain downsides of nuXmv, and generalizations to ease the implementation as a whole.
+The implementation includes practical solutions to certain downsides of nuXmv, and generalizations to ease the implementation as a whole.
 All these aspects are not relevant for the goal of this thesis.
 It should be noted that the macro processing engine pyexpander \cite{pyexpander} was used to remove redundancies.
-nuXmv is certainly not the most low-level language imaginable, e.g. SMT certainly comes with less features to aid programmers, however programming nuXmv still lead to many redundancies in the codebase.
+nuXmv is certainly not the most low-level language imaginable, however, programming nuXmv still lead to many redundancies in the codebase.
 pyexpander in principle serves the same purpose as the C-preprocessor but is much more powerful and allowed to get rid of most aforementioned redundancies.
 
 \subsection{Core Functionality}
@@ -673,7 +675,7 @@ On a \minrv{Load}, if the cache is invalid or currently holds the contents of a 
     \smv{addr} here refers to the already updated value of that variable, i.e. \smv{regs[rs1] mod 4}.
 }, i.e. the value to read.
 This process is independent of the current privilege level, e.g. user-mode attempting to read from a memory address causes a cache-fill regardless of whether user-mode can access the region.
-Though, user-mode still will not be able to read the respective word as reads are privileged controlled.
+In this case, though, user-mode still will not be able to read the respective word as reads are privileged controlled.
 
 If, however, on a \minrv{Load} the cache already holds the targeted word, is valid and the current mode suffices to read the respective memory address, \smv{line} instead of \smv{memory[regs[rs1] mod 4]} will be written into register \smv{rd}.
 
@@ -705,7 +707,7 @@ It was shown that this list of instructions is complete in comparison to RISC-V 
 Furthermore, MINRV8 supports caching of memory regions and \gls{pmp} entries for memory regions, i.e. read- and write-permissions configurable for user-mode and to some extent for machine-mode (cf. section \ref{sec:minrv8}).
 
 It was argued that MINRV8 provides a sufficient amount of complexity to make it comparable to modern \gls{risc} architectures besides not including a model of executable memory and not supporting jumps and branches.
-This downside will be discussed in section \ref{sec:discuss-arch} and is related to the decision to model the stream of instructions as input variables in nuXmv.
+This will be discussed in section \ref{sec:discuss-arch} and is related to the decision to model the stream of instructions as input variables in nuXmv.
 
 Finally, it was presented how MINRV8 was implemented in nuXmv (cf. section \ref{sec:model-implementation}).
 The implementation was conducted by hand with aid of the preprocessor engine pyexpander \cite{pyexpander}.

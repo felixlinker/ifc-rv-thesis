@@ -4,7 +4,7 @@
 \label{chp:results}
 
 This section will cover the results of the verification process as it was described in section \ref{sec:sum-background}.
-Our main finding is that there are eight assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} cannot be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the eight assumptions that will be introduced in subsequent sections are in place.
+The main finding is that there are eight assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} cannot be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the eight assumptions that will be introduced in subsequent sections are in place.
 
 Additionally, roughly 23 bug fix patches\footnote{%
     The number of 23 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
@@ -40,7 +40,8 @@ Validity of the counter-examples was guaranteed by 13 \smv{INIT} constraints tha
 Firstly, two groups of constraints guarantee that counter-examples are not false upfront.
 By constraining the contents of registers to only contain confidential data when the architecture starts in machine-mode and to only contain malicious data when the architecture starts in user-mode.
 Furthermore, cache and memory can only contain confidential data if the respective memory region is set to \textit{not} be readable for user-mode and can only contain malicious data if the respective memory region \textit{is} set to be writable by user-mode.
-If, for example, the model would not be constrained to initially only contain confidential data in some register when in machine-mode, nuXmv returns a trivial counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register.
+For example, assume, the model would not be constrained to initially only contain confidential data in some register when in machine-mode.
+In this case, nuXmv returns a trivial counter-example violating the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) where the architecture starts in user-mode and has confidential data in some register.
 
 Secondly, two more groups of constraints ensures the initial state to comply with the specification is guaranteed.
 The first is rather simple, given by a single constraint and depicted in the following snippet:
@@ -330,7 +331,7 @@ In principle, these ways work analogously to how the MINRV8 architecture changes
 In general, when changing the privilege mode, the \lstinline{RIP} register, which is the \gls{pc} equivalent for x86 architectures, and the stack-pointer are set to the respective version of the targeted privilege-mode.
 The designers of the architecture found that parts of the normal privilege mode changing routines could be left out in some scenarios to improve performance.
 One of this routines to be left out was changing the stack-pointer by hardware.
-These performance improvements are implemented in the \lstinline{SYSCALL} instruction which makes a cheap transition to high-privilege mode by for instance not changing the stack-pointer by hardware.
+These performance improvements are implemented in the \lstinline{SYSCALL} instruction which makes a cheap transition to high-privilege mode by, for instance, not changing the stack-pointer by hardware.
 In consequence, there is the analogous \lstinline{SYSRET} instruction to return control back to user-mode which also does not set the stack-pointer.
 However, if an interrupt handler invoked by the \lstinline{SYSCALL} instruction intends to use the stack-pointer, it must first set the stack-pointer up accordingly and afterwards set it back to user-mode\footnote{%
     There are more than two privilege modes provided by the x86 architecture and they also have different names than the privilege modes of the MINRV8 architecture, however, the SYSRET vulnerability only touches two privilege modes which have the same purpose as user- and machine-mode of the MINRV8 architecture.
@@ -493,7 +494,8 @@ In this chapter, the results to the prove-refine loop were presented:
 
 These assumptions are visualized in figure \ref{fig:ifc-assumptions} that again takes inspiration from digital timing diagrams.
 The eight assumptions introduced in section \ref{sec:assumptions} constrain streams of instructions to always resemble the following properties:
-Whenever machine-mode is called from user-mode by the \minrv{Ecall} instruction or there is an external interrupt, machine-mode must not use memory or \gls{csr} related instructions in the area colored in yellow until some form of a sanitization procedure (\smv{SAN}) has been completed which leads to the integrity labels of inputs to these instructions being high after the sanitization procedure.
+Whenever machine-mode is called from user-mode by the \minrv{Ecall} instruction or there is an external interrupt, machine-mode must not use memory or \gls{csr} related instructions in the area colored in yellow until some form of a sanitization procedure (\smv{SAN}) has been completed.
+This leads to the integrity labels of inputs to these instructions being high after the sanitization procedure.
 This property is made stable by the \smv{NO_PULIC_READS} and \smv{SAN_(CACHE)_ON_CLASSIFICATION} assumptions which ensure that no malicious data is loaded from memory or cache as long as machine-mode has control.
 If any of these are not assumed, the inputs to memory or \gls{csr} related instructions might become low e.g. somewhere in the orange colored area of the second row.
 
