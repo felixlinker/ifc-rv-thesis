@@ -73,10 +73,34 @@ In summary, the aspects of \cite{Reid17} that are relevant for this thesis are:
 
 Additionally, the paper successfully uses its approach to partially verify the ARM M-Class architecture.
 A downside of this work, however, is that it is limited to verifying single processor transactions only.
-This lies in the nature of the properties taken from the natural language specification which only constrain single transitions of the processor.
+This approach was chosen due to the nature of the properties from the natural language specification.
+These only constrain single transitions of the processor.
+To meet these, the formalized properties come in two forms: invariants and properties.
+These two types of properties form an inductive proof.
+First, it is proven that the initialization procedure of the ARM architecture establishes the invariants, then, it is proven that assuming the invariants no transition of the processor either invalidates an invariant or violates an actual property.
+Next to resembling the structure of the natural language specification, this approach promises to be more performant than unbounded model checking.
 
-This thesis attempts to fill this gap and proposes a new way of verifying architectural specifications which will apply to multiple processor transitions.
-The work in this thesis therefore also is subject to the same requirements that have been imposed on the high-level properties in \cite{Reid17}.
+In this thesis, the work of \cite{Reid17} will be continued: high-level properties will be established to verify \glspl{isa}.
+The work in this thesis therefore also is subject to the requirements that have been imposed on the higher-level properties in \cite{Reid17}.
+However, the work of \cite{Reid17} will be enhanced by verifying properties applying to multiple processor transitions, i.e. by performing unbounded model checking.
+This enhances on three downsides of bounded model checking:
+\begin{enumerate}
+    \item Counter-examples to properties of \cite{Reid17} are states that also implicitly give a transition into the next state, i.e. an instruction to be executed.
+    This makes a counter-example difficult to understand as this state is just some of many during operation of the architecture.
+    In contrast, counter-examples in this thesis will be given by an initial state and a series of instructions executed subsequently from this state on, i.e. an actual program.
+    It therefore will be easier to understand what exactly happens when a property is violated.
+    \item Unbounded model checking gives higher assurance of completeness of the model.
+    In \cite{Reid17}, the verification procedure ultimately sets up an inductive proof that allows to make the statement: There is no state that either invalidates an invariant or violates a property.
+    In this thesis, the verification procedure will allow for the following statement to be made: There is no program that violates a property.
+    This is much broader and there are fewer abstractions to grasp in order to understand what the verification procedure actually does.
+    \item Most importantly, the properties in this thesis will be more expressive.
+    While in \cite{Reid17}, bounded model checking does limit the scope the properties apply to, the properties themselves are limited - they can only constrain a single transition at a time.
+    In this thesis, however, ideas like: \enquote{If first $ X $ and then $ Y $ happens, $ P $ must hold.} which can hardly\footnote{%
+        One can think of ways to implement such a property using bounded model checking, e.g. first establish a post-condition for when $ X $ happens and then assume this post- as a pre-condition for $ Y $ happening.
+        However, in this a scenario, finding such conditions is non-trivial, it must be further verified that the respective conditions are adequate, e.g. they might be to weak, and establishing these conditions would introduce the need to reverse-engineer how certain actions influence the state.
+        This would make them instable and non-concise and, thus, conflict with the self-imposed requirements for the properties.
+    } be expressed using bounded model checking.
+\end{enumerate}
 
 \section{Information Flow Control}
 \label{sec:bg-ifc}
