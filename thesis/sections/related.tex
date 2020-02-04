@@ -22,6 +22,8 @@ We found that related work can be characterized by four dimensions:
 
 Given these categories, our work has hardware as subject verifying a specification statically via direct information flow properties.
 
+\section{Software Verification}
+
 Two papers that do not consider hardware but software verification come from the Massachusetts Institute of Technology.
 Firstly, \citeauthor{GordonKPGNR15} present their tool DroidSafe for static analysis of information flow properties for android applications in \citetitle{GordonKPGNR15} \cite{GordonKPGNR15}.
 Secondly, \citeauthor{SuhLZD04} propose an approach to live track information on \gls{os} level tacking by traps on security policy violations in \citetitle{SuhLZD04} \cite{SuhLZD04}.
@@ -52,6 +54,8 @@ This is not critical for our results since if an actual value ever was to be rel
 If, however, executable memory was part of the model, sanitization methods might need to be adopted.
 
 The approach of \cite{SuhLZD04} achieves a 100\% success rate in a benchmark and the authors claim that their approach has negligible performance impact.
+
+\section{Hardware Verification}
 
 All remaining papers are all related to hardware.
 \citeauthor{Zhang15} consider the detection of hardware trojans in \citetitle{Zhang15} \cite{Zhang15}, i.e. parts of an integrated circuit that behave maliciously, can be activated by very few inputs and otherwise do not affect the functionality of the circuit.

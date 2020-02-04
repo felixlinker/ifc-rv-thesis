@@ -150,8 +150,9 @@ The relation of these two assumptions, however, also characterizes a pattern tha
 It turned out that for every integrity related assumption, such as \smv{SAN_ON_CALL}, there was a similar confidentiality related assumption such as \smv{CLR_ON_RET}.
 This can be seen easily in table \ref{tbl:assumptions-overview}.
 In alternating rows, two groups of assumptions can be distinguished: those which are relevant to the properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} and those which are relevant to the property \smv{NO_LEAK}.
-Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow.
-Whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
+Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow which align perfectly with the intuition of the two types of labels:
+Confidentiality is about machine-mode not handing out secrets to user-mode, integrity is about user-mode not gaining control over machine-mode.
+Consequently, whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
 
 \paragraph{Memory related assumptions}
 Two assumptions about memory reads and writes join the ranks of these groups, namely \smv{NO_PUBLIC_READS} and \smv{NO_PUBLIC_WRITES} which are formally given in snippet \ref{snpt:no-public-reads} and \ref{snpt:no-public-writes} respectively.
@@ -452,6 +453,11 @@ In AMD's implementation of the x86 architecture, when setting the \lstinline{RIP
         G (priv & op = MRET & MPP = 0b_0 -> MIE = 0b_0) &
     \end{lstlisting}
 \end{figure}
+
+Consider Fedora's mitigation to the SYSRET vulnerability \cite{FedoraSysretMit} as a real-world example.
+The interrupt handlers were modified such that if the user could have changed the \lstinline{RIP} value, i.e. might contain an uncanonical value, the \lstinline{IRET} instead of the \lstinline{SYSRET} instruction is used.
+This would also be verifiable by our approach: the condition under which \lstinline{IRET} is chosen over \lstinline{SYSRET} would form the antecedent and \smv{op = IRET} the consequent of the implication in snippet \ref{snpt:sp-safety}.
+For the MINRV8, however, there is no other choice than disabling interrupts as the source of the \textit{external} interrupt cannot be controlled.
 
 The other mitigation modifies the architecture.
 The stack-pointer extension of the MINRV8 architecture was altered such that the two stack-pointers are assigned to privilege-modes and switched by hardware.

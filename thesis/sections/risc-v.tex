@@ -78,7 +78,7 @@ For the latter category, RISC-V only knows two instructions at the base instruct
 These instructions well be inspected in more detail in section \ref{sec:rv-priv-arch}.
 
 \paragraph{Summary}
-The base integer instruction set of RISC-V gives you everything you need for implementing a comfortable Turing-machine but pretty much nothing more.
+The base integer instruction set of RISC-V contains everything needed to implement a comfortable Turing-machine but pretty much nothing more.
 You can perform basic arithmetic with integers or bit vectors of Booleans, load and store results of your calculations and abstract your code by using jumps and branches.
 Abstractions other than from code, i.e. by routines implemented using jumps and branches, are not given.
 
@@ -284,8 +284,8 @@ Delegation of interrupts can be disabled either by software writing the bits of 
 Similar to the \gls{mip} register, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
 Exceptions also have an exception code assigned and thus, fields of \gls{medeleg} correspond to these codes.
 An interrupt or exception can only be delegated to modes equally or higher privileged than the mode the interrupt or exception was targeting originally.
-For example, if an interrupt is targeting supervisor-mode it must be handled by machine-mode or can optionally be delegated to supervisor-mode but cannot be handled by user-mode.
-For each mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $, there are respective counterparts to machine-mode registers such as \gls{mip}, e.g., if an interrupt is delegated to mode $ x $, the corresponding bit in $ x\text{ip} $ reads accordingly and becomes writable.
+For example, if an interrupt is targeting supervisor-mode it can optionally be delegated to supervisor-mode or must be handled by machine-mode but cannot be handled by user-mode.
+For each mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $, there are respective counterparts to machine-mode registers such as \gls{mip}, e.g., if an interrupt is delegated to mode $ x $, the corresponding bit in the respective \gls{xip} register reads accordingly and becomes writable.
 Otherwise it appears to be hardwired to zero.
 From now on, registers related to interrupt and exception handling will be introduced for some arbitrary mode $ x $.
 
@@ -434,7 +434,7 @@ The reasoning behind the architecture and features included was given in section
 In this section, the architecture itself will be introduced and briefly specified.
 
 MINRV8 supports four general purpose registers and has two privilege modes: machine- and user-mode.
-Besides this, it has 4-bytes of readable and writeable memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies the remaining addresses 2 to 3.
+Besides this, it has 4-bytes of readable and writeable but non-executable memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies the remaining addresses 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with \minrv{And} and \minrv{Or}, a \minrv{Mov} instruction to move a word from one register to another, a comparison instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
 Machine words are generally interpreted as signed-words thus there will not be unsigned counterparts to integer arithmetic or the comparison instruction.
@@ -442,7 +442,7 @@ Machine words are generally interpreted as signed-words thus there will not be u
 With this list of instructions, all instructions of the base integer instruction set of the RISC-V \gls{isa} are either left out deliberately, can be emulated, or have been made redundant by other design decisions of the MINRV8 \gls{isa}.
 As for what has been left out it was already mentioned that jumps and branches will not be modelled.
 Since this removes the need for a \gls{pc}, this also removes the need to model the \gls{auipc} instruction which is supported by RISC-V.
-At the end of this section, an outlook why jumps and branches were not modelled will be given.
+In section \ref{sec:minrv8-restrictions}, an outlook why jumps and branches were not modelled will be given.
 Additionally, there is the \gls{ebreak} instruction that transfers control to a debugging environment.
 It was decided to not include debugging in the MINRV8 architecture since, as mentioned before, at its current state the level of complexity offered by the architecture is sufficient to make it comparable to other modern \gls{risc} architectures.
 Finally, there is the FENCE instruction that allows to order memory access.
@@ -534,6 +534,9 @@ In this setting, it was decided to always fill the cache on write-hits for write
 \end{table}
 
 The \gls{pmpcfg} register allows to set read and write privileges per memory region and allows to lock the settings of individual regions.
+
+\subsection{Restrictions of the MINRV8 Architecture}
+\label{sec:minrv8-restrictions}
 
 Someone experienced in the field of microcontrollers and processors might find MINRV8 to lack the crucial features of jump and branch instructions and the specification of executable memory.
 These points were left out or left unspecified deliberately.
@@ -663,6 +666,7 @@ The module comprises three variables:
     \item \smv{line : signed word[8]}
 \end{itemize}
 
+The type of the \smv{line} variable indicates that this cache can only store one word, i.e. one byte, at a time.
 These variables transition depend on the cache-configuration of the respective memory region in \gls{pmacfg}.
 As already introduced in section \ref{sec:minrv8}, a memory region can be either set as uncacheable, write-back-cacheable or write-through-cacheable.
 If a memory region is set as uncacheable, the cache will ignore reads and writes to this region and not make any transition.

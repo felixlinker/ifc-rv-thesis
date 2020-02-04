@@ -147,7 +147,7 @@ In some \gls{hdl} models, it might be necessary to allow for insecure flows of i
 In those cases, a programmer can use \lstinline[mathescape]{downgrade(e, $ \tau $)} to annotate the expression \lstinline{e} as being of type $ \tau $, regardless of any prior annotations.
 This effectively \textit{grades} the label of a bit of information \textit{down} such that information is not routed to a sink annotated with a label smaller than the information.
 
-In total, SecVerilogBL knows seven ways to express types:
+In total, SecVerilogBL supports seven ways to express types:
 \begin{align*}
     \text{Types } \tau ::= l \mid \tau_1 \sqcup \tau_2 \mid \tau_1 \sqcap \tau_2 \mid x \mapsto \tau \mid f(x) \mid \textit{if $ e^\tau $ $ \tau_t $ $ \tau_f $} \mid \textit{case $ e^\tau $ $ \tau_1 $ \dots $ \tau_n $}
 \end{align*}
@@ -185,14 +185,14 @@ This way, a constant type $ \tau $ of kind $ l $ can be applied to a whole bit v
         (*\dots*)
     \end{lstlisting}
 
+    In this example, the variable \lstinline{ns} refers to the \textit{security state} of the ARM TrustZone architecture.
+    The ARM TrustZone architecture not only spoorts different privilege but also security states which can either be secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
+    The variable \lstinline{ns} in the implementation of the ARM TrustZone architecture by \citeauthor{Ferraiuolo17} indicates whether the architecture currently is in secure- or non-secure-state.
+
     The variables \lstinline{read} and \lstinline{reg_ns} illustrate the purpose of lifting types to higher kinds.
     Both types \lstinline{world(ns)} and \lstinline{PT} are of kind $ l $, yet they are used to annotate variables that store more than one bit.
     Because \lstinline{read} is a register with 32 bits, \lstinline{world(ns)} is lifted to \lstinline{i -> world(ns)}, i.e. each element of \lstinline{read} is of the dependent type \lstinline{world(ns)}.
     Similarly, since \lstinline{reg_ns} is an array of 1024 registers of width 1, \lstinline{PT} is lifted to \lstinline{i -> j -> PT}, i.e. each array element is of type \lstinline{j -> PT} and  each array element's bits are of type \lstinline{PT}.
-
-    In this example, the variable \lstinline{ns} refers to the \textit{security state} of the ARM TrustZone architecture.
-    The ARM TrustZone architecture not only knows different privilege but also security states which can either be secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
-    The variable \lstinline{ns} in the implementation of the ARM TrustZone architecture by \citeauthor{Ferraiuolo17} indicates whether the architecture currently is in secure- or non-secure-state.
 
     Starting in line \ref{ln:assignment}, it can be seen how dependent types work in practice.
     The function \lstinline{world} maps 0 to \lstinline{CT} and 1 to \lstinline{PU}.
@@ -343,12 +343,12 @@ To achieve this, it must be tackled how such an information flow policy as propo
     Typically, the operating system will encapsulate the details of doing I/O, allocating memory, and other low-level system functions so that application programmers do not need to worry about such details.
 \end{displaycquote}
 
-Modern architectures all provide instructions of these categories: instructions for general computation, i.e. bit vector arithmetic, load-store instructions and platform management instructions.
+Modern architectures all provide instructions of these categories: instructions for general computation, i.e. bit vector arithmetic, load/store instructions and platform management instructions.
 
 As a target of verification, this thesis will work with \gls{risc} architectures.
 In \citetitle{Hennessy12}, \gls{risc} architectures are defined by three main concepts \cite[p.C-4]{Hennessy12}:
 \begin{itemize}
-    \item Only load and store instructions affect or touch memory
+    \item RISC architectures are \textit{load/store architectures}, i.e. only load and store instructions affect or touch memory
     \item All other instructions work on registers only and always modify the full width of registers
     \item There are few instructions and their encoding is mostly homogenous
 \end{itemize}
@@ -371,7 +371,7 @@ Introducing more than one \gls{risc} architectures will allow us to choose parts
 
 \subsection{Arm}
 
-The ARM architecture knows three \textit{profiles}:
+The ARM architecture defines three architecture \textit{profiles}:
 \begin{itemize}
     \item The generic \textit{application profile} ARMv8-A,
     \item the \textit{real-time profile} ARMv8-R designed for deployment scenarios in which real-time responses from a processor is crucial, e.g. in aviation,
@@ -383,14 +383,14 @@ The \citetitle{Armv8} \cite{Armv8} introduces the ARM A-class architecture as a 
 \begin{displaycquote}[p.A1-34]{Armv8}
     \begin{itemize}
         \item A large uniform register file.
-        \item A \textit{load/store} architecture, where data-processing operations only operate on register contents, not directly on memory contents.
+        \item A load/store architecture, where data-processing operations only operate on register contents, not directly on memory contents.
         \item Simple addressing modes, with all load/store addresses determined from register contents and instruction fields only.
     \end{itemize}
 \end{displaycquote}
 
 These properties already meet most of the aspects of \gls{risc} architectures as defined in \cite{Hennessy12}.
 When it comes to the aspect of a homogenous instruction set, the ARM architecture makes some trade-offs on this aspect to support the three profiles available.
-The ARM architecture knows three instruction sets: A64, a fixed-length 32-bit encoding instruction set for 64-bit systems, A32, a fixed 32-bit encoding length-instruction set for 32-bit systems, and T32, a variable-length instruction set that uses both 16- and 32-bit encodings to support compressed instructions.
+The ARM architecture supports three instruction sets: A64, a fixed-length 32-bit encoded instruction set for 64-bit systems, A32, a fixed-length 32-bit encoded instruction set for 32-bit systems, and T32, a variable-length instruction set that uses both 16- and 32-bit encodings to support compressed instructions.
 The ARMv8-A architecture eases the challenge of correctly decoding these different instruction sets by the concept of \textit{execution states}.
 The ARMv8-A supports two of these execution states: AArch64, a 64-bit execution state, and AArch32, a 32-bit execution state.
 An ARM A-class processor can receive A64 instructions when in the AArch64 execution state and A32 or T32 instructions when in the AArch32 execution state.
@@ -524,9 +524,9 @@ With these boundaries in mind, it must be decided what will be incorporated in t
 \subsection{Microarchitectures}
 \label{sec:microarchs}
 
-When an \gls{isa} is implemented in a chip, the layout and design of this chip is often times called \textit{microarchitecture}.
+The hardware implementation of an \gls{isa} is called \textit{microarchitecture}.
 Such implementations usually incorporate sophisticated features that speed up operation of the chip such as pipelining.
-Instructions that are defined as part of an \gls{isa} are not atomic in regard to their execution; there usually are five steps that must be taken in order to execute an instruction (cf. \cite[p.286]{Patterson13}):
+Instructions that are defined as part of an \gls{isa} are not atomic in regard to their execution; there usually are five steps that must be taken in order to execute an instruction, the so called Von-Neumann cycle (cf. \cite[p.286]{Patterson13}):
 \begin{enumerate}
     \item Instruction fetch - load the instruction from memory
     \item Instruction decode and register file read - Read the fetched instruction and read registers targeted by the instruction
@@ -534,7 +534,7 @@ Instructions that are defined as part of an \gls{isa} are not atomic in regard t
     \item Data memory access - Access the memory for a read or write
     \item Write back - Store the result of the instruction in a register
 \end{enumerate}
-The microarchitecture comprises hardware modules that implement each of this steps.
+The microarchitecture comprises functional modules that implement each of this steps.
 To use the microarchitecture to the fullest, it is much more efficient to use these modules in a pipeline where for example after the first instruction has been fetched and handed to the module decoding it, the next instruction is fetched in parallel.
 In an ideal scenario, executing $ n $ instructions using a pipeline of length $ p $ only takes $ n + p - 1 $ cycles whereas without pipelining this would take $ n * p $ cycles.
 
@@ -604,6 +604,7 @@ To put the mechanics of transitions between privilege levels to a test, the thre
     Since the decision to work with RISC-V in this thesis has already been made, the threat model was be phrased with this in mind.
 }:
 \begin{quote}
+    \itshape
     Assume that user-mode has been completely compromised.
     Is there any way it can gain access to secret data handled by machine-mode or it can gain control over machine-mode?
 \end{quote}
@@ -617,7 +618,8 @@ Even if it could be assumed that the hardware your computer is running on accura
     Without going into details on this research, the approach of this thesis still is an important addition to this research as it is more general, i.e. implementation independent whereas hardware verification by its very nature is implementation dependent.
 }.
 
-In this threat model, timing channels are excluded.
+In this threat model, timing channels are not considered.
+With recent microarchitectural-attacks (cf. Meltdown \cite{Lipp2018meltdown} and Spectre \cite{Kocher2018spectre}) these become more and more relevant, however, when considering \glspl{isa} they are of secondary importance.
 
 \section{Model Checking}
 \label{sec:model-checking}
@@ -699,7 +701,7 @@ However, this part of code gives you an indication for how models written in PRO
 Besides \lstinline{if} statements and labels similar to those in C (cf. line \ref{ln:label}), PROMELA supports \lstinline{do}-loops to control process execution flow.
 \lstinline{do}-loops run indefinitely until they are exited manually by a \lstinline{break} statement.
 
-As data types, PROMELA knows three categories: processes, message channels and data objects.
+As data types, PROMELA supports three categories: processes, message channels and data objects.
 Data objects comprise atomic data types such as \lstinline{byte}, \lstinline{bool}, \lstinline{int}, etc. as well as complex data type defined by \lstinline{typedef} that define a complex structures that have fields of data objects.
 Both atomic data types and complex data types are very close to the data types of C.
 
@@ -1282,7 +1284,7 @@ We adopt the requirements to these properties from \cite{Reid17}, i.e. these pro
 \end{displaycquote}
 
 To achieve this, we will investigate the RISC-V architecture in more detail and define as well as implement the MINRV8 architecture in chapter \ref{chp:arch}.
-This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load-store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
+This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load/store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
 A model of this instruction set architecture will be implemented in nuXmv.
 
 As a next step in chapter \ref{chp:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
