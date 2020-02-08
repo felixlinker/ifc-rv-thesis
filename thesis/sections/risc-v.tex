@@ -378,7 +378,7 @@ An exception to this is $ x\text{status}.x\text{IE} $ which still is set to 0, m
 Finally, note that exceptions are handled as soon as they occur.
 This is necessary as exceptions always are closely related to the current stream of instructions and therefore need attention before said stream can continue to be executed.
 The only exception to this are other interrupts which are handled before any exception with the following decreasing order of priority: external interrupts, software interrupts, timer interrupts, exceptions.
-RISC-V knows no concept of settings exceptions pending, this however, isn't necessary.
+RISC-V knows no concept of settings exceptions pending, this however, is not necessary.
 If an exception occurs while an interrupt is set pending, the interrupt can be handled with \gls{xepc} being set to the address of the faulting instruction which either will again fault after the interrupt has been handled or will succeed by some magical condition in which case it does need any further attention\footnote{
     While not being a citable source, credit should be given to Stack Overflow user Baard who pointed this out to us (cf. \url{https://stackoverflow.com/a/56402079/7194995}).
 }.
@@ -637,7 +637,7 @@ Secondly, when the \minrv{Mret} instruction is executed, the \gls{hart} sets \sm
 On a trap, MPP (machine-mode prior privilege) and MPIE (machine-mode prior interrupts enabled) are written accordingly while MEIP (machine-mode external interrupt pending) and MIE (machine-mode interrupts enabled) are set to zero.
 MEIP can be set to zero although the trap might have been triggered by an \minrv{Ecall} instruction because interrupts have higher priority in RISC-V than synchronous exceptions.
 To understand why this is correct, there are two cases to consider.
-Either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it wasn't set pending: then writing MEIP with 0 does not change the state since MEIP was 0 to begin with.
+Either an external interrupt was set pending: then it must be serviced immediately and MEIP must be cleared; or it was not set pending: then writing MEIP with 0 does not change the state since MEIP was 0 to begin with.
 On return from machine-mode, i.e. execution of \minrv{Mret}, MIE is written with MPIE, MPIE is set to 1 and MPP is set to 0; all other bits are left unchanged.
 An exception to the rules mentioned above is the field MEIP which can be set high on every transition based on the value of \smv{m_external_interrupt}.
 

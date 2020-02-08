@@ -149,7 +149,7 @@ This linearized counterpart is considered by nuXmv and the sequence of states ge
 
 Starting with the premise of this thesis, it was always clear that the MINRV8 architecture is a simplification.
 This, though, is not a problem since by focusing on the very core, security related instructions allowed to implement a tractable and small model in nuXmv.
-If one would add jump and branch instructions to the MINRV8 architecture, it'd be fully comparable to actual RISC-V architectures.
+If one would add jump and branch instructions to the MINRV8 architecture, it would be fully comparable to actual RISC-V architectures.
 From this point of view, it is not a problem to apply the results of the verification process, i.e. the set of assumptions, to the RISC-V architecture.
 
 The implementation of the MINRV8 architecture abstracted from real-world architectures in two main points:
@@ -325,7 +325,7 @@ In other words: for this thesis, tracking only one bit for confidentiality and o
 Initially, it was decided to track labels bit-wise because \begin{enumerate*}[label=\alph*)]
     \item we followed the approach of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} which tracked information flow bit-wise as well,
     \item again, performance was sufficient to allow for it, and
-    \item one couldn't have been sure prima facie non-bit-wise tracking of information would suffice.
+    \item one could not have been sure prima facie non-bit-wise tracking of information would suffice.
 \end{enumerate*}
 
 Additionally, it can also be seen that computational instructions never played a major role in any counter-example.

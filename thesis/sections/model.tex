@@ -426,7 +426,7 @@ These induce the first properties the MINRV8 architecture will be verified again
 
 Firstly, recall the definition of the LOAD and STORE semantics.
 The new tracking labels resulting from executing such an instruction solely depend on the labels of the word loaded or stored.
-What hasn't been used in the definition of information flow is the label of the target address of the memory operation.
+What has not been used in the definition of information flow is the label of the target address of the memory operation.
 It is intuitive that the address does not influence the label of the information itself.
 This leads to the following property:
 \begin{enumerate}[label=\Roman*.,series=]
