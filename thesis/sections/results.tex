@@ -150,7 +150,7 @@ The relation of these two assumptions, however, also characterizes a pattern tha
 It turned out that for every integrity related assumption, such as \smv{SAN_ON_CALL}, there was a similar confidentiality related assumption such as \smv{CLR_ON_RET}.
 This can be seen easily in table \ref{tbl:assumptions-overview}.
 In alternating rows, two groups of assumptions can be distinguished: those which are relevant to the properties \smv{MEMORY_OP_INTEGRITY} and \smv{CSR_INTEGRITY} and those which are relevant to the property \smv{NO_LEAK}.
-Additionally it is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow which align perfectly with the intuition of the two types of labels:
+It is noteworthy that these two groups of assumptions can be characterized by the way they constrain information flow which align perfectly with the intuition of the two types of labels:
 Confidentiality is about machine-mode not handing out secrets to user-mode, integrity is about user-mode not gaining control over machine-mode.
 Consequently, whereas confidentiality related assumptions always constrain flow of information going \textit{out of} machine-mode, integrity related assumptions always constrain flow of information going \textit{into} machine-mode.
 

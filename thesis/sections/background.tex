@@ -128,7 +128,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
     \begin{figure}
         \centering
         \includegraphics[width=0.4\textwidth]{figures/ifp-lattice.png}
-        \caption{Security lattice for verifying an ARM TrustZone implementation \cite{Ferraiuolo17}}
+        \caption{Lattice of security labels for verifying an ARM TrustZone implementation displayed as Hasse diagram \cite{Ferraiuolo17}}
         \label{fig:sec-lattice}
     \end{figure}
 
@@ -540,7 +540,8 @@ Adding to the first argument of the model not being implementation independent, 
 This thesis, however, is not about verifying how pipelining can be implemented correctly but about \textit{higher level} properties of \glspl{isa}.
 
 Additionally, aspects of the functional correctness of an implementation towards the \gls{isa} are served adequately by existing methods:
-In \cite{Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher level properties in \cite{Zhang15, Beatty94, Berezin98, Trippel19} or against their actual specifications in form of an \glspl{isa} in \cite{Burch94, Reid16, RISCV-formal}.
+In \cite{Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher level properties in \cite{Zhang15, Beatty94, Berezin98, Trippel19} or against their actual specifications in form of an \glspl{isa} in \cite{Reid16, RISCV-formal}.
+In particular, pipelining has been verified in \cite{Burch94}.
 
 \subsection{Virtual Memory}
 \label{sec:virtual-memory}
@@ -991,6 +992,8 @@ However, whereas the limiting factor for SPIN was the modelling language, the li
 In case of a property failing to be verified, no counterexamples are given but SPACER simply outputs that there is an trace of the program for which a given property does not hold without specifying the trace itself.
 \muZ{} itself can be configured to give a more detailed result however this would still not include a \textit{trace of derivations}.
 For SPACER or \muZ{} to be usable in the context of this thesis, these tools would need to output a log of variable values or steps taken when applying rules.
+In theory, we could alter these tools such that the output is adjusted respectively.
+However, it is not clear whether this is actually possible and it might come with significant performance impacts or break the tool altogether.
 
 \subsection{nuXmv}
 \label{sec:nuxmv}

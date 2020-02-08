@@ -197,7 +197,10 @@ Again, a mysterious confidential word appears in register three which must have 
     \caption{Counter-examples for \smv{CLR_CACHE_ON_DECLASSIFICATION} and \smv{SAN_CACHE_ON_CLASSIFICATION}}
 \end{table}
 
-It could be seen that counter-example \ref{tbl:cex-no-leak-ccod} to the cache-relate assumptions \smv{CLR_CACHE_ON_DECLASSIFICATION} resulted in a trace where memory privileges are lowered but sensitive data remains in cache.
+\subsection{Cache-Invalidation Mitigation}
+
+Consider the counter-example to the cache-relate assumptions \smv{CLR_CACHE_ON_DECLASSIFICATION} depicted in table \ref{tbl:cex-no-leak-ccod}.
+It can be seen that it resulted in a trace where memory privileges are lowered but sensitive data remains in cache.
 One therefore might think that this vulnerability can be mitigated by changing the architecture such that the cache is invalidated on mode-transitions\footnote{%
     The traces \ref{tbl:cex-mem-i-scocl} and \ref{tbl:cex-csr-i-scocl} both do not involve mode-transitions.
     However, it could be safely assumed that initially, the confidentiality or integrity labels in the cache line are low or high respectively.

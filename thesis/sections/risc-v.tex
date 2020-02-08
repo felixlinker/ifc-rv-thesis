@@ -141,7 +141,7 @@ The \gls{see} runs in machine-mode.
             \hline
             Application \\ \hline
             \cellcolor{black} \textcolor{white}{ABI} \\ \hline
-            AEE \\ \hline
+            \cellcolor{black!10} AEE \\ \hline
         \end{tabular}
     }
     \quad
@@ -152,9 +152,9 @@ The \gls{see} runs in machine-mode.
             Application & \multirow{2}{*}{\dots} & Application \\
             \cline{1-1} \cline{3-3}
             \cellcolor{black} \textcolor{white}{ABI} & & \cellcolor{black} \textcolor{white}{ABI} \\ \hline
-            \multicolumn{3}{| c |}{OS} \\ \hline
-            \multicolumn{3}{| c |}{\cellcolor{black} \textcolor{white}{SBI}} \\ \hline
-            \multicolumn{3}{| c |}{SEE} \\ \hline
+            \multicolumn{3}{| c |}{\cellcolor{black!10} OS} \\ \hline
+            \multicolumn{3}{| c |}{\cellcolor{black!80} \textcolor{white}{SBI}} \\ \hline
+            \multicolumn{3}{| c |}{\cellcolor{black!20} SEE} \\ \hline
         \end{tabular}
     }
     \caption{Privilege level combinations \cite{RiscVISA}}
@@ -434,15 +434,17 @@ The reasoning behind the architecture and features included was given in section
 In this section, the architecture itself will be introduced and briefly specified.
 
 MINRV8 supports four general purpose registers and has two privilege modes: machine- and user-mode.
-Besides this, it has 4-bytes of readable and writeable but non-executable memory which is divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies the remaining addresses 2 to 3.
+Besides this, it has 4-bytes of readable and writeable but non-executable memory divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies the remaining addresses 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with \minrv{And} and \minrv{Or}, a \minrv{Mov} instruction to move a word from one register to another, a comparison instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
 Machine words are generally interpreted as signed-words thus there will not be unsigned counterparts to integer arithmetic or the comparison instruction.
 
 With this list of instructions, all instructions of the base integer instruction set of the RISC-V \gls{isa} are either left out deliberately, can be emulated, or have been made redundant by other design decisions of the MINRV8 \gls{isa}.
-As for what has been left out it was already mentioned that jumps and branches will not be modelled.
-Since this removes the need for a \gls{pc}, this also removes the need to model the \gls{auipc} instruction which is supported by RISC-V.
-In section \ref{sec:minrv8-restrictions}, an outlook why jumps and branches were not modelled will be given.
+As for what has been left out, it was already mentioned that jumps and branches will not be modelled.
+Since this removes the need for a \gls{pc}, the \gls{auipc} instruction, which is supported by RISC-V, is made redundant as well.
+This decision is closely related to the way the MINRV8 architecture was modelled.
+In section \ref{sec:minrv8-restrictions}, an outlook on the reasoning behind this will be given.
+
 Additionally, there is the \gls{ebreak} instruction that transfers control to a debugging environment.
 It was decided to not include debugging in the MINRV8 architecture since, as mentioned before, at its current state the level of complexity offered by the architecture is sufficient to make it comparable to other modern \gls{risc} architectures.
 Finally, there is the FENCE instruction that allows to order memory access.
