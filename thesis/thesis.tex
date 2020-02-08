@@ -51,6 +51,10 @@
 
 \setlist[description]{leftmargin=\parindent,labelindent=\parindent}
 
+% Use quotation marks in block quotes
+\renewcommand{\mkbegdispquote}[2]{\openautoquote}
+\renewcommand{\mkenddispquote}[2]{\closeautoquote#1#2}
+
 \input{defs/listings.tex}
 
 \setkomafont{descriptionlabel}{\normalfont\bfseries}
