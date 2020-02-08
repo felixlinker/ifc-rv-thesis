@@ -507,19 +507,11 @@ There are no major features RISC-V lacks in that are crucial to the concept of a
 The goal of this thesis is to verify an \gls{isa} against higher level properties.
 For this undertaking to be worthwhile, it must be clear where the limitations of these properties lie.
 
-An \gls{isa} sits between the hardware and compilers which are utilized by programs and in particular \glspl{os}.
-It serves an analogous purpose to a programming language (PL).
-The latter is used by programs and \glspl{os} as a specification of the input language to compilers, the former is used by compilers as a specification of the input language to the actual hardware.
-This relation is depicted in figure \ref{fig:ecosystem}.
+An \gls{isa} is an interface offered by hardware which is used by binary programs and in particular \glspl{os}.
+It serves an analogous purpose to a programming language.
+The latter is used by programs and \glspl{os} as a specification of the input language to compilers, the former is used by compilers and \glspl{os} as a specification of the input language to the actual hardware.
 Yet, this thesis does not verify \glspl{os}, programs, compilers or hardware.
 With these boundaries in mind, it must be decided what will be incorporated in the model that will be developed over the course of this thesis.
-
-\begin{figure}
-    \centering
-    \includegraphics[width=0.7\textwidth]{figures/stack.png}
-    \caption{The ecosystem of an \gls{isa}}
-    \label{fig:ecosystem}
-\end{figure}
 
 \subsection{Microarchitectures}
 \label{sec:microarchs}
