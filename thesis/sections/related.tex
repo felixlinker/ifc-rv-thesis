@@ -99,8 +99,8 @@ The CHERI architecture is an attempt to equip an architecture with strong mechan
 \label{sec:related-model-checking}
 
 The work of \citeauthor{BradfieldS16} in \citetitle{BradfieldS16} \cite{BradfieldS16} comes closest to what has been attempted in this thesis.
-On the high level, \citeauthor{BradfieldS16} also attempt to verify an \gls{isa} and also use model checking to do so.
-However, they do not use higher level properties or information flow tracking to achieve this.
+On the high-level, \citeauthor{BradfieldS16} also attempt to verify an \gls{isa} and also use model checking to do so.
+However, they do not use higher-level properties or information flow tracking to achieve this.
 Coincidentally, the authors focus on the SYSRET vulnerability to the x86 architecture.
 Their goal is to prove the absence of SYSRET-like vulnerabilities which is expressed as the property: never can the processor be in privileged mode when at the same time the stack pointer, base pointer or instruction pointer are controlled by user-mode.
 
@@ -139,7 +139,7 @@ Find an overview of all papers in table \ref{tbl:related-work}.
 Each column classifies related work in regard to the categories introduced at the beginning of this section: the subject of verification is software/hardware and an implementation/specification, verification is performed live/statically and information flow properties are expressed directly or as non-interference properties (if at all).
 
 The work coming closest to our methodology of verification via information flow control was \cite{GordonKPGNR15,SuhLZD04} and considered software.
-The work coming closest to our goal of verifying specifications against higher level properties was \cite{Fox02,KhakpourSD13,BradfieldS16}.
+The work coming closest to our goal of verifying specifications against higher-level properties was \cite{Fox02,KhakpourSD13,BradfieldS16}.
 Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our model by an implementation of an \gls{mmu} to prove isolation properties on user-process level.
 
 \begin{table}
@@ -172,7 +172,7 @@ Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our 
 
 With this overview at hand, we can come back to the discussion postponed in section \ref{sec:discuss-requirements} whether our work is \textit{supplemental} to related work.
 In this discussion, we will consider four references: the work of \citeauthor{Reid17} in \cite{Reid17}, of \citeauthor{Fox02} in \cite{Fox02} and of \cite{BradfieldS16} in \citeauthor{BradfieldS16}.
-Only the work of these authors is in direct competition to ours as all authors consider the verification of \gls{isa} specifications in a static context against higher level properties.
+Only the work of these authors is in direct competition to ours as all authors consider the verification of \gls{isa} specifications in a static context against higher-level properties.
 The work of \citeauthor{Nienhuis19} \cite{Nienhuis19} was excluded from this discussion since this work did not consider the verification but the development of an \gls{isa}.
 
 The most critical addition to the work of \cite{Reid17} and \cite{Fox02} is that here, we consider non-redundant verification of specifications.

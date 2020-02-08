@@ -19,7 +19,7 @@ The relation between these two approaches often is illustrated by a famous quote
 Whereas testing is a quick and efficient way of finding bugs in the development process of a system, formal verification is a more complex but complete (in regard to the properties verified) process of proving the absence of bugs.
 
 In \citetitle{Reid17} \cite{Reid17}, \citeauthor{Reid17} stressed the need of verifying specifications themselves as opposed to simply verifying implementations against specifications.
-To tackle this, he proposed to verify specifications against higher level properties and used this methodology to verify the specification of the ARM M-Class specification.
+To tackle this, he proposed to verify specifications against higher-level properties and used this methodology to verify the specification of the ARM M-Class specification.
 
 An intuition for this line of research is given by \citeauthor{Reid17} with the following analogy: think of a specification as the law and an implementation as some action that is touched by the law.
 In our everyday life, we rely on everybody to obey the law in their actions.
@@ -30,14 +30,14 @@ However, every law has loopholes.
 Sometimes what \textit{we want} from the law does not align with what it actually says.
 This is because the law is big and complex and some cases get overlooked.
 Therefore, there not only is the law but also the constitution that expresses the very basis of what must be always guaranteed by each and every statute of the law.
-To carry this analogy on, in the world of formal verification, the constitution is given by the higher level properties the specification itself is verified against.
+To carry this analogy on, in the world of formal verification, the constitution is given by the higher-level properties the specification itself is verified against.
 
 In this thesis, two lines of \citeauthor{Reid17}'s research will be continued: \begin{enumerate*}[label=\alph*)]
-    \item the main contribution of this thesis also is to propose an approach for verifying specifications against higher level properties and
+    \item the main contribution of this thesis also is to propose an approach for verifying specifications against higher-level properties and
     \item this methodology will be applied to an \gls{isa} specification as well.
 \end{enumerate*}
 
-The higher level properties an \gls{isa} will be verified against, mainly stem from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
+The higher-level properties an \gls{isa} will be verified against, mainly stem from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
 As the title indicates, their work also falls into the domain of verification; the authors propose a new way of verifying \gls{hdl} implementations.
 The core idea here is to use a a type system in which types serve as security annotation of information.
 By applying typing rules to expressions in the \gls{hdl} code, these annotations are propagated and thus information is tracked through the code.
@@ -73,7 +73,7 @@ At the end of this chapter, the methodology of this thesis will be discussed in 
 In chapter \ref{chp:arch}, the RISC-V architecture and a new, minimal, RISC-V-inspired architecture called MINRV8 will be developed.
 Following up on this, it will be described how the MINRV8 architecture was implemented in nuXmv.
 
-Chapter \ref{chp:ifc} details what information flow tracking means in context of an \gls{isa}, how specifically it can be applied to MINRV8, and how it was implemented in nuXmv, i.e. it will be discussed how we applied the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to \glspl{isa} leading finally to the higher level properties that implement information flow control for the MINRV8 architecture.
+Chapter \ref{chp:ifc} details what information flow tracking means in context of an \gls{isa}, how specifically it can be applied to MINRV8, and how it was implemented in nuXmv, i.e. it will be discussed how we applied the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to \glspl{isa} leading finally to the higher-level properties that implement information flow control for the MINRV8 architecture.
 
 The evaluation of our approach is given in chapter \ref{chp:results}-\ref{chp:conclusion}.
 First, the results of the verification process will be presented in chapter \ref{chp:results}.
@@ -83,7 +83,7 @@ In chapter \ref{chp:related-work} the results and the approach in general will b
 \section{Contributions}
 
 The contributions of this thesis are twofold.
-Firstly, a general and architecture independent approach approach to verifying \glspl{isa} specifications will be developed that relies on a model checker and higher level information flow properties.
+Firstly, a general and architecture independent approach approach to verifying \glspl{isa} specifications will be developed that relies on a model checker and higher-level information flow properties.
 This approach takes unbounded numbers of instructions into account, is non-redundant and is meant to be used to detect vulnerabilities that must be combatted by architectural changes or to verify rules e.g. \glspl{os} and compilers can obey to not be themselves vulnerable.
 These rules will be:
 \begin{itemize}

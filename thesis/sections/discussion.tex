@@ -15,7 +15,7 @@ What is the \textit{actual} sense of security that can be guaranteed?
 
 At this point, the class of vulnerabilities covered by these properties cannot be defined strictly.
 However, the canaries these properties have been tested against in section \ref{sec:canaries}, exemplify this class of vulnerabilities.
-Assessing the results of the approach to formally verify higher level properties of the MINRV8 architecture shall be subject of this section.
+Assessing the results of the approach to formally verify higher-level properties of the MINRV8 architecture shall be subject of this section.
 We will cover five aspects of our work:
 \begin{itemize}
     \item Scope, i.e. what are the limits of our results,
@@ -336,7 +336,7 @@ E.g. the \minrv{Add} instruction - from a pure standpoint of \textit{where} info
 This option only shrinks the state space by a linear factor - nevertheless it might matter.
 
 The gist of these findings is:
-Whereas in the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} tracking of each and every bit for a given system was crucial because the authors \textit{could not choose where bugs occur}, it seems that in our more-high level approach, for every bug \enquote{imaginable}, there is a very simple trace illustrating it: nuXmv is able to choose where a bug occurs since it quantifies over programs as opposed to the work of \citeauthor{Ferraiuolo17} where the program of interest is fixed.
+Whereas in the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} tracking of each and every bit for a given system was crucial because the authors \textit{could not choose where bugs occur}, it seems that in our more-high-level approach, for every bug \enquote{imaginable}, there is a very simple trace illustrating it: nuXmv is able to choose where a bug occurs since it quantifies over programs as opposed to the work of \citeauthor{Ferraiuolo17} where the program of interest is fixed.
 
 \section{Reflection on Requirements}
 \label{sec:discuss-requirements}
@@ -368,7 +368,7 @@ In the following chapter \ref{chp:related-work}, related work will be presented.
 Following up on this, this discussion will be picked up.
 
 In addition to these self-imposed goals, it was also decided in section \ref{sec:verify-spec} to adopt the four design goals that were initially introduced in \cite{Reid17}.
-These were defined to apply to high level properties for specifications and list as follows:
+These were defined to apply to high-level properties for specifications and list as follows:
 \begin{displaycquote}[pp.88:2-3]{Reid17}
     The central design challenge we face is to create a set of properties that:
     \begin{itemize}

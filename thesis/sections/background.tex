@@ -23,7 +23,7 @@ This methodology has been sketched in the introduction but can be given precisel
 \section{Formal Verification of Specifications}
 \label{sec:verify-spec}
 
-As already mentioned, the work of \citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} focusses on verifying specifications, in particular \glspl{isa}, against high level properties.
+As already mentioned, the work of \citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} focusses on verifying specifications, in particular \glspl{isa}, against high-level properties.
 The key motivation of this work is best summarized by the conclusion of the paper:
 \begin{displaycquote}[p.88:22]{Reid17}
     Formal verification of programs is becoming more and more practical but, if the verification is to be meaningful, it must be based on correct architecture specifications for the hardware that the programs run on.
@@ -33,7 +33,7 @@ The key motivation of this work is best summarized by the conclusion of the pape
     While it is common to debug specifications by \textit{testing} the specification, this paper proposes a different approach:
     we define a set of formal properties that should hold for the specification and we \textit{formally verify} the architecture specification satisfies these properties.
     We think of the relationship between the properties and the specification as being like the relationship between a nation's constitution and a nation's laws:
-    the constitution is concise enough that everyone can read them while the laws are too large for effective review; the constitution can be used to test whether existing or proposed laws are compatible with high level goals; and the constitution is stable and changes very, very slowly.
+    the constitution is concise enough that everyone can read them while the laws are too large for effective review; the constitution can be used to test whether existing or proposed laws are compatible with high-level goals; and the constitution is stable and changes very, very slowly.
 \end{displaycquote}
 
 These high-level properties comprise the formalization of \textcquote[p.88:2]{Reid17}{cross-cutting features}, i.e. features that describe expected high-level behavior of the architecture.
@@ -107,7 +107,7 @@ This enhances on three downsides of bounded model checking:
 
 In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors verify an implementation of the ARM TrustZone architecture by statically type-checking an information flow policy.
 To achieve this, they enhance on the already existing \gls{hdl} language SecVerilog, extending its type system to allow more fine grained modelling of information flow policies.
-Therefore, the authors verify an implementation against higher level properties as opposed to verifying a specification as done by \citeauthor{Reid17} in \cite{Reid17}.
+Therefore, the authors verify an implementation against higher-level properties as opposed to verifying a specification as done by \citeauthor{Reid17} in \cite{Reid17}.
 This thesis takes this general approach and lifts it to be applied to specifications rather than \glspl{hdl}.
 
 \glspl{hdl} are very much like ordinary programming languages only that they are used to specify electronic circuits.
@@ -504,7 +504,7 @@ There are no major features RISC-V lacks in that are crucial to the concept of a
 \label{sec:ecosystem}
 
 \glspl{isa} are embedded in a larger context.
-The goal of this thesis is to verify an \gls{isa} against higher level properties.
+The goal of this thesis is to verify an \gls{isa} against higher-level properties.
 For this undertaking to be worthwhile, it must be clear where the limitations of these properties lie.
 
 An \gls{isa} is an interface offered by hardware which is used by binary programs and in particular \glspl{os}.
@@ -537,10 +537,10 @@ However, since the goal of this thesis is to verify an \gls{isa}, the model to b
 Furthermore, verifying such hardware features falls in the realm of functional correctness.
 Features such as pipelining face the risk that an implementation turns out to violate the \gls{isa} because instructions might execute not as they should.
 Adding to the first argument of the model not being implementation independent, including sub-architectural state into the model would lead to an indirect verification of the functional correctness of such parts, i.e. whether they truly implement the \gls{isa}.
-This thesis, however, is not about verifying how pipelining can be implemented correctly but about \textit{higher level} properties of \glspl{isa}.
+This thesis, however, is not about verifying how pipelining can be implemented correctly but about \textit{higher-level} properties of \glspl{isa}.
 
 Additionally, aspects of the functional correctness of an implementation towards the \gls{isa} are served adequately by existing methods:
-In \cite{Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher level properties in \cite{Zhang15, Beatty94, Berezin98, Trippel19} or against their actual specifications in form of an \glspl{isa} in \cite{Reid16, RISCV-formal}.
+In \cite{Mukherjee16} attempts to verify hardware in general have been proposed and implementations of processors have been verified against higher-level properties in \cite{Zhang15, Beatty94, Berezin98, Trippel19} or against their actual specifications in form of an \glspl{isa} in \cite{Reid16, RISCV-formal}.
 In particular, pipelining has been verified in \cite{Burch94}.
 
 \subsection{Virtual Memory}
@@ -571,7 +571,7 @@ Addresses will be treated as physical ones throughout this thesis.
 \label{sec:threat-model}
 
 Now that two concepts that touch most architectures have been ruled out, namely sub-architectural hardware mechanisms or virtual memory, this section will give a positive description of what \textit{will} be part of the model.
-This leads to the question of the threat model of the higher level properties to be verified.
+This leads to the question of the threat model of the higher-level properties to be verified.
 
 A key feature of modern architectures that is used by modern \glspl{os} is to have different privileges levels.
 For example, the RISC-V architecture supports up to three different privilege levels; from lowest to highest: user-mode, supervisor-mode and machine-mode.
@@ -585,7 +585,7 @@ While it was argued that verification of virtual memory systems should be target
 Thus, this thesis will focus on the mechanics of privilege levels in the process of verification.
 
 This links back to \cite{Reid17}; recall that one goal of this work was to \textcquote[p.88:2]{Reid17}{express the major guarantees that programmers depend on}.
-Since \glspl{os} heavily rely on correct implementations of privilege levels and especially the mechanics to transition between those, it is of specific interest to verify high level properties about the workings of these mechanisms which will lead to insights in these guarantees.
+Since \glspl{os} heavily rely on correct implementations of privilege levels and especially the mechanics to transition between those, it is of specific interest to verify high-level properties about the workings of these mechanisms which will lead to insights in these guarantees.
 
 Privilege levels go hand in hand with interrupt and exception handling.
 Interrupts generally are used in \glspl{isa} to transfer control to specific privilege modes or programs, e.g. whenever one presses a key on a keyboard, a keyboard interrupt is generated that is handled by the appropriate device driver and propagated by the \gls{os} to the correct application, e.g. your text editor or shell.
@@ -639,7 +639,7 @@ Model checking therefore deals with two parts: Firstly, a model of some system, 
 Systems to be model checked come in many forms.
 They range from software libraries over hardware designs to embedded controllers.
 The same is true for specifications.
-Those can be fully fledged \textit{actual} specifications that describe the requirements to a system exhaustively or higher level properties that generally should apply to systems such as deadlock freeness as mentioned in \cite{Baier08}.
+Those can be fully fledged \textit{actual} specifications that describe the requirements to a system exhaustively or higher-level properties that generally should apply to systems such as deadlock freeness as mentioned in \cite{Baier08}.
 
 More technically, in model checking some system is taken and transformed into a model using a formal language like PROMELA (cf. section \ref{sec:spin}) and a specification is taken and transformed into a property usually expressed in some formal logic, e.g. \gls{ltl}.
 Then it is verified via a model checker whether the system model models the formal property.
@@ -1162,7 +1162,7 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
 
 \begin{example}
     Consider the example invariant, \gls{ltl} and \gls{ctl} specifications depicted in snippet \ref{snpt:nuxmv-spec}.
-    These specify high level properties about the traffic lights example in snippet \ref{snpt:nuxmv}.
+    These specify high-level properties about the traffic lights example in snippet \ref{snpt:nuxmv}.
 
     \begin{figure}
         \begin{lstlisting}[
@@ -1282,7 +1282,7 @@ To achieve this, we will investigate the RISC-V architecture in more detail and 
 This architecture will stick to the \gls{risc}-properties as defined in \cite{Hennessy12} in that it will be a load/store architecture, instructions will operate on registers mainly, and there are few, homogenously encoded instructions available.
 A model of this instruction set architecture will be implemented in nuXmv.
 
-As a next step in chapter \ref{chp:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher level properties to verify the architecture against.
+As a next step in chapter \ref{chp:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher-level properties to verify the architecture against.
 Thereby, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in nuXmv.
 By using nuXmv as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
 When this has been dealt with, the actual \gls{ifc} will be expressed as \gls{ltl} properties.
