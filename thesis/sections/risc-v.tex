@@ -609,7 +609,23 @@ Therefore - if full control over the transition relation is desired - it often i
 }.
 In the implementation for nuXmv of the MINRV8 architecture, \smv{case}-expressions that always close with a default statement were used to ensure that transitions of variables are always fully constrained.
 
+In general, all variables besides \smv{priv} change their value in accordance with the flow-chart depicted in figure \ref{fig:implementation-flow} with some exceptions depending on the variable.
+At first, it is checked whether a trap occurred.
+All variables besides \smv{mstatus}, which is mapped to \smv{csrs[0]}, are stable in this case.
+Then, it is checked whether the current instruction is targeting the respective variable: for example, for an \minrv{Add} instruction, some index \smv{i}, and the variable \smv{regs}, check whether \smv{rd == i}.
+Finally, the variable must only change its value, if the current instruction applies to the variable, e.g., a \minrv{Store} instruction will only change values of \minrv{memory} but not \minrv{regs}.
+If all checks succeed, the respective instruction is evaluated and the variable is assigned with the instruction's result.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/implementation-flow.png}
+    \caption{Variable changing flow-chart}
+    \label{fig:implementation-flow}
+\end{figure}
+
 In the following, the \enquote{formal idea} of the variable transitions of the model will be introduced.
+Whenever there is an exception to the flow-chart depicted in figure \ref{fig:implementation-flow}, it will be made explicit.
+Examples for such exceptions are changes of \smv{memory} on cache-line evictions or \smv{mstatus} being influenced by the input variable \smv{m_external_interrupt}.
 In this context, it is assumed that variables are stable unless otherwise mentioned.
 
 The transitions of the \smv{priv} variable are simple.
