@@ -95,12 +95,12 @@ The right shift operation on the other hand does a sign extension because MINRV8
     \end{align*}
 \end{example}
 
-At last, the $ \sqcup $-supremum operator on $ \Sigma $ is extended to $ \Sigma^* $ by applying it literal-wise to a word, e.g. $ ab \sqcup cd = (a \sqcup c) \cdot (b \sqcup d) $.
+At last, the $ \sqcup $-supremum operator on $ \Sigma $ is extended to $ \Sigma^* $ by applying it literal-wise to a word, e.g., $ ab \sqcup cd = (a \sqcup c) \cdot (b \sqcup d) $.
 
 With these tools at hand the translation of type system rules to semantic functions will now be presented.
 Recall that MINRV8 offers 15 instructions.
 For many instructions, there are type system rules that can be mapped directly.
-E.g. there is no semantic difference between the \minrv{Add} instruction and performing addition in code.
+e.g., there is no semantic difference between the \minrv{Add} instruction and performing addition in code.
 However, there are some instructions that have no corresponding type-system rule in \cite{Ferraiuolo17}.
 A overview of this mapping is given in table \ref{tbl:instr-mapping}.
 
@@ -319,7 +319,7 @@ Let $ \binSigma = \{ 00, 01, 10, 11 \}$ with a mapping $ \varphi : \Sigma \right
     \label{fig:sec-lattice-bin}
 \end{figure}
 
-Let $ \sqcup $ be defined on $ \binSigma $ such that $ \varphi $ is an isomorphism, e.g. $ 00 \; \sqcup \; 11 = 10 $.
+Let $ \sqcup $ be defined on $ \binSigma $ such that $ \varphi $ is an isomorphism, e.g., $ 00 \; \sqcup \; 11 = 10 $.
 This mapping is depicted in figure \ref{fig:sec-lattice-bin}.
 Note that public and untrusted correspond to a 0 whereas confidential and trusted correspond to a 1.
 This abstraction can be formalized by examining two equivalence-relations or -classes on $ \Sigma $ and $ \binSigma $.
@@ -348,7 +348,7 @@ Furthermore, it is possible to define $ \sqcup $ solely by working with these eq
 This means that labels of the lattice $ (\Sigma, \sqcup, \sqcap) $ can be tracked by considering the confidentiality and integrity parts individually.
 In other words: in general one can calculate the supremum or infimum of two labels by performing the respective operation on the parts in the domains of confidentiality and integrity individually.
 This is illustrated in figure \ref{fig:lattice-equiv-classes} where again the lattice of security labels is shown but there also are two axes which divide each domain in half.
-There, you can see why, e.g. $ \{ \PT \} = \P \cap \T $ and also that $ \P \sqcup \C = \C $ or $ \T \sqcup \U = \U $.
+There, you can see why, e.g., $ \{ \PT \} = \P \cap \T $ and also that $ \P \sqcup \C = \C $ or $ \T \sqcup \U = \U $.
 
 \begin{figure}
     \centering
@@ -405,7 +405,7 @@ For each variable in the model, an confidentiality or integrity tracking counter
     \label{tbl:ifc-vars}
 \end{table}
 
-These variables transition under the same conditions as their base variable does, e.g. \smv{regs_conf} does a transition if and only if \smv{regs} transitions and \smv{regs_conf} will deduct its content from sources parallel to those of \smv{regs}.
+These variables transition under the same conditions as their base variable does, e.g., \smv{regs_conf} does a transition if and only if \smv{regs} transitions and \smv{regs_conf} will deduct its content from sources parallel to those of \smv{regs}.
 The values themselves change based on the current instruction and its information flow tracking semantics as described in section \ref{sec:ifc-model}.
 The only exception to this is the information flow tracking of the variable \smv{csrs} the labels of which do not change at all.
 \Glspl{csr} are assigned constants labels because they do not store information but reflect the architectures state.

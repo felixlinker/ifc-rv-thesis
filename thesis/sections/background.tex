@@ -51,7 +51,7 @@ In his paper, \citeauthor{Reid17} gives a list of requirements for such cross-cu
 
 The aspects of the conciseness and stability of the properties implement the idea of a \enquote{constitution} for an \gls{isa} linking back to the paragraphs quoted above.
 The first point, however, plays a greater role for the practical applicability of the verification process.
-If properties, the architecture is verified against, express \enquote{major guarantees that programmers \textins{can} depend} on, they can be used to aid in usage of the platform, e.g. by \gls{os} engineers to utilize the mechanisms of the architecture correctly and thereby to write secure \glspl{os}.
+If properties, the architecture is verified against, express \enquote{major guarantees that programmers \textins{can} depend} on, they can be used to aid in usage of the platform, e.g., by \gls{os} engineers to utilize the mechanisms of the architecture correctly and thereby to write secure \glspl{os}.
 Lastly, the requirement aimed at reducing the \enquote{risk of common-mode failure} aims at combatting the downsides of other approaches to verify specifications.
 \citeauthor{Reid17} lists three commonly used ways of verifying specifications: \textcquote[p.88:2]{Reid17}{by testing specifications against existing implementations; by testing specifications using testsuites used to test implementations; or as a side effect of attempting to formally verify an implementation against a specification}.
 These approaches, however, all face the risk of issues with the specification being undetected because the implementation and specification both are affected by the same issue, i.e. the risk of issues being undetected because of common-mode failure.
@@ -96,8 +96,8 @@ This enhances on three downsides of bounded model checking:
     \item Most importantly, the properties in this thesis will be more expressive.
     While in \cite{Reid17}, bounded model checking does limit the scope the properties apply to, the properties themselves are limited - they can only constrain a single transition at a time.
     In this thesis, however, ideas like: \enquote{If first $ X $ and then $ Y $ happens, $ P $ must hold.} which can hardly\footnote{%
-        One can think of ways to implement such a property using bounded model checking, e.g. first establish a post-condition for when $ X $ happens and then assume this post- as a pre-condition for $ Y $ happening.
-        However, in this a scenario, finding such conditions is non-trivial, it must be further verified that the respective conditions are adequate, e.g. they might be to weak, and establishing these conditions would introduce the need to reverse-engineer how certain actions influence the state.
+        One can think of ways to implement such a property using bounded model checking, e.g., first establish a post-condition for when $ X $ happens and then assume this post- as a pre-condition for $ Y $ happening.
+        However, in this a scenario, finding such conditions is non-trivial, it must be further verified that the respective conditions are adequate, e.g., they might be to weak, and establishing these conditions would introduce the need to reverse-engineer how certain actions influence the state.
         This would make them instable and non-concise and, thus, conflict with the self-imposed requirements for the properties.
     } be expressed using bounded model checking.
 \end{enumerate}
@@ -111,7 +111,7 @@ Therefore, the authors verify an implementation against higher-level properties 
 This thesis takes this general approach and lifts it to be applied to specifications rather than \glspl{hdl}.
 
 \glspl{hdl} are very much like ordinary programming languages only that they are used to specify electronic circuits.
-This use case introduces several novelties to \glspl{hdl} in contrast to programming languages, e.g. type systems are not as rich and usually comprise registers (multiple bits) and wires (one bit). i.e. they resemble much more low level systems.
+This use case introduces several novelties to \glspl{hdl} in contrast to programming languages, e.g., type systems are not as rich and usually comprise registers (multiple bits) and wires (one bit). i.e. they resemble much more low level systems.
 In context of this thesis, think of an \gls{hdl} as a programming language with a very specific use case.
 
 \citeauthor{Ferraiuolo17} define an \textit{information flow policy} as a lattice of security labels $ (M, \sqcup, \sqcap) $; with $ \sqsubseteq $ being the partial order on $ M $ as induced by the lattice.
@@ -218,7 +218,7 @@ These rules are written as proofs of sequent calculus.
     This proof states that the formula $ C $ can be derived from the formulas $ A $ and $ B $ or more formally that: $ A, B \vdash C $.
 \end{example}
 
-In the context of type systems, formulas used in proofs of sequent calculus often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} types some \textit{expression}, e.g. if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type, one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
+In the context of type systems, formulas used in proofs of sequent calculus often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} types some \textit{expression}, e.g., if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type, one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
 In \cite{Ferraiuolo17} three such environments are introduced:
 
 \begin{description}
@@ -374,7 +374,7 @@ Introducing more than one \gls{risc} architectures will allow us to choose parts
 The ARM architecture defines three architecture \textit{profiles}:
 \begin{itemize}
     \item The generic \textit{application profile} ARMv8-A,
-    \item the \textit{real-time profile} ARMv8-R designed for deployment scenarios in which real-time responses from a processor is crucial, e.g. in aviation,
+    \item the \textit{real-time profile} ARMv8-R designed for deployment scenarios in which real-time responses from a processor is crucial, e.g., in aviation,
     \item and the \textit{microcontroller} profile ARMv8-M aimed at embedded systems.
 \end{itemize}
 
@@ -553,7 +553,7 @@ Memory is divided into pages with a virtual address being made up of a page inde
 On accessing an address, the page index is translated to a physical memory address which taken together with the page offset results in the respective physical memory address.
 This allows programs to treat their \enquote{personal} address space as continuous whereas in reality it comprises several pages of memory scattered all over physical memory.
 
-Virtual memory usually is part of \glspl{isa}; e.g. the ARM architecture includes the specification of the \gls{mmu} which translates addresses and is programmed by an \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
+Virtual memory usually is part of \glspl{isa}; e.g., the ARM architecture includes the specification of the \gls{mmu} which translates addresses and is programmed by an \gls{os} via system registers (cf. chapter D5 \cite{Armv8}).
 The RISC-V specification also includes a system for managing virtual memory with an address space of 32, 39, or 48 bits (cf. section 4 \cite{RiscVISAP}).
 Here, the setup of virtual memory also is delegated to an \gls{os} and can be configured by programming system registers.
 
@@ -575,7 +575,7 @@ This leads to the question of the threat model of the higher-level properties to
 
 A key feature of modern architectures that is used by modern \glspl{os} is to have different privileges levels.
 For example, the RISC-V architecture supports up to three different privilege levels; from lowest to highest: user-mode, supervisor-mode and machine-mode.
-Higher privilege levels usually give access to more system control registers, specific instructions and often times work hand in hand with specific semantics of system registers, e.g. RISC-V supports physical memory regions which support settings for each privilege level, i.e. certain regions of physical memory can be set readable to machine- but not user-mode, etc.
+Higher privilege levels usually give access to more system control registers, specific instructions and often times work hand in hand with specific semantics of system registers, e.g., RISC-V supports physical memory regions which support settings for each privilege level, i.e. certain regions of physical memory can be set readable to machine- but not user-mode, etc.
 
 In a sense, privilege modes play a similar role to virtual memory.
 Both concepts are used by \glspl{os} in very fundamental ways and therefore are relevant for the security of a system as a whole.
@@ -588,7 +588,7 @@ This links back to \cite{Reid17}; recall that one goal of this work was to \text
 Since \glspl{os} heavily rely on correct implementations of privilege levels and especially the mechanics to transition between those, it is of specific interest to verify high-level properties about the workings of these mechanisms which will lead to insights in these guarantees.
 
 Privilege levels go hand in hand with interrupt and exception handling.
-Interrupts generally are used in \glspl{isa} to transfer control to specific privilege modes or programs, e.g. whenever one presses a key on a keyboard, a keyboard interrupt is generated that is handled by the appropriate device driver and propagated by the \gls{os} to the correct application, e.g. your text editor or shell.
+Interrupts generally are used in \glspl{isa} to transfer control to specific privilege modes or programs, e.g., whenever one presses a key on a keyboard, a keyboard interrupt is generated that is handled by the appropriate device driver and propagated by the \gls{os} to the correct application, e.g., your text editor or shell.
 Exceptions usually refer to error conditions that arise during computation.
 For example, coming back to physical memory regions in RISC-V, if user-mode would attempt to read from a region unreadable to it an exception would be generated.
 It is the obligation of software running in machine-mode to handle such error conditions - usually related software comes as part of an \gls{os}.
@@ -641,7 +641,7 @@ They range from software libraries over hardware designs to embedded controllers
 The same is true for specifications.
 Those can be fully fledged \textit{actual} specifications that describe the requirements to a system exhaustively or higher-level properties that generally should apply to systems such as deadlock freeness as mentioned in \cite{Baier08}.
 
-More technically, in model checking some system is taken and transformed into a model using a formal language like PROMELA (cf. section \ref{sec:spin}) and a specification is taken and transformed into a property usually expressed in some formal logic, e.g. \gls{ltl}.
+More technically, in model checking some system is taken and transformed into a model using a formal language like PROMELA (cf. section \ref{sec:spin}) and a specification is taken and transformed into a property usually expressed in some formal logic, e.g., \gls{ltl}.
 Then it is verified via a model checker whether the system model models the formal property.
 Note that \enquote{model} in this context is ambiguous.
 On the one hand this term refers to the model of the system as a simplified description; on the other hand, this term refers to the logical models-relation $ \models $ which is actually being checked.
@@ -1004,7 +1004,7 @@ Symbolic model checkers have been introduced in \cite{Burch92} and encode the st
 nuXmv supports both finite and infinite state transition systems.
 These systems are expressed in the form of \textit{modules}.
 At its heart, a module consists of a collection of variables, \smv{INIT} (i.e. initial) constraints and \smv{TRANS} (i.e. transition) constraints.
-There are more syntactical constructs, e.g. macros or constants, but these do not add to the expressiveness of nuXmv but either serve as syntactic sugar or enhance on performance if used.
+There are more syntactical constructs, e.g., macros or constants, but these do not add to the expressiveness of nuXmv but either serve as syntactic sugar or enhance on performance if used.
 A module in nuXmv induces a set of state transition systems.
 The state space of such a system is given by the variables of the module, i.e. an assignment to all variables is a state of the system.
 The initial state must model the \smv{INIT} constraints the transition relation must model the \smv{TRANS} constraints.
@@ -1230,7 +1230,7 @@ The idea for the implementation is straight-forward:
 \end{itemize}
 
 It was furthermore decided to express the information flow control of the architecture in \gls{ltl}.
-nuXmv supports a plethora of techniques to check specifications, e.g. the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
+nuXmv supports a plethora of techniques to check specifications, e.g., the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
 In the practical work for this thesis, after the decision to implement the \gls{ifc} in \gls{ltl} has been made, a couple of these techniques which apply to \gls{ltl}-checking were tested.
 In this informal evaluation it was found that the K-Liveness algorithm proposed in \cite{Claessen12} delivered best results and terminated quickly whenever the model met the specification.
 Whenever this was not the case, i.e. the specification was not met by the model which was usually indicated by a long runtime of the K-Liveness algorithm, a \gls{bmc} approach computed counter-examples very efficiently.
@@ -1313,7 +1313,7 @@ For example, it is an obvious security issue, when machine-mode directly hands c
 No sensible architectural mechanisms could prevent machine mode from doing this as long as machine mode is in fact able to hand data to user mode - which it should be.
 
 In the first case, where it is discovered that a counter-example comprises a proper architectural vulnerability, we will investigate mechanisms that mitigate the respective vulnerability and also attempt to verify the effectiveness of such mitigations by re-running the proofs.
-If however, we do not find the counter-example to uncover a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules to be obeyed by e.g. \gls{os} or compiler engineers that prohibit such bad vulnerabilities.
+If however, we do not find the counter-example to uncover a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules to be obeyed by e.g., \gls{os} or compiler engineers that prohibit such bad vulnerabilities.
 We also will then verify the effectiveness of these rules by implementing them in the model as assumptions and re-running the proofs as well.
 
 When phrasing assumptions, we impose the following requirements upon them:

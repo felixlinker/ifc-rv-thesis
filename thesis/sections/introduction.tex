@@ -84,7 +84,7 @@ In chapter \ref{chp:related-work} the results and the approach in general will b
 
 The contributions of this thesis are twofold.
 Firstly, a general and architecture independent approach approach to verifying \glspl{isa} specifications will be developed that relies on a model checker and higher-level information flow properties.
-This approach takes unbounded numbers of instructions into account, is non-redundant and is meant to be used to detect vulnerabilities that must be combatted by architectural changes or to verify rules e.g. \glspl{os} and compilers can obey to not be themselves vulnerable.
+This approach takes unbounded numbers of instructions into account, is non-redundant and is meant to be used to detect vulnerabilities that must be combatted by architectural changes or to verify rules e.g., \glspl{os} and compilers can obey to not be themselves vulnerable.
 These rules will be:
 \begin{itemize}
     \item practical and verifiable themselves,
@@ -94,5 +94,5 @@ These rules will be:
 
 Secondly, this approach will be applied to the MINRV8 to give a prototype.
 This prototype will be able to detect both the cache poisoning and the SYSRET vulnerability the x86 architecture was or is susceptible to.
-Whereas the cache poisoning attack was an actual vulnerability to the x86 architecture, the SYSRET vulnerability affected e.g. \glspl{os} running on Intel's version of the x86 architecture.
+Whereas the cache poisoning attack was an actual vulnerability to the x86 architecture, the SYSRET vulnerability affected e.g., \glspl{os} running on Intel's version of the x86 architecture.
 Therefore, the latter vulnerability is a prime example why verifying \glspl{isa} must also take into account software running on it, hence, it is taken into account that not every vulnerability can be fixed in hardware.

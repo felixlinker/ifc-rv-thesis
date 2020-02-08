@@ -8,7 +8,7 @@ These properties were model checked, the main result of which was a set of rules
 What is the consequence of this?
 The formal achievement of this thesis can be summarized as follows:
 \begin{quote}
-    It can be guaranteed that programs running on the MINRV8 architecture, e.g. \glspl{os}, are \textit{secure} (in the sense of not violating the \gls{ifc} properties $ P $) if they obey to the rules $ R $.
+    It can be guaranteed that programs running on the MINRV8 architecture, e.g., \glspl{os}, are \textit{secure} (in the sense of not violating the \gls{ifc} properties $ P $) if they obey to the rules $ R $.
 \end{quote}
 But what does \enquote{secure} mean here besides not violating $ P $?
 What is the \textit{actual} sense of security that can be guaranteed?
@@ -59,7 +59,7 @@ nuXmv allows to think of the following options:
     \item \label{itm:exmem-frozen}
     Use \smv{FROZENVAR}s to model executable memory - a \smv{FROZENVAR} (frozen variable) is something like a constant in other programming languages but without a fixed value.
     nuXmv chooses the value on the first simulation step but does not change it afterwards.
-    This is more efficient than using a plain \smv{VAR} and constraining it to not change, e.g. \smv{TRANS next(x) = x;}.
+    This is more efficient than using a plain \smv{VAR} and constraining it to not change, e.g., \smv{TRANS next(x) = x;}.
     \item \label{itm:exmem-var}
     Use \smv{VAR}s to model executable memory.
     In practice, this would mean that for memory to hold all instructions executed it would need to be much larger than the current 4 bytes.
@@ -281,7 +281,7 @@ We find that steps \ref{itm:step-semantics} to \ref{itm:step-loop} are well foun
 This, however, is less obvious for steps \ref{itm:step-minrv} and \ref{itm:step-canaries}.
 In both cases, the selection of RISC-V features and instruction to include or vulnerabilities to test respectively can be doubted.
 
-The work on this thesis was indeed influenced by the canaries the model was ultimately tested against, e.g. it was decided to implement a cache to be able to cover the cache poisoning attack, and vice versa: the selection of vulnerabilities to test the model against was based on the features implemented in it.
+The work on this thesis was indeed influenced by the canaries the model was ultimately tested against, e.g., it was decided to implement a cache to be able to cover the cache poisoning attack, and vice versa: the selection of vulnerabilities to test the model against was based on the features implemented in it.
 Despite the circular character of these two steps, we find that this is not an issue.
 Steps \ref{itm:step-minrv} and \ref{itm:step-canaries} must be understood as a prototype of a verification procedure proposed in this thesis which is given by steps \ref{itm:step-semantics} to \ref{itm:step-loop}.
 Having the setup to test these steps being derived via a methodology that is circular to some degree does not make the procedure itself circular.
@@ -332,7 +332,7 @@ Additionally, it can also be seen that computational instructions never played a
 These results suggest that in future work, if the model ever was to be expanded to a more accurate model of RISC-V and/or to a higher machine-word width and performance problems then are encountered, one could abstract the information flow tracking labels from bit- to word-wise labels.
 This would decrease the size of the state space to be considered by nuXmv exponentially.
 Additionally, one could remove instructions that only alter data but do not add \enquote{new} ways for information to flow.
-E.g. the \minrv{Add} instruction - from a pure standpoint of \textit{where} information flows - adds nothing in comparison to the \minrv{Mov} instruction.
+e.g., the \minrv{Add} instruction - from a pure standpoint of \textit{where} information flows - adds nothing in comparison to the \minrv{Mov} instruction.
 This option only shrinks the state space by a linear factor - nevertheless it might matter.
 
 The gist of these findings is:
