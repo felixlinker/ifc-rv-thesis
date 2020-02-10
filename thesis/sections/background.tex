@@ -114,7 +114,7 @@ This thesis takes this general approach and lifts it to be applied to specificat
 This use case introduces several novelties to \glspl{hdl} in contrast to programming languages, e.g., type systems are not as rich and usually comprise registers (multiple bits) and wires (one bit). i.e. they resemble much more low level systems.
 In context of this thesis, think of an \gls{hdl} as a programming language with a very specific use case.
 
-\citeauthor{Ferraiuolo17} define an \textit{information flow policy} as a lattice of security labels $ (M, \sqcup, \sqcap) $; with $ \sqsubseteq $ being the partial order on $ M $ as induced by the lattice.
+\citeauthor{Ferraiuolo17} define an \textit{information flow policy} as a lattice of security labels $ (M, \sqcup, \sqcap) $; with $ \sqsubseteq $ being the partial order on $ M $ as induced by the lattice operations supremum $ \sqcup $ and infimum $ \sqcap $.
 Intuitively speaking, information labelled with $ a \in M $ is allowed to flow to a sink labelled with $ b \in M $ if and only if $ a \sqsubseteq b $, i.e. information is always allowed to flow up in the lattice but not down.
 
 \begin{example}
