@@ -603,6 +603,19 @@ Instead, the content of the destination register in the case of a \minrv{Loadi} 
 This means that nuXmv can choose any value in the next state for register \smv{i} if it happens to be targeted by instruction \minrv{Loadi}.
 Thereby, the value written to the destination register by the \minrv{Loadi} instruction is encoded implicitly in the transition relation rather than in the state space.
 
+An overview of the implementation's modules is given in figure \ref{fig:modules-overview}.
+On the right-hand side, the main module and its variables are depicted.
+Arrows indicate whether one variable influences another.
+Sometimes, arrows are labeled to indicate the instruction on which a variable changes its value.
+Here, \minrv{Comp.} represents computational instructions such as \minrv{Add} and \minrv{Sys.} stands for platform management instructions such as \minrv{Ecall}.
+
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/modules-overview.png}
+    \caption{Overview of all modules of the implementation}
+    \label{fig:modules-overview}
+\end{figure}
+
 \paragraph{Transitions}
 nuXmv allows to constrain the transition of variables by arbitrary formulas expressed in propositional logic.
 The system can make a transition if it satisfies all formulas given as constraints.
