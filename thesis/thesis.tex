@@ -3,7 +3,7 @@
 \usepackage[inline]{enumitem}
 \usepackage{csquotes}
 \usepackage{tikz}
-\usepackage[hidelinks]{hyperref}
+\usepackage{hyperref}
 \usepackage{syntax}
 \usepackage[euler]{textgreek}
 \usepackage[acronym,nomain,nonumberlist,nopostdot]{glossaries}
@@ -29,6 +29,14 @@
 % fonts
 \usepackage{tgpagella}
 \usepackage{courier}
+
+\hypersetup{
+    colorlinks=true,
+    linkcolor=teal,
+    filecolor=gray,
+    urlcolor=gray,
+    citecolor=cyan
+}
 
 \newcommand{\muZ}{{\textmu}Z}
 \newcommand{\ite}[3]{\ensuremath{\texttt{if} \; #1 \; #2 \; #3}}
