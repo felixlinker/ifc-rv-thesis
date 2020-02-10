@@ -604,8 +604,10 @@ This means that nuXmv can choose any value in the next state for register \smv{i
 Thereby, the value written to the destination register by the \minrv{Loadi} instruction is encoded implicitly in the transition relation rather than in the state space.
 
 An overview of the implementation's modules is given in figure \ref{fig:modules-overview}.
-On the right-hand side, the main module and its variables are depicted.
-Arrows indicate whether one variable influences another.
+On the left-hand side, the main module and its variables are depicted.
+Arrows indicate whether one variable influences another\footnote{%
+    For clarity reasons, it was omitted that \glspl{csr} can be written to and with registers.
+}.
 Sometimes, arrows are labeled to indicate the instruction on which a variable changes its value.
 Here, \minrv{Comp.} represents computational instructions such as \minrv{Add} and \minrv{Sys.} stands for platform management instructions such as \minrv{Ecall}.
 
