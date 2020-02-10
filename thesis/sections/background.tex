@@ -36,9 +36,17 @@ The key motivation of this work is best summarized by the conclusion of the pape
     the constitution is concise enough that everyone can read them while the laws are too large for effective review; the constitution can be used to test whether existing or proposed laws are compatible with high-level goals; and the constitution is stable and changes very, very slowly.
 \end{displaycquote}
 
-These high-level properties comprise the formalization of \textcquote[p.88:2]{Reid17}{cross-cutting features}, i.e. features that describe expected high-level behavior of the architecture.
-Cross-cutting features have the downside that they are usually hard to grasp for humans since they require a thorough understanding of the system as a whole, yet are powerful since they often (indirectly) touch many aspects of the specification.
-In his paper, \citeauthor{Reid17} gives a list of requirements for such cross-cutting properties:
+\begin{figure}
+    \centering
+    \includegraphics[width=\textwidth]{figures/higher-level-verification.png}
+    \caption{Verification of specifications in relation to verification of implementations}
+    \label{fig:spec-verification}
+\end{figure}
+
+The relation between verifying specifications against higher-level properties and verifying implementations against specifications is depicted in figure \ref{fig:spec-verification}.
+This figure illustrates that both of these levels of verification are parallel to each other: Higher-level properties take the same role for specifications as specifications do for implementations.
+
+In the work of \citeauthor{Reid17}, the high-level properties are given by \textcquote[p.88:2]{Reid17}{cross-cutting features} which have the following properties:
 \begin{displaycquote}[pp.88:2-3]{Reid17}
     The central design challenge we face is to create a set of properties that:
     \begin{itemize}
@@ -47,7 +55,9 @@ In his paper, \citeauthor{Reid17} gives a list of requirements for such cross-cu
         \item are stable so that architectural extensions do not invalidate large numbers of rules;
         \item and that describe the architecture differently from existing specification to reduce the risk of common-mode failure.
     \end{itemize}
-\end{displaycquote}
+\end{displaycquote}.
+
+Cross-cutting features have the downside that they are usually hard to grasp for humans since they require a thorough understanding of the system as a whole, yet are powerful since they often (indirectly) touch many aspects of the specification.
 
 The aspects of the conciseness and stability of the properties implement the idea of a \enquote{constitution} for an \gls{isa} linking back to the paragraphs quoted above.
 The first point, however, plays a greater role for the practical applicability of the verification process.
