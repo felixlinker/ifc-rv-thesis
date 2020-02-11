@@ -69,7 +69,7 @@ This risk can be mitigated if the properties the specification will be verified 
 
 \citeauthor{Reid17} applies his approach to the ARM M-Class architecture for which not only a natural language but also a machine-readable specification is available.
 The machine-readable specification of the ARM M-Class architecture provides the function \asl{TopLevel} which implements the transition of the architecture from one state to another, i.e. a cycle of the processor.
-The natural language specification on the other hand mainly consists of rules that constrain the behavior of the architecture in different situations, i.e. that constrain the transition relation between architectural states that implicitly is given by the \asl{TopLevel} function.
+The natural language specification on the other hand mainly consists of rules that constrain the behavior of the architecture in different situations, i.e. constrain the transition relation between architectural states that implicitly is given by the \asl{TopLevel} function.
 
 In principle, these two forms of specification also face the risk of common-mode failures.
 In practice, however, it turned out that the natural language specification included several rules that described the behavior of the architecture on a very high-level thus meeting aforementioned requirements.
@@ -153,7 +153,7 @@ In SecVerilog, variables are typed by labels of the respective information flow 
 The type of a variable is described either by a label $ l \in M $ directly, by the conjunction $ \sqcap $ or disjunction $ \sqcup $ of two labels or by a type-level function $ f $ that maps some program variable $ v $ to a type.
 SecVerilogBL enhances on this by tracking security labels not only per variable but also per bit and array element therefore allowing for more fine grained annotation of the \gls{hdl} code but also adding a mechanism to downgrade information.
 Since information is not allowed to flow \enquote{down} in the lattice, downgrading can be understood best as a typecast that allows such behavior.
-In some \gls{hdl} models, it might be necessary to allow for insecure flows of information (in regard to the information flow policy).
+In some \gls{hdl} models, it might be necessary to permit insecure flows of information (in regard to the information flow policy).
 In those cases, a programmer can use \lstinline[mathescape]{downgrade(e, $ \tau $)} to annotate the expression \lstinline{e} as being of type $ \tau $, regardless of any prior annotations.
 This effectively \textit{grades} the label of a bit of information \textit{down} such that information is not routed to a sink annotated with a label smaller than the information.
 
@@ -456,7 +456,7 @@ These four base integer instruction sets are given by:
 The RISC-V manual differentiates between standard and non-standard extensions but only introduces standard ones.
 A standard extension is meant to be compatible with any other standard extension and should be \textcquote{RiscVISA}{generally useful} whilst non-standard extensions might add support for more niche use-cases and do not need to be compatible with all standard extensions.
 
-The set of functionalities offered by standard extensions begins at quite low level with the probably most mundane being the standard extension for integer multiplication and division.
+The set of functionalities offered by standard extensions begins at a low level with the probably most mundane being the standard extension for integer multiplication and division.
 You can find a list of all standard extensions in table \ref{tbl:rv-exts}.
 
 \begin{table}
@@ -604,7 +604,7 @@ For example, coming back to physical memory regions in RISC-V, if user-mode woul
 It is the obligation of software running in machine-mode to handle such error conditions - usually related software comes as part of an \gls{os}.
 
 To put the mechanics of transitions between privilege levels to a test, the threat model taken as a basis of the verification process in this thesis is the following\footnote{%
-    Since the decision to work with RISC-V in this thesis has already been made, the threat model was be phrased with this in mind.
+    Since the decision to work with RISC-V in this thesis has already been made, the threat model was phrased with this in mind.
 }:
 \begin{quote}
     \itshape
@@ -668,7 +668,7 @@ By translating the system into a model and the specification into a formal prope
     \label{fig:model-checking}
 \end{figure}
 
-It has already been mentioned in the introduction of both the thesis as a whole and this section that the model checker to be used in this thesis is nuXmv.
+It has already been mentioned in the introduction of both the thesis and this section that the model checker to be used in this thesis is nuXmv.
 The aim of this subsection is to introduce nuXmv and two other tools that were taken into consideration for this thesis.
 These other two model checkers are called SPIN and SPACER.
 By introducing three model checkers, we want to give a feel for all the different flavors of model checkers and be able to argue for why nuXmv was chosen over others.
@@ -700,13 +700,13 @@ This is ensured by the assertion in line \ref{ln:assert} since variables in SPIN
 
 The details of the protocol implemented in lines \ref{ln:excl-start}-\ref{ln:excl-end} are not relevant for this thesis.
 Their purpose is to grant mutual exclusive access to the critical region.
-However, this part of code gives you an indication for how models written in PROMELA look like.
+However, this part of code gives an indication for how models written in PROMELA look like.
 Besides \lstinline{if} statements and labels similar to those in C (cf. line \ref{ln:label}), PROMELA supports \lstinline{do}-loops to control process execution flow.
 \lstinline{do}-loops run indefinitely until they are exited manually by a \lstinline{break} statement.
 
 As data types, PROMELA supports three categories: processes, message channels and data objects.
 Data objects comprise atomic data types such as \lstinline{byte}, \lstinline{bool}, \lstinline{int}, etc. as well as complex data type defined by \lstinline{typedef} that define a complex structures that have fields of data objects.
-Both atomic data types and complex data types are very close to the data types of C.
+Both atomic data types and complex data types are close to the data types of C.
 
 \begin{figure}
     \begin{lstlisting}[
@@ -748,7 +748,7 @@ Both atomic data types and complex data types are very close to the data types o
 Snippet \ref{snpt:spin-output} shows the output when verifying snippet \ref{snpt:spin-exm} with SPIN where it is assumed that latter snippet was written into a file called \lstinline{mutex_flaw.pml}.
 The lines of the output are structured as follows: at the beginning of each line, a step index indicating the progress of all processes can be seen, whilst \lstinline{proc X (NAME)} indicates the process that has made progress by its ID and name.
 The rest of the line \lstinline{line X ... [CODE]} shows the code executed by the process along with the corresponding line number in the source file\footnote{%
-    In this case, line numbers do not fully align with snippet \ref{snpt:spin-exm} but this is not relevant here.
+    In this case, line numbers do not fully align with snippet \ref{snpt:spin-exm}.
 }.
 Notice, how processes 0 and 1 progress completely independently from each other, executing code on a line by line basis where each step of any process counts as a state transition of the whole model.
 
@@ -805,12 +805,12 @@ Labeling parts of code as end-state contributes towards this.
 Never claims are processes themselves.
 They run like any other process but must not terminate otherwise they're regarded as failure.
 This is the most complex way to express properties and in fact falls together with writing \gls{ltl} properties about a model which will be introduced in section \ref{sec:nuxmv}.
-Therefore SPIN also allows to express such never properties in \gls{ltl} directly via their command line interface.
+Therefore SPIN allows to express such never properties in \gls{ltl} directly via their command line interface.
 
 The last type of properties, trace assertions, solely deal with message passing and therefore are not relevant to this thesis.
 
-For some, it might be obvious at this point why we decided against using SPIN as the model checker of this thesis.
-Its focus on verifying distributed and parallel systems is obvious and would make implementing an \gls{isa} in it very hard.
+It might be obvious at this point why we decided against using SPIN as the model checker of this thesis.
+Its focus on verifying distributed and parallel systems would make implementing an \gls{isa} in it very hard.
 In the \textit{Primer and Reference Manual} for SPIN it is written:
 \begin{displaycquote}[p.33]{SpinManual}
     \textins{W}e saw that the emphasis in PROMELA models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}

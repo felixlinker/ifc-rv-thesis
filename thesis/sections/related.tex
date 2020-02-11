@@ -3,11 +3,11 @@
 \chapter{Related Work}
 \label{chp:related-work}
 
-As related work, we will consider seven papers - one of which will be investigated in detail.
+As related work, we will consider seven papers - one of which we will investigate in detail.
 Since this work was founded both on \citetitle{Reid17} \cite{Reid17} and \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} but both papers have been introduced in chapter \ref{chp:background} extensively, we will not consider them again in this section.
 However, we will make an extensive comparison to the paper \citetitle{BradfieldS16} \cite{BradfieldS16} by \citeauthor{BradfieldS16} since this work is closest to ours.
 
-The remaining six papers will be introduced as a group.
+Before this, we will first introduce work related to software and after that work related to hardware.
 All related work covers verification\footnote{%
     It was a deliberate decision to not label all related work as \textit{formal} verification.
     e.g., \cite{Zhang15,SuhLZD04} do verify either properties or live program execution but do not use formal methods to accomplish this.
@@ -28,9 +28,9 @@ Two papers that do not consider hardware but software verification come from the
 Firstly, \citeauthor{GordonKPGNR15} present their tool DroidSafe for static analysis of information flow properties for android applications in \citetitle{GordonKPGNR15} \cite{GordonKPGNR15}.
 Secondly, \citeauthor{SuhLZD04} propose an approach to live track information on \gls{os} level tacking by traps on security policy violations in \citetitle{SuhLZD04} \cite{SuhLZD04}.
 It is quite far-fetched to call \cite{SuhLZD04} a paper about \textit{verification}.
-Nonetheless, the approach is interesting and methodologically close to ours.
+Nonetheless, is methodologically close to ours.
 
-The authors in \cite{GordonKPGNR15} consider information flow privacy sensitive sources of information, e.g., unique device ID, SMS messages and other private file, to riskful sinks of information, e.g., the network, NFC and the local file system.
+The authors of \cite{GordonKPGNR15} consider information flow privacy sensitive sources of information, e.g., unique device ID, SMS messages and other private file, to riskful sinks of information, e.g., the network, NFC and the local file system.
 Both, sources and sinks, are guarded by the android \gls{api}.
 The authors track information flow from sensitive sources to sensitives sinks which both are given by specific calls to methods of the android \gls{api}.
 DroidSafe manages to detect at least 90\% of malicious information flows in selected benchmarks whilst reporting at most 13 false positives.
@@ -46,7 +46,7 @@ The authors propose a simple security policy involving two rules:
     \textit{No instruction can be generated from I/O inputs}, and \textit{No I/O inputs and spurious values based on propagated inputs can be used as pointers unless they are bound-checked and added to an authentic pointer}.
 \end{displaycquote}
 
-Whereas the first cannot be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to the integrity property \ref{itm:prop-mem-i} which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
+Whereas the first cannot be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to our integrity property \ref{itm:prop-mem-i}, which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
 The exception of bound-checks is implicitly modelled by the \smv{SAN_ON_*} assumptions in chapter \ref{chp:results} which mandate from machine-mode to sanitize register of spurious values before using them.
 Such a sanitization might be implemented by boundary-checking.
 Here, machine-mode can only sanitize registers by clearing them, e.g., by using the shift left instruction \minrv{Sll}.
@@ -57,7 +57,6 @@ The approach of \cite{SuhLZD04} achieves a 100\% success rate in a benchmark and
 
 \section{Hardware Verification}
 
-All remaining papers are all related to hardware.
 \citeauthor{Zhang15} consider the detection of hardware trojans in \citetitle{Zhang15} \cite{Zhang15}, i.e. parts of an integrated circuit that behave maliciously, can be activated by very few inputs and otherwise do not affect the functionality of the circuit.
 They analyzed \gls{hdl} implementations of such integrated circuits searching for (mostly) unused parts in the design.
 The techniques employed in this work do not come close to what has been used in this thesis.
@@ -74,7 +73,7 @@ User-mode processes must only depend on process-accessible-resources, processes 
 The first of these is a non-interference property.
 Non-interference properties were introduced in \cite{GoguenMeseguer82} and can be best summarized as:
 \begin{displaycquote}[p.11]{GoguenMeseguer82}
-    one group of users, using a certain set of commands, is \underline{noninterfering} with another group of users if what the first group does with those has commands has no effect on what the second group of users can see.
+    \textins{O}ne group of users, using a certain set of commands, is \underline{noninterfering} with another group of users if what the first group does with those has commands has no effect on what the second group of users can see.
 \end{displaycquote}
 Here, think of these two groups of users as two user-mode processes.
 This is an indirect way of expressing information flow properties.
@@ -86,11 +85,11 @@ It would be an interesting line of research to add an \gls{mmu} to the model and
 
 On the other hand, \citeauthor{KhakpourSD13} do not give any sense for what these properties actually achieve when it comes to security.
 It is not clear what kind of bugs concretely might be tackled by their properties; whilst they are intuitive and certainly should be met by the ARM architecture, it is unclear whether they actually guarantee any desirable characteristics of the architecture.
-These properties fall out of nowhere.
+These properties come out of nowhere.
 Whilst this critique to some extent also applies to our work, we think that the methodology of deriving the information flow properties as presented in section \ref{sec:ifc-properties} gives some sense of completeness to our properties which is missing from the work of \citeauthor{KhakpourSD13}.
 
 Lastly, we consider the work of \citeauthor{Nienhuis19} in \citetitle{Nienhuis19} \cite{Nienhuis19}.
-This work comes from a completely other direction: as opposed to verifying information flow properties in some existing architecture, the authors present a new architecture, CHERI, that guards memory accesses by \textit{capabilities}.
+This work comes from a completely other direction: as opposed to verifying information flow properties in existing architecture, the authors present a new architecture, CHERI, that guards memory accesses by \textit{capabilities}.
 These capabilities allow processes to perform given actions on a given range of memory, specified per virtual address.
 The development of CHERI was accompanied by formal methods and proofs to enhance the trust in this system.
 The CHERI architecture is an attempt to equip an architecture with strong mechanisms of controlling information flow such that the trust in it is very high from the beginning, supported by formal proofs that certain desirable properties hold for this architecture.
@@ -99,7 +98,7 @@ The CHERI architecture is an attempt to equip an architecture with strong mechan
 \label{sec:related-model-checking}
 
 The work of \citeauthor{BradfieldS16} in \citetitle{BradfieldS16} \cite{BradfieldS16} comes closest to what has been attempted in this thesis.
-On the high-level, \citeauthor{BradfieldS16} also attempt to verify an \gls{isa} and also use model checking to do so.
+\citeauthor{BradfieldS16} also attempt to verify an \gls{isa} and also use model checking to do so.
 However, they do not use higher-level properties or information flow tracking to achieve this.
 Coincidentally, the authors focus on the SYSRET vulnerability to the x86 architecture.
 Their goal is to prove the absence of SYSRET-like vulnerabilities which is expressed as the property: never can the processor be in privileged mode when at the same time the stack pointer, base pointer or instruction pointer are controlled by user-mode.
@@ -107,14 +106,14 @@ Their goal is to prove the absence of SYSRET-like vulnerabilities which is expre
 In their methodology, the authors first identify a group of vulnerable instructions which might lead to such a state by being interrupted.
 Eight instructions were identified as such - all of them being \minrv{Ecall}/\minrv{Mret} equivalents.
 The authors then model these instructions alongside with all state touched by these instructions.
-By sparsely constraining the initial state of the model they finally prove: for all initial states, there is no direct successor state where a general protection fault has been thrown and one of the stack, base or instruction pointers is controlled by user-mode.
+By sparsely constraining the initial state of the model they finally prove: for all initial states, there is no direct successor state where a general protection fault has been thrown and either the stack, base or instruction pointer is controlled by user-mode.
 The authors claim that by the constraints chosen for the initial states of the model, these states actually embody an over-approximation of all reachable states of the x86 architecture.
 With this methodology, the authors manage to correctly find that Intel's version of the x86 architecture is vulnerable to the SYSRET vulnerability while AMD's version is not.
 
 On the one hand, we find it to be unfair to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} clearly does not have the same scope as ours - their paper only comprises five pages.
 On the other hand, we find that the work in \cite{BradfieldS16} is lacking in two, key aspects.
 First and foremost, the problem of a circular argument in verification as discussed in section \ref{sec:trustworthiness} fully applies to this work.
-The authors do not use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restrict their model to instructions of which they know these are relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
+The authors do not use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restrict their model to instructions of which they know that these are relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
     With the property's encoding, the authors miss the original intent of the work: to verify the absence of SYSRET-\textit{like} vulnerabilities.
     By only considering general protection fault, a potentially huge class of other vulnerabilities is ruled out by assumption.
 }.
@@ -136,7 +135,7 @@ Instead of proving the absence of the SYSRET vulnerability, we opted to prove th
 
 Seven papers were considered as related work.
 Find an overview of all papers in table \ref{tbl:related-work}.
-Each column classifies related work in regard to the categories introduced at the beginning of this section: the subject of verification is software/hardware and an implementation/specification, verification is performed live/statically and information flow properties are expressed directly or as non-interference properties (if at all).
+Each column classifies related work in regard to the categories introduced at the beginning of this section: the subject of verification is software/hardware and an implementation/specification, verification is performed live/statically and information flow properties are expressed directly/as non-interference properties (if at all).
 
 The work coming closest to our methodology of verification via information flow control was \cite{GordonKPGNR15,SuhLZD04} and considered software.
 The work coming closest to our goal of verifying specifications against higher-level properties was \cite{Fox02,KhakpourSD13,BradfieldS16}.
@@ -171,7 +170,7 @@ Additionally, the work of \cite{SuhLZD04,KhakpourSD13} motivates to augment our 
 \end{table}
 
 With this overview at hand, we can come back to the discussion postponed in section \ref{sec:discuss-requirements} whether our work is \textit{supplemental} to related work.
-In this discussion, we will consider four references: the work of \citeauthor{Reid17} in \cite{Reid17}, of \citeauthor{Fox02} in \cite{Fox02} and of \cite{BradfieldS16} in \citeauthor{BradfieldS16}.
+In this discussion, we will consider four references: the work of \citeauthor{Reid17} \cite{Reid17}, of \citeauthor{Fox02} \cite{Fox02} and of \citeauthor{BradfieldS16} \cite{BradfieldS16}.
 Only the work of these authors is in direct competition to ours as all authors consider the verification of \gls{isa} specifications in a static context against higher-level properties.
 The work of \citeauthor{Nienhuis19} \cite{Nienhuis19} was excluded from this discussion since this work did not consider the verification but the development of an \gls{isa}.
 
@@ -191,6 +190,6 @@ In addition to this, we enhance on the work of \cite{Reid17} by considering an u
 Finally, an extensive comparison should be made to the work in \cite{BradfieldS16}, the only case where model checking was applied to architectural specifications.
 Yet unfortunately, this approach was flawed, did not use model checking to its full potential and implemented a very limited model.
 In \cite{BradfieldS16}, the properties again only took one transition in the state spaces into consideration whereas in this work we proved properties touching traces of possibly infinite length.
-Also, their model only comprised instructions related to mode-transitioning whereas here, we implemented a more or less complete set of basic \gls{risc} instructions.
+Also, their model only comprised instructions related to mode-transitioning whereas we implemented a more or less complete set of basic \gls{risc} instructions.
 And finally, the approach of \cite{BradfieldS16} was not only limited to the SYSRET vulnerability, it also attempted to verify that x86 architecture violates its own specification as the authors did not take into account that verifying specifications is a trade-off between changing the architecture and defining requirements that must be met by software running on it.
 All in all, this shows that our work is \textit{supplemental}.

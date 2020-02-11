@@ -3,10 +3,10 @@
 \chapter{Architecture}
 \label{chp:arch}
 
-In this section, the architecture to be worked with will be developed and implemented.
+In this section, the architecture to work with will be developed and implemented.
 As mentioned before, the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
-To derive a simpler version of the RISC-V architecture, which will be called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
-This introduction will be concluded by a summary that mentions which parts will be adopted and which parts will be left out in the development of the MINRV8 architecture.
+To derive a simpler version of the RISC-V architecture, which is called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
+This introduction will conclude with a summary that mentions which parts will be adopted and which parts will be left out in the development of the MINRV8 architecture.
 
 Consequently, in section \ref{sec:minrv8}, the MINRV8 architecture will be introduced.
 The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv, which is presented in section \ref{sec:model-implementation}.
@@ -200,7 +200,7 @@ If a \gls{pmp} entry is locked, not only can its contents not be changed anymore
 
 Another way of enforcing \gls{pmp} checks onto machine-mode is to set the MPRV bit in the \gls{mstatus} register.
 This bit is only available if more than one privilege mode is supported otherwise it is hardwired to zero.
-If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that has was preempted by taking the trap.
+If MPRV is set to one, \textcquote{RiscVISAP}{load and store memory addresses are translated and protected as though the current privilege mode were set to MPP}, i.e. they're performed with the privilege level that was preempted by taking the trap.
 
 Additionally, the \gls{mstatus} register supports the MXR field that allows to read executable memory regions.
 If MXR is not set, attempting to read from a memory region marked as executable will fail.
@@ -666,7 +666,7 @@ In order to control read- and write-access to the \glspl{csr}, the model knows t
 \end{lstlisting}
 
 These arrays provide bitmasks that indicate the least privilege level necessary to read or write the \gls{csr} of the corresponding index at the corresponding bit-position.
-All \glspl{csr} besides \gls{mstatus} can be read but but no \gls{csr} can be written by user-mode.
+All \glspl{csr} besides \gls{mstatus} can be read but no \gls{csr} can be written by user-mode.
 These constants are transformed to the bitmasks \smv{csr_read_mask} or \smv{csr_write_mask} respectively by the per-bit $ b $ implication of $ b \rightarrow \texttt{priv} $ based on the index of the currently targeted \gls{csr}.
 Bits of \glspl{csr} are changed by the \minrv{Csrrs} or \minrv{Csrrc} instruction only if \smv{csr_write_mask} is high at the corresponding index with two exceptions:
 \begin{itemize}
