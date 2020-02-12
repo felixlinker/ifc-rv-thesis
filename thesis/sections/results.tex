@@ -294,7 +294,7 @@ Steps \ref{itm:cache-pois-mem} and \ref{itm:cache-pois-smi} can also be swapped 
 Then, triggering the interrupt will make SMM mode execute parts of SMM memory which will leave some parts of the handler being cached.
 After SMM returns from handling the interrupt, administrator mode can read these words from cache.
 
-This attack does not fully apply to the MINRV8 architecture since it does not support as fine grained privilege modes as the x86 architecture.
+This attack does not fully apply to the MINRV8 architecture since it does not support as fine-grained privilege modes as the x86 architecture.
 In x86, administrator privileges are needed to set SMM memory cacheable and attack SMM-mode which is of higher privilege than administrator-mode.
 To apply this attack to the MINRV8 would bring the need of user-mode being able to set cacheability properties of memory regions.
 It is not reasonable to assume that anyone would give user-mode this power.
@@ -324,7 +324,7 @@ It should be part of future work to implement a complete model of the RISC-V spe
 \subsection{The SYSRET Vulnerability}
 \label{sec:sysret}
 
-The so called \textit{SYSRET vulnerability} to the Intel x86 architecture is listed as vulnerability \textit{CVE-2012-0217} by the \textit{Common Vulnerabilities and Exposures} database (CVE\textsuperscript{\textregistered}) \cite{SYSRET-vuln} and allegedly has also been found by Rafal Wojtczuk \cite{SYSRETFreeBSD,SYSRETDebian,SYSRETCert}.
+The so-called \textit{SYSRET vulnerability} to the Intel x86 architecture is listed as vulnerability \textit{CVE-2012-0217} by the \textit{Common Vulnerabilities and Exposures} database (CVE\textsuperscript{\textregistered}) \cite{SYSRET-vuln} and allegedly has also been found by Rafal Wojtczuk \cite{SYSRETFreeBSD,SYSRETDebian,SYSRETCert}.
 To our knowledge, the most concise and freely available explanation of the vulnerability can be found in the blog post \textit{The Intel SYSRET Privilege Escalation} by George Dunlap published on the page of Xen Project, a community for virtualization-related open source projects which in part also have been affected by said vulnerability \cite{Dunlap19}.
 
 The x86 architecture provides multiple ways to switch between privilege modes.

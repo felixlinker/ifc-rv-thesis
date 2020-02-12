@@ -6,18 +6,18 @@
 In the introduction, the core motivation of this thesis was given, which is to formally verify \glspl{isa} by model checking information flow control properties.
 In this section, the background of this thesis will be set up.
 
-The first two sections \ref{sec:verify-spec} and \ref{sec:bg-ifc} will introduce the foundational work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
-Following up on this, the actual subject of verification, \glspl{isa}, and the technical details of the verification process will be outlined.
+The first two sections, \ref{sec:verify-spec} and \ref{sec:bg-ifc}, will introduce the foundational work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
+The actual subject of verification, \glspl{isa}, and the technical details of the verification process will be outlined, following up on this.
 There will be not only an introduction to common \glspl{isa}, especially RISC-V, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a threat-model (section \ref{sec:ecosystem}).
 Then, a general explanation of model checking will be given, resulting in the description of the nuXmv model checker that will be used in this thesis (section \ref{sec:model-checking}).
 
 In each of these subsections, a collection of \glspl{isa} or model checkers respectively will be touched to \begin{enumerate*}[label=\alph*)]
     \item give a better feel for the field as a whole and
-    \item meaningfully argue for one of the presented options to be worked with in this thesis.
+    \item meaningfully argue for one of the presented options to work within this thesis.
 \end{enumerate*}
 However, the sections on \gls{risc} architectures other than RISC-V and model checker other than nuXmv can be skipped by readers that are more interested in the results of this thesis.
 
-As a final part of the background, in section \ref{sec:sum-background}, a summary of all aforementioned sections will be given which will allow for a outline of this thesis's methodology.
+As a final part of the background, in section \ref{sec:sum-background}, a summary of all aforementioned sections will be given, which will allow for an outline of this thesis's methodology.
 This methodology has been sketched in the introduction but can be given precisely only after the background has been introduced.
 
 \section{Formal Verification of Specifications}
@@ -67,12 +67,12 @@ Lastly, the requirement aimed at reducing the \enquote{risk of common-mode failu
 These approaches, however, all face the risk of issues with the specification being undetected because the implementation and specification both are affected by the same issue, i.e. the risk of issues being undetected because of common-mode failure.
 This risk can be mitigated if the properties the specification will be verified against actually express something \textit{new}.
 
-\citeauthor{Reid17} applies his approach to the ARM M-Class architecture for which not only a natural language but also a machine-readable specification is available.
+\citeauthor{Reid17} applies his approach to the ARM M-Class architecture, for which not only a natural language but also a machine-readable specification is available.
 The machine-readable specification of the ARM M-Class architecture provides the function \asl{TopLevel} which implements the transition of the architecture from one state to another, i.e. a cycle of the processor.
-The natural language specification on the other hand mainly consists of rules that constrain the behavior of the architecture in different situations, i.e. constrain the transition relation between architectural states that implicitly is given by the \asl{TopLevel} function.
+The natural language specification on the other hand mainly consists of rules that constrain the behaviour of the architecture in different situations, i.e. constrain the transition relation between architectural states that implicitly is given by the \asl{TopLevel} function.
 
 In principle, these two forms of specification also face the risk of common-mode failures.
-In practice, however, it turned out that the natural language specification included several rules that described the behavior of the architecture on a very high-level thus meeting aforementioned requirements.
+In practice, however, it turned out that the natural language specification included several rules that described the behaviour of the architecture on a very high-level, thus, meeting aforementioned requirements.
 Using these rules as high-level cross-cutting properties, \citeauthor{Reid17} was able to find 12 bugs in the ARM M-Class specification that despite prior testing had been undiscovered up to this point.
 
 In summary, the aspects of \cite{Reid17} that are relevant for this thesis are:
@@ -116,7 +116,7 @@ This enhances on three downsides of bounded model checking:
 \label{sec:bg-ifc}
 
 In \citetitle{Ferraiuolo17} \cite{Ferraiuolo17} by \citeauthor{Ferraiuolo17} the authors verify an implementation of the ARM TrustZone architecture by statically type-checking an information flow policy.
-To achieve this, they enhance on the already existing \gls{hdl} language SecVerilog, extending its type system to allow more fine grained modelling of information flow policies.
+To achieve this, they enhance on the already existing \gls{hdl} language SecVerilog, extending its type system to allow more fine-grained modelling of information flow policies.
 Therefore, the authors verify an implementation against higher-level properties as opposed to verifying a specification as done by \citeauthor{Reid17} in \cite{Reid17}.
 This thesis takes this general approach and lifts it to be applied to specifications rather than \glspl{hdl}.
 
@@ -138,7 +138,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
     \begin{figure}
         \centering
         \includegraphics[width=0.4\textwidth]{figures/ifp-lattice.png}
-        \caption{Lattice of security labels for verifying an ARM TrustZone implementation displayed as Hasse diagram \cite{Ferraiuolo17}}
+        \caption{A lattice of security labels for verifying an ARM TrustZone implementation displayed as Hasse diagram \cite{Ferraiuolo17}}
         \label{fig:sec-lattice}
     \end{figure}
 
@@ -151,8 +151,8 @@ The core of both of these languages when it comes to information flow control is
 This enables verifying an information flow policy by static type-checking.
 In SecVerilog, variables are typed by labels of the respective information flow policy.
 The type of a variable is described either by a label $ l \in M $ directly, by the conjunction $ \sqcap $ or disjunction $ \sqcup $ of two labels or by a type-level function $ f $ that maps some program variable $ v $ to a type.
-SecVerilogBL enhances on this by tracking security labels not only per variable but also per bit and array element therefore allowing for more fine grained annotation of the \gls{hdl} code but also adding a mechanism to downgrade information.
-Since information is not allowed to flow \enquote{down} in the lattice, downgrading can be understood best as a typecast that allows such behavior.
+SecVerilogBL enhances on this by tracking security labels not only per variable but also per bit and array element therefore allowing for more fine-grained annotation of the \gls{hdl} code but also adding a mechanism to downgrade information.
+Since information is not allowed to flow \enquote{down} in the lattice, downgrading can be understood best as a typecast that allows such behaviour.
 In some \gls{hdl} models, it might be necessary to permit insecure flows of information (in regard to the information flow policy).
 In those cases, a programmer can use \lstinline[mathescape]{downgrade(e, $ \tau $)} to annotate the expression \lstinline{e} as being of type $ \tau $, regardless of any prior annotations.
 This effectively \textit{grades} the label of a bit of information \textit{down} such that information is not routed to a sink annotated with a label smaller than the information.
@@ -196,7 +196,7 @@ This way, a constant type $ \tau $ of kind $ l $ can be applied to a whole bit v
     \end{lstlisting}
 
     In this example, the variable \lstinline{ns} refers to the \textit{security state} of the ARM TrustZone architecture.
-    The ARM TrustZone architecture not only spoorts different privilege but also security states which can either be secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
+    The ARM TrustZone architecture not only supports different privilege but also security states which can either be secure-state (meant to handle confidential data) or non-secure-state (meant to handle only non-confidential data).
     The variable \lstinline{ns} in the implementation of the ARM TrustZone architecture by \citeauthor{Ferraiuolo17} indicates whether the architecture currently is in secure- or non-secure-state.
 
     The variables \lstinline{read} and \lstinline{reg_ns} illustrate the purpose of lifting types to higher kinds.
@@ -228,7 +228,7 @@ These rules are written as proofs of sequent calculus.
     This proof states that the formula $ C $ can be derived from the formulas $ A $ and $ B $ or more formally that: $ A, B \vdash C $.
 \end{example}
 
-In the context of type systems, formulas used in proofs of sequent calculus often are so called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} types some \textit{expression}, e.g., if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type, one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
+In the context of type systems, formulas used in proofs of sequent calculus often are so-called \textcquote{Ferraiuolo17}{typing judgements} where some \textit{environment} types some \textit{expression}, e.g., if $ X $ is a type environment, $ x $ an expression and $ \tau $ a type, one possible typing judgement would be $ X \vdash x : \tau $ which means that $ x $ is of type $ \tau $ under the environment $ X $.
 In \cite{Ferraiuolo17} three such environments are introduced:
 
 \begin{description}
@@ -238,7 +238,7 @@ In \cite{Ferraiuolo17} three such environments are introduced:
 \end{description}
 
 \citeauthor{Ferraiuolo17} introduce eight typing rules; these are for constant expressions and variables, logical and arithmetic expressions, bit vector concatenation and shifting as well as array indexing.
-An overview of some typing rules of \cite{Ferraiuolo17} are depicted in figure \ref{fig:type-rules}\footnote{%
+An overview of some typing rules of \cite{Ferraiuolo17} is depicted in figure \ref{fig:type-rules}\footnote{%
     It will turn out that only these typing rules are relevant in context of this thesis.
 }.
 The most simple type system rule probably is T-Const which types constant expressions $ n $.
@@ -413,7 +413,7 @@ If these features do not suffice for a specific use-case, there are nine optiona
 As for registers, the ARMv8-A architecture supports the most versatile types of registers of all \gls{risc} architectures to be compared in this thesis.
 Depending on the execution state, 13 to 31 32- or 64-bit registers are supported.
 Additionally, there is a \gls{pc}, a dedicated \gls{sp} and some exception link registers.
-A general purpose register is used as the standard \gls{lr}.
+A general-purpose register is used as the standard \gls{lr}.
 Furthermore, there are 32 64- or 128-bit registers for floating point and vector arithmetic and a collection of \glspl{csr} that hold status information of the architecture.
 
 \subsection{MIPS}
@@ -481,7 +481,7 @@ You can find a list of all standard extensions in table \ref{tbl:rv-exts}.
     \label{tbl:rv-exts}
 \end{table}
 
-A subset of the RISC-V \gls{isa} is described by a so called \textcquote{RiscVISA}{\gls{isa} naming string} which comes in the following form:
+A subset of the RISC-V \gls{isa} is described by a so-called \textcquote{RiscVISA}{\gls{isa} naming string} which comes in the following form:
 
 \begin{grammar}
     <naming-string> ::= `RV' (`32' | `64' | `128') (`I' | `E') <extensions>
@@ -494,10 +494,10 @@ A RISC-V core consists of multiple \glspl{hart}.
 Each \gls{hart} controls its own set of registers including a \gls{pc} and is equipped with its own instruction fetch unit.
 However, multiple \glspl{hart} share the same memory.
 
-A \gls{hart} might either control 16 or 32 general purpose registers which are named from x0 to x31.
-All but one instruction sets support 32 general purpose registers whereas the exception to this is the base instruction set aimed at embedded computing, RV32E, which only supports 16 general purpose registers.
+A \gls{hart} might either control 16 or 32 general-purpose registers which are named from x0 to x31.
+All but one instruction sets support 32 general-purpose registers whereas the exception to this is the base instruction set aimed at embedded computing, RV32E, which only supports 16 general-purpose registers.
 
-Similarly to the MIPS architecture, the first of these general purpose registers is hardwired to zero and for example can be used as a target register when the result of an instruction is not needed.
+Similarly to the MIPS architecture, the first of these general-purpose registers is hardwired to zero and for example can be used as a target register when the result of an instruction is not needed.
 Also, there is no dedicated \gls{lr} or \gls{sp}.
 RISC-V supports up to 4096 \glspl{csr}.
 
@@ -527,7 +527,7 @@ With these boundaries in mind, it must be decided what will be incorporated in t
 
 The hardware implementation of an \gls{isa} is called \textit{microarchitecture}.
 Such implementations usually incorporate sophisticated features that speed up operation of the chip such as pipelining.
-Instructions that are defined as part of an \gls{isa} are not atomic in regard to their execution; there usually are five steps that must be taken in order to execute an instruction, the so called Von-Neumann cycle (cf. \cite[p.286]{Patterson13}):
+Instructions that are defined as part of an \gls{isa} are not atomic in regard to their execution; there usually are five steps that must be taken in order to execute an instruction, the so-called Von-Neumann cycle (cf. \cite[p.286]{Patterson13}):
 \begin{enumerate}
     \item Instruction fetch - load the instruction from memory
     \item Instruction decode and register file read - Read the fetched instruction and read registers targeted by the instruction
@@ -630,7 +630,7 @@ Model checking is a technique that falls into the domain of formal verification.
 It is one way to prove that a given system complies with a given specification.
 \citeauthor{Baier08} introduce model checking in their book \citetitle{Baier08} \cite{Baier08} as:
 \begin{displaycquote}[p.7ff.]{Baier08}
-    \textit{Model-based} verification techniques are based on models describing the possible system behavior in a mathematically precise and unambiguous manner. \textelp{}
+    \textit{Model-based} verification techniques are based on models describing the possible system behaviour in a mathematically precise and unambiguous manner. \textelp{}
     This provides the basis for a whole range of verification techniques ranging from an exhaustive exploration (model checking) to experiments with a restrictive set of scenarios in the model (simulation), or in reality (testing). \textelp{}
 
     Model checking is a verification technique that explores all possible system states in a brute-force manner.
@@ -1236,7 +1236,7 @@ The idea for the implementation is straight-forward:
 \begin{itemize}
     \item Use input variables to model instructions to the architecture
     \item Use variables to model the architectural state, i.e. registers, etc.
-    \item Use transition constraints to implement the behavior of each instruction
+    \item Use transition constraints to implement the behaviour of each instruction
 \end{itemize}
 
 We furthermore decided to express the information flow control of the architecture in \gls{ltl}.

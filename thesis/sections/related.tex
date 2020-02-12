@@ -123,8 +123,8 @@ Whilst it might be an adequate showcase for instances of problems where model ch
 
 Secondly, the property proposed by \citeauthor{BradfieldS16} is not in line with Intel's x86 specification (cf. \cite{Dunlap19}).
 The purpose of the SYSENTER and SYSEXIT instructions \textit{is} to execute privileged code with the stack pointer being controlled by user-mode to reduce the overhead of the mode transition.
-This means, that taking a general protection fault while handling a call to machine-mode via SYSENTER, leaving the general protection fault handler with a stack pointer controlled by user-mode is intended behavior.
-This might be badly designed behavior - but it works as specified.
+This means, that taking a general protection fault while handling a call to machine-mode via SYSENTER, leaving the general protection fault handler with a stack pointer controlled by user-mode is intended behaviour.
+This might be badly designed behaviour - but it works as specified.
 In practice, operating systems opted to ensure that no general protection fault could occur when executing the SYSRET instruction but to verify Intel's x86 architecture to not be susceptible to the SYSRET vulnerability asks from it to violate the specification.
 
 In contrast, regarding the first issue, in our work we not only proposed more general properties that were not rooted in specific vulnerabilities but in a structured model of information flow and also would apply to other architectures with few adjustments required, we also took clear and justifiable steps when minimizing the RISC-V architecture such that it would be feasible to verify it in scope of this thesis.

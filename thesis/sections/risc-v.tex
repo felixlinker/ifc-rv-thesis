@@ -66,9 +66,9 @@ In contrast to memory operations, addresses targeted by jumps must be aligned co
 If this is not the case, an exception will be generated.
 
 Jumps are intended to call routines and functions.
-This is why they store a return address to some general purpose register.
+This is why they store a return address to some general-purpose register.
 Branches on the other hand are intended to control program flow, e.g., to implement an \textit{if-else} structure or \textit{for}-loops where code will not return from the branched execution.
-RISC-V is agnostic about the details of calling conventions for routines, e.g., how the stack is organized, which general purpose registers are used as \gls{lr} or \gls{sp}, and leaves these details to be implemented by software running on the core.
+RISC-V is agnostic about the details of calling conventions for routines, e.g., how the stack is organized, which general-purpose registers are used as \gls{lr} or \gls{sp} and leaves these details to be implemented by software running on the core.
 
 \paragraph{Platform management instructions}
 The RISC-V manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions performing operations that potentially need some form of privilege.
@@ -180,7 +180,7 @@ RISC-V offers two ways to configure physical memory: \glspl{pma} and \gls{pmp}.
 Examples for such \enquote{inherent properties} are supported access types, whether a region of memory supports memory access ordering or and cacheability.
 Depending on the implementation, these attributes might be hardwired for certain regions (or all) or modifiable by software.
 In general, \glspl{pma} constrain possible interactions with physical memory.
-\glspl{pma} can be accessed by software to determine what kind of behavior it can expect from a physical region of memory.
+\glspl{pma} can be accessed by software to determine what kind of behaviour it can expect from a physical region of memory.
 
 The \gls{pmp} setup serves as another layer of \textit{protection} for regions of memory.
 This makes it similar to virtual memory.
@@ -264,7 +264,7 @@ Software interrupts can be set pending by software running on the same \gls{hart
 Software interrupts have no predefined semantics and thus can be used by programmers or system designers in every imaginable way.
 
 Each of these categories of interrupts can target any privilege-mode resulting in a total of six interrupts available to the platform in our case (or nine if supervisor-mode is supported).
-These interrupt-types are associated with indices in the range from $ 0_{10} $ to $ 11_{10} $, also called interrupt code\footnote{%
+These interrupt-types are associated with indices in the range from $ 0_{10} $ to $ 11_{10} $, also-called interrupt code\footnote{%
     The reader might have noticed that these are more indices than needed to encode all interrupts available - even if supervisor-mode is present.
     Indices 2, 6 and 10 currently are reserved.
     These indices' two least significant bits are $ 10_2 $ which corresponds to the encoding of hypervisor-mode.
@@ -434,7 +434,7 @@ A secure embedded system that implements the RV32E, i.e. base integer instructio
 The reasoning behind the architecture and features included was given in section \ref{sec:risc-v-selection}.
 In this section, the architecture itself will be introduced and briefly specified.
 
-MINRV8 supports four general purpose registers and has two privilege modes: machine- and user-mode.
+MINRV8 supports four general-purpose registers and has two privilege modes: machine- and user-mode.
 Besides this, it has 4-bytes of readable and writeable but non-executable memory divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies the remaining addresses 2 to 3.
 MINRV8 supports basic instructions for memory reads and writes, integer arithmetic with $ + $ and $ - $, bit-shifts, bitwise-logical operations with \minrv{And} and \minrv{Or}, a \minrv{Mov} instruction to move a word from one register to another, a comparison instruction, two instructions to switch privilege mode and instructions to read and write \glspl{csr}.
 A full list of all instructions can be found in table \ref{tbl:min-arch-instrs}.
@@ -488,7 +488,7 @@ All this gives strong assurance that the computational model of MINRV8 does not 
     \label{tbl:min-arch-instrs}
 \end{table}
 
-Besides the general purpose storage options, MINRV8 also includes three \glspl{csr}: an \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration \glspl{pma} as described in section \ref{sec:risc-v-selection}.
+Besides the general-purpose storage options, MINRV8 also includes three \glspl{csr}: an \gls{mstatus} equivalent, a \gls{pmpcfg} equivalent and a \gls{pmacfg} register that implements the configuration \glspl{pma} as described in section \ref{sec:risc-v-selection}.
 MINRV8 supports external interrupts as the only source of interrupts and an environment call to machine-mode as the only source of exceptions.
 Therefore, in the context of MINRV8, \gls{mstatus} has 4 bits comprising two stacking bits for taking traps, i.e. MPP (machine-mode prior privilege) and MPIE (machine-mode prior interrupts enabled), a MEIP bit to signal pending external interrupts and a MIE bit to en- or disable interrupts globally.
 By this combination of \glspl{csr}, it was only included from RISC-V what was necessary to implement the features presented in section \ref{sec:risc-v-selection}.

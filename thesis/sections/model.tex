@@ -472,7 +472,7 @@ However, this leads us to phrase a property about the \gls{csr} labels that ensu
 \end{enumerate}
 
 Both of these properties are founded in intuition as well.
-It is not safe to have an attacker control the load and store instructions of machine-mode since this could lead to unwanted behavior of code.
+It is not safe to have an attacker control the load and store instructions of machine-mode since this could lead to unwanted behaviour of code.
 One might object that this is not problematic since, if a malicious value was to be loaded by machine-mode, information flow tracking should catch this, however, this must not necessarily be the case.
 An attacker could trick machine-mode into using a value that is labelled as integrous but coincidentally diverges the control flow of machine-mode in a way that is beneficial to an attacker.
 Additionally, it is obvious that \glspl{csr} should only be written with trusted data.

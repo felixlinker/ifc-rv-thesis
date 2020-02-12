@@ -159,7 +159,7 @@ From this point of view, it is not a problem to apply the results of the verific
 
 The implementation of the MINRV8 architecture abstracted from real-world architectures in two main points:
 \begin{enumerate}
-    \item nuXmv does not guarantee stable behavior on \minrv{Ecall} instructions; this introduces a sense of non-determinism where nuXmv considers more programs than could actually be run on the MINRV8 architecture.
+    \item nuXmv does not guarantee stable behaviour on \minrv{Ecall} instructions; this introduces a sense of non-determinism where nuXmv considers more programs than could actually be run on the MINRV8 architecture.
     This is not problematic because overabstracting the space of all programs $ P $ still leaves nuXmv considering all programs in $ P $.
     \item The implementation does not support jump or branch instructions.
     This is not problematic because programs including jumps can be linearized; such programs \textit{are} considered by nuXmv.

@@ -92,7 +92,7 @@ These counter-examples are illustrated in table \ref{tbl:cex-mem-i-npw} and \ref
 On the other hand, if machine-mode is allowed to store arbitrary words into public memory, a simple counter-example to the \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) is that machine-mode simply stores a secret into public memory which is then loaded by user-mode as illustrated by the trace in table \ref{tbl:cex-no-leak-npw}.
 
 Additionally, in this counter-example the consequences of assuming \minrv{CLR_ON_RET} can be seen.
-Machine-mode tries to hide secrets from user-mode by writing a public value into register zero before returning which is mandated by aforementioned assumption.
+Machine-mode tries to hide secrets from user-mode by writing a public value into register zero before returning, which is mandated by aforementioned assumption.
 Yet, as shown in the last paragraph, this assumption taken alone, does not ensure the absence of \smv{NO_LEAK} related counter-examples.
 
 \begin{table}
@@ -129,7 +129,7 @@ In each counter-example, at least one memory region initially is writable for us
 Machine-mode changes the privilege settings of that memory region making it non-writable to user-mode and then loads and uses a machine-word which is untrusted violating the respective integrity related property.
 
 The counter-example given when not assuming \smv{CLR_ON_DECLASSIFICATION} is given in table \ref{tbl:cex-no-leak-cod}.
-The architecture starts with some confidential data in the memory of the first memory region which is not publicly readable.
+The architecture starts with some confidential data in the memory of the first memory region, which is not publicly readable.
 In the first step, machine-mode however sets just that memory to being publicly readable.
 Machine-mode does clear its registers before giving control back to user-mode, yet this is irrelevant since user-mode can just load the contents from the now accessible memory region one which violates the \smv{NO_LEAK} property (cf. \ref{itm:prop-no-leak}).
 
@@ -160,7 +160,7 @@ Machine-mode does clear its registers before giving control back to user-mode, y
 Coming to the assumptions that constrain interaction with cache, the counter-examples given by nuXmv are not completely straight forward.
 As a start, consider the counter-examples generated when not assuming \smv{SAN_CACHE_ON_DECLASSFICATION} for the \smv{MEMORY_OP_INTEGRITY} property in table \ref{tbl:cex-mem-i-scocl}.
 In the first instruction, machine-mode sets memory region one to be inaccessible by user-mode which does not violate assumption \minrv{SAN_ON_CLASSIFICATION} since all memory provides trusted values.
-In the next instruction, machine-mode decides to load a word from memory which happens to be untrusted.
+In the next instruction, machine-mode decides to load a word from memory, which happens to be untrusted.
 This must come from cache since no other memory cell matches this label.
 This is only possible because memory region one is set to be write-back-cacheable where writes not necessarily must be reflect in memory.
 This word is then used as address for a \minrv{Load} instruction violating property \ref{itm:prop-mem-i}.
@@ -255,7 +255,7 @@ However, these counter-examples show that it is still possible to implement the 
 
 This carries over to the counter-example for property \smv{NO_LEAK} (\ref{itm:prop-no-leak}) which is depicted in table \ref{tbl:cex-no-leak-cache-vuln}.
 This counter-example more closely matches the alternative version of the cache-poisoning attack used for reading SMM memory.
-nuXmv sets the initial state up such that the cache holds some confidential data for one of the memory regions which both are set to be write-back-cacheable and non-readable to user-mode.
+nuXmv sets the initial state up such that the cache holds some confidential data for one of the memory regions, which both are set to be write-back-cacheable and non-readable to user-mode.
 Yet still, user-mode can gain access to the confidential word in cache as no access controls are performed when reading from cache.
 
 \begin{table}
