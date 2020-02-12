@@ -431,7 +431,7 @@ It is intuitive that the address does not influence the label of the information
 This leads to the following property:
 \begin{enumerate}[label=\Roman*.,series=]
     \item \label{itm:prop-mem-i}
-    Whenever a memory operation is performed in privileged mode, the target address must be integrous.
+    Whenever a memory operation is performed in privileged mode, the target address must be trusted.
 
     \begin{lstlisting}[
         language=smv,
@@ -449,7 +449,7 @@ This leads to the following property:
 Secondly, recall the definition of the semantics for \rv{Csrrs} or \rv{Csrrc}, respectively.
 These only propagate information flow tracking labels by assigning the constant labels of the \gls{csr} read to the respectively targeted register.
 We decided to model the labels of \glspl{csr} as constants because they control the state of the architecture and as such might be target of an attack.
-We labelled all \glspl{csr} as integrous and \gls{mstatus} as confidential.
+We labelled all \glspl{csr} as trusted and \gls{mstatus} as confidential.
 We decided to not label \gls{pmacfg} or \gls{pmpcfg} as confidential since it can be assumed that user mode must be able to know where memory regions are to operate correctly.
 
 Coming back to the information flow semantics of \rv{Csrrs} and \rv{Csrrc}, notice that in the respective definition of the semantical functions the value, the \glspl{csr} are written with, is not used.
@@ -457,7 +457,7 @@ This must necessarily be the case since the labels of the \glspl{csr} are consta
 However, this leads us to phrase a property about the \gls{csr} labels that ensures their integrity:
 \begin{enumerate}[label=\Roman*.,resume]
     \item \label{itm:prop-csr-i}
-    Whenever a \gls{csr} is written, the value it is written with must be integrous.
+    Whenever a \gls{csr} is written, the value it is written with must be trusted.
 
     \begin{lstlisting}[
         language=smv,
@@ -474,7 +474,7 @@ However, this leads us to phrase a property about the \gls{csr} labels that ensu
 Both of these properties are founded in intuition as well.
 It is not safe to have an attacker control the load and store instructions of machine-mode since this could lead to unwanted behaviour of code.
 One might object that this is not problematic since, if a malicious value was to be loaded by machine-mode, information flow tracking should catch this, however, this must not necessarily be the case.
-An attacker could trick machine-mode into using a value that is labelled as integrous but coincidentally diverges the control flow of machine-mode in a way that is beneficial to an attacker.
+An attacker could trick machine-mode into using a value that is labelled as trusted but coincidentally diverges the control flow of machine-mode in a way that is beneficial to an attacker.
 Additionally, it is obvious that \glspl{csr} should only be written with trusted data.
 
 From all the variables our implementation of the MINRV8 architecture comprises we now considered \smv{regs} and \smv{memory} as well as \smv{cache} in regards to the security of the architecture by looking at the gaps of the information flow semantic functions.
@@ -516,8 +516,8 @@ In the end, all variables of the main module and all labels of arguments to inst
 
 The properties that were finally established are:
 \begin{enumerate}[label=\Roman*.]
-    \item \smv{MEMORY_OP_INTEGRITY}: whenever a memory operation is performed in privileged mode, the target address must be integrous.
-    \item \smv{CSR_INTEGRTY}: whenever a \gls{csr} is written, the value it is written with must be integrous.
+    \item \smv{MEMORY_OP_INTEGRITY}: whenever a memory operation is performed in privileged mode, the target address must be trusted.
+    \item \smv{CSR_INTEGRTY}: whenever a \gls{csr} is written, the value it is written with must be trusted.
     \item \smv{NO_LEAK}: whenever the architecture is in user mode, there is no confidential data in any register.
 \end{enumerate}
 
@@ -533,6 +533,6 @@ There are two points in which the privilege mode changes: first, it changes from
 The \smv{NO_LEAK} property (\ref{itm:prop-no-leak}) mandates that the confidentiality labels of the registers always resemble the first row in the diagram, i.e. they are only high when the current privilege mode also is high.
 The green areas highlight where the registers could contain confidential data, i.e. the confidentiality  labels \textit{could} be high, but the orange areas highlight the point in time where the confidentiality labels \textit{must} be low.
 The properties \smv{MEMORY_OP_INTEGRITY} (\ref{itm:prop-mem-i}) and \smv{CSR_INTEGRITY} (\ref{itm:prop-csr-i}) follow the same visualization.
-In the second row of the figure, it is visualized whether inputs to memory or \gls{csr} related instructions are integrous.
+In the second row of the figure, it is visualized whether inputs to memory or \gls{csr} related instructions are trusted.
 The integrity labels to input of these instructions must be high, whenever the architecture is in machine-mode and can be low if the architecture is on user-mode.
 Analogously, the green areas mark where the integrity labels \textit{could} be low but the orange areas indicate where it \textit{must} be high.
