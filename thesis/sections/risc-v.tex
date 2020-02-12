@@ -67,8 +67,8 @@ If this is not the case, an exception will be generated.
 
 Jumps are intended to call routines and functions.
 This is why they store a return address to some general-purpose register.
-Branches on the other hand are intended to control program flow, e.g., to implement an \textit{if-else} structure or \textit{for}-loops where code will not return from the branched execution.
-RISC-V is agnostic about the details of calling conventions for routines, e.g., how the stack is organized, which general-purpose registers are used as \gls{lr} or \gls{sp} and leaves these details to be implemented by software running on the core.
+Branches on the other hand are intended to control program flow, e.g. to implement an \textit{if-else} structure or \textit{for}-loops where code will not return from the branched execution.
+RISC-V is agnostic about the details of calling conventions for routines, e.g. how the stack is organized, which general-purpose registers are used as \gls{lr} or \gls{sp} and leaves these details to be implemented by software running on the core.
 
 \paragraph{Platform management instructions}
 The RISC-V manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions performing operations that potentially need some form of privilege.
@@ -195,7 +195,7 @@ The permissions specified about a region of memory by a \gls{pmp} entry are enfo
 One exception to this is the \textit{locking} of \gls{pmp} entries.
 If a \gls{pmp} entry is locked, not only can its contents not be changed anymore\footnote{%
     System resets may reset an entry - unlocking it.
-    However, manufacturers still can decide to hardwire a \gls{pmp} entry, e.g., to make it read-only.
+    However, manufacturers still can decide to hardwire a \gls{pmp} entry, e.g. to make it read-only.
     This, however could also be realized via \glspl{pma}.
 }, the respective permissions also are enforced on machine-mode.
 
@@ -320,7 +320,7 @@ On execution of the $x$RET instruction, the architecture will reset the state ac
 
 \paragraph{Summary}
 In the previous paragraphs, the basic ideas of the three levels of privilege, memory attributes and protection and interrupt and exception handling specified by the privileged architecture of RISC-V \cite{RiscVISAP} were introduced.
-The specification includes even more mechanisms then these, e.g., it was touched that there are timer \glspl{csr} but there is much more.
+The specification includes even more mechanisms then these, e.g. it was touched that there are timer \glspl{csr} but there is much more.
 However, these mechanisms are beyond this thesis's scope as they \begin{enumerate*}[label=\alph*)]
     \item often do not introduce new concepts to the architecture as a whole but build up on already introduced ones\footnote{%
         A prominent exception to this is supervisor-mode adding support for virtualization.
@@ -631,7 +631,7 @@ In general, all variables besides \smv{priv} change their value in accordance wi
 At first, it is checked whether a trap occurred.
 All variables besides \smv{mstatus}, which is mapped to \smv{csrs[0]}, are stable in this case.
 Then, it is checked whether the current instruction is targeting the respective variable: for example, for an \minrv{Add} instruction, some index \smv{i}, and the variable \smv{regs}, check whether \smv{rd == i}.
-Finally, the variable must only change its value, if the current instruction applies to the variable, e.g., a \minrv{Store} instruction will only change values of \minrv{memory} but not \minrv{regs}.
+Finally, the variable must only change its value, if the current instruction applies to the variable, e.g. a \minrv{Store} instruction will only change values of \minrv{memory} but not \minrv{regs}.
 If all checks succeed, the respective instruction is evaluated and the variable is assigned with the instruction's result.
 
 \begin{figure}
@@ -678,7 +678,7 @@ Bits of \glspl{csr} are changed by the \minrv{Csrrs} or \minrv{Csrrc} instructio
 The transition relation of the registers and memory is easier to understand.
 \smv{regs} changes at index \smv{i} if it is targeted by some instruction and no trap is taken.
 Then, \smv{regs[i]} is written with a value determined by the instruction semantics\footnote{%
-    This only applies to instructions that \textit{have} semantics targeting registers, e.g., \minrv{Ecall} will not change values of any register.
+    This only applies to instructions that \textit{have} semantics targeting registers, e.g. \minrv{Ecall} will not change values of any register.
 }.
 These per-instruction semantics include considering the \smv{csr_read_mask} bitmask on \minrv{Csrrs} and \minrv{Csrrc}.
 
@@ -712,7 +712,7 @@ If a memory region is set as cacheable\footnote{%
 On a \minrv{Load}, if the cache is invalid or currently holds the contents of a different memory address than targeted, \smv{addr} gets written with \smv{regs[rs1] mod 4}, i.e. the address to read from, \smv{valid} becomes \smv{TRUE} and \smv{line} is written with \smv{memory[addr]}\footnote{%
     \smv{addr} here refers to the already updated value of that variable, i.e. \smv{regs[rs1] mod 4}.
 }, i.e. the value to read.
-This process is independent of the current privilege level, e.g., user-mode attempting to read from a memory address causes a cache-fill regardless of whether user-mode can access the region.
+This process is independent of the current privilege level, e.g. user-mode attempting to read from a memory address causes a cache-fill regardless of whether user-mode can access the region.
 In this case, though, user-mode still will not be able to read the respective word as reads are privileged controlled.
 
 If, however, on a \minrv{Load} the cache already holds the targeted word, is valid and the current mode suffices to read the respective memory address, \smv{line} instead of \smv{memory[regs[rs1] mod 4]} will be written into register \smv{rd}.

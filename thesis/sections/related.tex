@@ -10,7 +10,7 @@ However, we will make an extensive comparison to the paper \citetitle{BradfieldS
 Before this, we will first introduce work related to software and after that work related to hardware.
 All related work covers verification\footnote{%
     It was a deliberate decision to not label all related work as \textit{formal} verification.
-    e.g., \cite{Zhang15,SuhLZD04} do verify either properties or live program execution but do not use formal methods to accomplish this.
+    E.g. \cite{Zhang15,SuhLZD04} do verify either properties or live program execution but do not use formal methods to accomplish this.
 } of specifications or via information flow properties.
 We found that related work can be characterized by four dimensions:
 \begin{enumerate}
@@ -30,7 +30,7 @@ Secondly, \citeauthor{SuhLZD04} propose an approach to live track information on
 It is quite far-fetched to call \cite{SuhLZD04} a paper about \textit{verification}.
 Nonetheless, is methodologically close to ours.
 
-The authors of \cite{GordonKPGNR15} consider information flow privacy sensitive sources of information, e.g., unique device ID, SMS messages and other private file, to riskful sinks of information, e.g., the network, NFC and the local file system.
+The authors of \cite{GordonKPGNR15} consider information flow privacy sensitive sources of information, e.g. unique device ID, SMS messages and other private file, to riskful sinks of information, e.g. the network, NFC and the local file system.
 Both, sources and sinks, are guarded by the android \gls{api}.
 The authors track information flow from sensitive sources to sensitives sinks which both are given by specific calls to methods of the android \gls{api}.
 DroidSafe manages to detect at least 90\% of malicious information flows in selected benchmarks whilst reporting at most 13 false positives.
@@ -49,7 +49,7 @@ The authors propose a simple security policy involving two rules:
 Whereas the first cannot be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to our integrity property \ref{itm:prop-mem-i}, which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
 The exception of bound-checks is implicitly modelled by the \smv{SAN_ON_*} assumptions in chapter \ref{chp:results} which mandate from machine-mode to sanitize register of spurious values before using them.
 Such a sanitization might be implemented by boundary-checking.
-Here, machine-mode can only sanitize registers by clearing them, e.g., by using the shift left instruction \minrv{Sll}.
+Here, machine-mode can only sanitize registers by clearing them, e.g. by using the shift left instruction \minrv{Sll}.
 This is not critical for our results since if an actual value ever was to be relevant for an attack, nuXmv could have chosen to let machine-mode load this exact value via an \minrv{Loadi} instruction.
 If, however, executable memory was part of the model, sanitization methods might need to be adopted.
 
