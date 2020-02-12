@@ -35,7 +35,6 @@ Whereas the topics of the scope and trustworthiness of our work touch more gener
 
 MINRV8 is meant to be a reasonable abstraction of a real-world RISC-V architecture from a security standpoint.
 However, up to this point nothing has been said about the limits of this abstraction.
-With every abstraction, there is a small chance that it perfectly matches the concept that has been abstracted in regard to the purpose of the abstraction but in most cases, some corners are cut.
 In this section, we will reflect on the limits of the MINRV8 architecture and its implementation.
 
 In summary, the MINRV8 architecture knows three groups of instructions (cf. table \ref{tbl:min-arch-instrs}):
@@ -239,7 +238,7 @@ With such a mechanism in place, machine-mode could not be fooled into using the 
 
 These two examples stress that the precise phrasing of the assumptions is critical for both how realistic the assumptions are and how well they might be suited to serve as target for verification of actual code-bases.
 While it would be sufficient to find a stronger precondition for these assumptions in existing code-bases, it is non-trivial whether such preconditions are easy to find or whether the assumptions might be rephrased such that they still grant the absence of information flow related bugs but are easier to verify in programs.
-This topic, though, cannot be handled as part of this thesis and as such marks future work.
+Thoroughly investigating how to phrase properties, however, would be out of the scope of this thesis and, as such, marks future work.
 
 \section{Trustworthiness of the Approach}
 \label{sec:trustworthiness}
@@ -364,15 +363,15 @@ Secondly, in sections \ref{sec:per-bit-tracking} it was discussed that bit-wise 
 All of this gives good reasons to believe that our approach is indeed \textit{viable} and could be applied to other architectures with reasonable effort.
 
 To discuss the \textit{relevance} of this work, recall that in section \ref{sec:assumptions} it was shown that the implementation of the MINRV8 architecture models the property \enquote{assumptions $ \Leftrightarrow $ properties}.
-This was put to a test by exposing the implementation to the cache poisoning or SYSRET vulnerability where it was found that it then does violate the properties as presented in section \ref{sec:ifc-properties}.
+This was put to the test by exposing the implementation to the cache poisoning or SYSRET vulnerability where it was found that it then does violate the properties as presented in section \ref{sec:ifc-properties}.
 In other words, it was shown that the three properties \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK} cover at least vulnerabilities related to the cache poisoning or SYSRET vulnerability without any manual intervention besides changing the architecture itself.
 This marks the main result of this thesis and shows that our approach to verifying \glspl{isa} is \textit{effecitve}.
 Furthermore, mitigations to these vulnerabilities can be verified using the same model.
-It must be decided on a case by case basis whether a given violation of the information flow properties actually marks a vulnerability of the architecture leaving it with the need to be altered or marks a feature the risks of which must be controlled in software.
+It must be decided on a case by case basis whether a given violation of the information flow properties marks a vulnerability of the architecture leaving it with the need to be altered or marks a feature the risks of which must be controlled in software.
 
 The discussion whether our work also is \textit{supplemental} will be postponed to a later stage.
 In the following chapter \ref{chp:related-work}, related work will be presented.
-Following up on this, this discussion will be picked up.
+This discussion will be picked up, following up on this.
 
 In addition to these self-imposed goals, it was also decided in section \ref{sec:verify-spec} to adopt the four design goals that were initially introduced in \cite{Reid17}.
 These were defined to apply to high-level properties for specifications and list as follows:

@@ -7,7 +7,7 @@ This section will cover the results of the verification process as it was descri
 The main finding is that there are eight assumptions which in total grant that the properties as described in section \ref{sec:ifc-properties} cannot be violated, in other words: the MINRV8 architecture models the information flow properties introduced in this thesis, namely \smv{MEMORY_OP_INTEGRITY}, \smv{CSR_INTEGRITY} and \smv{NO_LEAK}, if and only if the eight assumptions that will be introduced in subsequent sections are in place.
 
 Additionally, roughly 23 bug fix patches\footnote{%
-    The number of 23 bug fix patches was measured by counting the amount of patches containing the word \enquote{fix} in its description and being applied to the model file.
+    The number of 23 bug fix patches was measured by counting the amount of patches in the git graph containing the word \enquote{fix} in its description and being applied to the model file.
 } were applied to the model and some \smv{INIT} constraints were set up.
 Taken together with aforementioned assumptions these patches mark a fixpoint of the prove-refine loop discussed in section \ref{sec:sum-background} and depicted in figure \ref{fig:ver-process}.
 
@@ -234,7 +234,7 @@ To summarize all assumptions:
 At first, \smv{SAN_ON_CALL} and \smv{CLR_ON_RET} assumed that no direct flow of sensitive or malicious data is possible between user- and machine-mode (snippets \ref{snpt:san-on-call} and \ref{snpt:clr-on-ret}).
 Then, these assumptions were generalized to rule out detours into memory by \smv{NO_PUBLIC_WRITES} and \smv{NO_PUBLIC_READS} (snippets \ref{snpt:no-public-writes} and \ref{snpt:no-public-reads}).
 Finally, it was assumed that machine-mode must not freely alter access privileges of memory regions.
-It must clear or sanitize regions accordingly, depending on the previous access privileges, e.g. machine-mode must ensure to not forget secrets in memory that is made publicly accessible.
+It must clear or sanitize regions accordingly, depending on the previous access privileges, e.g. machine-mode must ensure not to forget secrets in memory that is made publicly accessible.
 
 \begin{figure}
     \begin{lstlisting}[

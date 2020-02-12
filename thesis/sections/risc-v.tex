@@ -431,8 +431,8 @@ This leaves MINRV8 with the following, very simple interrupt/exception handling 
 
 The architecture that will be model checked in this thesis is a minimal, RISC-V-inspired 8-bit architecture and shall be named MINRV8 from now on.
 A secure embedded system that implements the RV32E, i.e. base integer instruction set for embedded computing, was taken as a role model for this minimal architecture.
-The reasoning behind the architecture and features included was given in section \ref{sec:risc-v-selection}.
-In this section, the architecture itself will be introduced and briefly specified.
+The reasoning behind the architecture and features to inclue was given in section \ref{sec:risc-v-selection}.
+In this section, we will introduce and briefly specify the architecture itself.
 
 MINRV8 supports four general-purpose registers and has two privilege modes: machine- and user-mode.
 Besides this, it has 4-bytes of readable and writeable but non-executable memory divided into two regions the first of which ranges from addresses 0 to 1 whereas the other occupies the remaining addresses 2 to 3.
@@ -447,7 +447,7 @@ This decision is closely related to the way the MINRV8 architecture was modelled
 In section \ref{sec:minrv8-restrictions}, an outlook on the reasoning behind this will be given.
 
 Additionally, there is the \gls{ebreak} instruction that transfers control to a debugging environment.
-It was decided to not include debugging in the MINRV8 architecture since, as mentioned before, at its current state the level of complexity offered by the architecture is sufficient to make it comparable to other modern \gls{risc} architectures.
+It was decided not to include debugging in the MINRV8 architecture since, as mentioned before, at its current state, the level of complexity offered by the architecture is sufficient to make it comparable to other modern \gls{risc} architectures.
 Finally, there is the FENCE instruction that allows to order memory access.
 As the \glspl{pma} do not support memory ordering, this instruction was left out as well.
 
@@ -461,7 +461,7 @@ XOR can be emulated by a combination of \minrv{Sub}\footnote{%
 Instructions that have been made redundant are all unsigned variants of computational instructions and load/store instructions of word sizes greater than bytes.
 These load/store instructions have been made redundant with the decision to limit the word size of MINRV8 to one byte.
 
-All this gives strong assurance that the computational model of MINRV8 does not lack in any major part in comparison to RISC-V.
+All this gives strong assurance that the computational model of MINRV8 does not lack in any significant part in comparison to RISC-V.
 
 \begin{table}
     \centering
@@ -515,7 +515,7 @@ This manual describes these methods of caching as follows:
 \end{displaycquote}
 
 Cited paragraphs from the \citetitle{IntelSystemProgramming} are summarized in table \ref{tbl:cache-methods}.
-In this setting, it was decided to always fill the cache on write-hits for write-through-cacheable memory regions to make the caching methods as concise as possible although the manual leaves it open to implementations to also invalidate the cache.
+In this setting, we decided to always fill the cache on write-hits for write-through-cacheable memory regions to make the caching methods as concise as possible, although the manual leaves it open to implementations to also invalidate the cache.
 
 \begin{table}
     \centering
@@ -554,7 +554,7 @@ A more thorough discussion of this problem will be given in section \ref{sec:dis
 With the MINRV8 \gls{isa} being set up, this section presents its implementation in nuXmv.
 Cf. section \ref{sec:nuxmv} for an introduction to this tool.
 The implementation of MINRV8 was split into two modules:
-the first module implements the general mechanisms of the \gls{isa} which include everything but caching which is implemented in a separate module.
+the first module implements the general mechanisms of the \gls{isa}, the second implements caching.
 In analogy to this, section \ref{sec:implementation-core} will describe how the main module was implemented and section \ref{sec:implementation-caching} will explain the implementation of the module related to caching.
 In each of these section, the variables and their corresponding types will be stated declared as part of the modules after which the transition relation for each of the respective variables will be outlined.
 
@@ -564,7 +564,8 @@ The goal of this section is not to give a full description of the whole implemen
 The implementation includes practical solutions to certain downsides of nuXmv, and generalizations to ease the implementation as a whole.
 All these aspects are not relevant for the goal of this thesis.
 It should be noted that the macro processing engine pyexpander \cite{pyexpander} was used to remove redundancies.
-nuXmv is certainly not the most low-level language imaginable, however, programming nuXmv still lead to many redundancies in the codebase.
+nuXmv is undoubtedly not the most low-level language imaginable.
+However, programming nuXmv still leads to many redundancies in the codebase.
 pyexpander in principle serves the same purpose as the C-preprocessor but is much more powerful and allowed to get rid of most aforementioned redundancies.
 
 \subsection{Core Functionality}
@@ -599,7 +600,7 @@ Furthermore, the model knows five input variables:
 When an instruction does not support some or all of the arguments to the instruction, the values of these input variables simply are ignored.
 The variable \smv{m_external_interrupt} signals the event of a pending external interrupt from some source outside of the \gls{hart}.
 
-There is no input variable for an immediate value which might be needed by the \minrv{Loadi} instruction because otherwise, extra state space would be wasted.
+There is no input variable for an immediate value which might be needed by the \minrv{Loadi} instruction because otherwise, we would waste extra state space.
 Instead, the content of the destination register in the case of a \minrv{Loadi} instruction being executed is not constrained.
 This means that nuXmv can choose any value in the next state for register \smv{i} if it happens to be targeted by instruction \minrv{Loadi}.
 Thereby, the value written to the destination register by the \minrv{Loadi} instruction is encoded implicitly in the transition relation rather than in the state space.

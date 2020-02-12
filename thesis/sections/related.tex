@@ -110,7 +110,7 @@ By sparsely constraining the initial state of the model they finally prove: for 
 The authors claim that by the constraints chosen for the initial states of the model, these states actually embody an over-approximation of all reachable states of the x86 architecture.
 With this methodology, the authors manage to correctly find that Intel's version of the x86 architecture is vulnerable to the SYSRET vulnerability while AMD's version is not.
 
-On the one hand, we find it to be unfair to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} clearly does not have the same scope as ours - their paper only comprises five pages.
+On the one hand, we find it inadequate to compare this work on all aspects to ours since the work of \citeauthor{BradfieldS16} does not have the same scope as ours - their paper only comprises five pages.
 On the other hand, we find that the work in \cite{BradfieldS16} is lacking in two, key aspects.
 First and foremost, the problem of a circular argument in verification as discussed in section \ref{sec:trustworthiness} fully applies to this work.
 The authors do not use the model checker to verify the x86 architecture but to simulate the SYSRET vulnerability: they restrict their model to instructions of which they know that these are relevant to the SYSRET vulnerability or at least highly related to instructions affected by the SYSRET vulnerability with no clear reasons for why others were excluded or not included and they specifically encoded the gist of the SYSRET vulnerability in the property to be verified\footnote{%
@@ -124,7 +124,7 @@ Whilst it might be an adequate showcase for instances of problems where model ch
 Secondly, the property proposed by \citeauthor{BradfieldS16} is not in line with Intel's x86 specification (cf. \cite{Dunlap19}).
 The purpose of the SYSENTER and SYSEXIT instructions \textit{is} to execute privileged code with the stack pointer being controlled by user-mode to reduce the overhead of the mode transition.
 This means, that taking a general protection fault while handling a call to machine-mode via SYSENTER, leaving the general protection fault handler with a stack pointer controlled by user-mode is intended behaviour.
-This might be badly designed behaviour - but it works as specified.
+This might be badly designed behaviour - but meets the specification.
 In practice, operating systems opted to ensure that no general protection fault could occur when executing the SYSRET instruction but to verify Intel's x86 architecture to not be susceptible to the SYSRET vulnerability asks from it to violate the specification.
 
 In contrast, regarding the first issue, in our work we not only proposed more general properties that were not rooted in specific vulnerabilities but in a structured model of information flow and also would apply to other architectures with few adjustments required, we also took clear and justifiable steps when minimizing the RISC-V architecture such that it would be feasible to verify it in scope of this thesis.
@@ -174,7 +174,7 @@ In this discussion, we will consider four references: the work of \citeauthor{Re
 Only the work of these authors is in direct competition to ours as all authors consider the verification of \gls{isa} specifications in a static context against higher-level properties.
 The work of \citeauthor{Nienhuis19} \cite{Nienhuis19} was excluded from this discussion since this work did not consider the verification but the development of an \gls{isa}.
 
-The most critical addition to the work of \cite{Reid17} and \cite{Fox02} is that here, we consider non-redundant verification of specifications.
+The most critical addition to the work of \cite{Reid17} and \cite{Fox02} is that we consider non-redundant verification of specifications.
 \cite{Reid17} verified the machine-readable specification of the Arm architecture against higher-level properties that stem from the natural language specification of the Arm architecture.
 He restricted his work to the verification of the most critical parts of the natural language specification when it comes to security thereby striving to give programmers a \textit{concise} set of rules, nevertheless this aspect relies on redundancies between the machine-readable and natural language specification of the Arm architecture.
 The same applies to \cite{Fox02}.
