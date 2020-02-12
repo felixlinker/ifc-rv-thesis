@@ -130,7 +130,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
 \begin{example}
     To verify an ARM TrustZone implementation, \citeauthor{Ferraiuolo17} introduce four information flow labels $ \Sigma = \{ \PT, \PU, \CT, \CU \} $ which stand for public/trusted, public/untrusted, confidential/trusted and confidential/untrusted.
     These labels form the information flow policy lattice $ (\Sigma, \sqcup, \sqcap) $ which is depicted in figure \ref{fig:sec-lattice} as a Hasse diagram.
-    As you can see, each of these four labels comprises two tokens from two domains of the information flow policy.
+    As we can see, each of these four labels comprises two tokens from two domains of the information flow policy.
     The first of these domains is the one of \textit{confidentiality}, i.e. each label states that a piece of information is either public (\P{}) or confidential (\C{}).
     The second of these domains is the one of \textit{integrity}, i.e. each label states that a piece of information is either trusted (\T{}) or untrusted (\U{}) where \enquote{trusted} marks whether
     the values we deal with are integrous or in other words not malicious.
@@ -376,7 +376,6 @@ The MIPS architecture strikes a middle-ground of these two extremes.
 The goal of this section is to illustrate the features and fundamental design concepts that come with contemporary \gls{risc} architectures.
 The decision towards focusing on \gls{risc} architectures as a target of verification was made because their simpler approach to \glspl{isa} makes them far easier to analyze and model than \gls{cisc} processors.
 Using a \gls{risc} architecture will allow for implementing an architecture in scope of this thesis while the results will still be applicable and comparable to real-world \glspl{isa} that are in use as of today.
-Although choosing a \gls{risc} architecture as a target of verification already facilitates an easier implementation of the this thesis' approach, verifying a complete architecture still might be out of scope to be verified as part of a master thesis.
 Introducing more than one \gls{risc} architectures will allow us to choose parts to exclude in the verification model without harming our results.
 
 \subsection{Arm}
@@ -677,7 +676,7 @@ However, this section does not intend to perform an thorough analysis of contemp
 \subsection{SPIN}
 \label{sec:spin}
 
-SPIN (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker which has been originally developed by Bell Labs and made freely available in the nineties.
+SPIN (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker that has been originally developed by Bell Labs and made freely available in the nineties.
 As its name suggests, it uses PROMELA as input language.
 \citetitle{SpinManual} \cite{SpinManual} which has been used as source for this section, describes SPIN initially as follows:
 \begin{displaycquote}[p.1]{SpinManual}
@@ -1018,14 +1017,15 @@ There are more syntactical constructs, e.g., macros or constants, but these do n
 A module in nuXmv induces a set of state transition systems.
 The state space of such a system is given by the variables of the module, i.e. an assignment to all variables is a state of the system.
 The initial state must model the \smv{INIT} constraints the transition relation must model the \smv{TRANS} constraints.
-Whenever nuXmv checks a property $ P $ for a module $ M $ it is checked if the state transition system $ S $ given by $ M $ models $ P $.
+Whenever nuXmv checks a property $ P $ for a module $ M $, it is checked if the state transition system $ S $ given by $ M $ models $ P $.
 
 The input language to nuXmv is strongly typed.
-Variables can be of type boolean, integer range, a custom enumeration, bit vector or array in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
-\smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit vectors, arrays, etc., such as basic arithmetic, array indexing, standard boolean operators on both bit vector and boolean level, but also case and if-then-else expressions.
+Variables can be of type Boolean, integer range, a custom enumeration, bit vector or array in the case of finite state transition systems or additionally integers and reals which induce infinite state transition systems.
+\smv{INIT} constraints are simple formulas of propositional logic supporting standard expression to deal with bit vectors, arrays, etc., such as basic arithmetic, array indexing, standard Boolean operators on both bit vector and Boolean level, but also case and if-then-else expressions.
 \smv{TRANS} constraints also are forumlas of propositional logic but additionally support use of the \smv{next(...)} operator which is a reference to the value of the respective expression in the next state.
 
 \begin{example}
+\label{exm:traffic-lights}
     Consider the example module depicted in snippet \ref{snpt:nuxmv} modeling a pair of traffic lights; one for pedestrians crossing the street, the other for cars driving on the street.
 
     \begin{figure}
@@ -1061,7 +1061,7 @@ Variables can be of type boolean, integer range, a custom enumeration, bit vecto
     In other words, the transition of input variables appears to be completely random as it is completely unconstrained and as such can take any value in any step.
     In this case, the input variable to the module signals whether a pedestrian just pressed the button indicating the desire to cross the road.
 
-    Furthermore, the module comprises three ordinary variables: the boolean variable \smv{ped_waiting} which indicates whether a pedestrian is waiting to cross the road as well as \smv{traffic_lights} and \smv{ped_lights} modelling the traffic or pedestrian lights and both are of an enum type that contains the symbols \smv{r} for red and \smv{g} for green.
+    Furthermore, the module comprises three ordinary variables: the Boolean variable \smv{ped_waiting} which indicates whether a pedestrian is waiting to cross the road as well as \smv{traffic_lights} and \smv{ped_lights} modelling the traffic or pedestrian lights and both are of an enum type that contains the symbols \smv{r} for red and \smv{g} for green.
 
     Then, there is one \smv{INIT} constraint asserting that one of the traffic lights is green and the other is red at startup.
     All other constraints are expressed in the \smv{ASSIGN} statement which is syntactic sugar for a group of \smv{INIT} or \smv{TRANS} statements.
@@ -1172,7 +1172,7 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
 
 \begin{example}
     Consider the example invariant, \gls{ltl} and \gls{ctl} specifications depicted in snippet \ref{snpt:nuxmv-spec}.
-    These specify high-level properties about the traffic lights example in snippet \ref{snpt:nuxmv}.
+    These specify high-level properties about the traffic lights of example \ref{exm:traffic-lights}.
 
     \begin{figure}
         \begin{lstlisting}[
@@ -1220,7 +1220,7 @@ It can be seen that the most important \gls{ltl} operators \smv{X}, \smv{G} and 
 
 \subsection{Summary}
 
-Whereas SPIN was problematic because its input language did not match the needs of this thesis, and SPACER or \muZ{} were problematic because their output does not match the needs of this thesis, nuXmv delivers in both aspects.
+Whereas SPIN was problematic because its input language did not match the needs of this thesis, and SPACER or \muZ{} were problematic because their output does not match the requirements of this thesis, nuXmv fulfills both aspects.
 The traces generated as counter-examples serve as illustration what specifically went wrong on a property.
 The input language allows to implement modules that are limited in the description of the transition relation itself\footnote{%
     Since transitions are constrained by propositional logic and expressions without loops only, there can be issues if complex transitions should be expressed.
@@ -1239,7 +1239,7 @@ The idea for the implementation is straight-forward:
     \item Use transition constraints to implement the behavior of each instruction
 \end{itemize}
 
-It was furthermore decided to express the information flow control of the architecture in \gls{ltl}.
+We furthermore decided to express the information flow control of the architecture in \gls{ltl}.
 nuXmv supports a plethora of techniques to check specifications, e.g., the \citetitle{nuXmv} \cite{nuXmv} lists 47 commands to check a specification.
 In the practical work for this thesis, after the decision to implement the \gls{ifc} in \gls{ltl} has been made, a couple of these techniques which apply to \gls{ltl}-checking were tested.
 In this informal evaluation it was found that the K-Liveness algorithm proposed in \cite{Claessen12} delivered best results and terminated quickly whenever the model met the specification.
@@ -1302,7 +1302,7 @@ The results of this verification process will be discussed in chapter \ref{chp:r
 How will these results look like?
 
 The idea of \gls{ifc} is to express properties like: \enquote{Information must not flow like \dots}.
-Whenever nuXmv is asked: \enquote{Does this model of the MINRV8 architecture allow for such flows of information?}, it will either respond with yes giving a sequence of instructions that violate the information flow property or respond with no.
+Whenever nuXmv is asked: \enquote{Does this model of the MINRV8 architecture allow for such flows of information?}, it will either respond with yes, giving a sequence of instructions that violate the information flow property, or respond with no.
 If the response happens to be a counter-example, the following questions must be investigated:
 \begin{enumerate}
     \item \label{itm:counter-ex-validity}
@@ -1337,7 +1337,8 @@ When phrasing assumptions, we impose the following requirements upon them:
 \end{enumerate}
 
 The reasoning behind point \ref{itm:assumptions-non-trivial} is straight-forward:
-Trying to prove \enquote{$ \text{false} \Rightarrow \text{properties} $} or \enquote{$ \text{properties} \Rightarrow \text{properties} $} is pointless.
+Working with contradictory assumptions leads to proving \enquote{$ \text{false} \Rightarrow \text{properties} $} which is trivially true.
+Likewise, working with assumptions trivially entailing the properties leads to proving \enquote{$ \text{properties} \Rightarrow \text{properties} $} again being trivially true.
 
 Point \ref{itm:assumptions-machine-mode} was raised because it is important to note that the assumptions introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
 Recall, that in context of this thesis it is assumed that user-mode is adversarial to machine-mode and compromised completely.

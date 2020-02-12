@@ -3,14 +3,14 @@
 \chapter{Architecture}
 \label{chp:arch}
 
-In this section, the architecture to work with will be developed and implemented.
-As mentioned before, the RISC-V architecture will serve as a role model for the architecture to be verified as part of this thesis.
-To derive a simpler version of the RISC-V architecture, which is called MINRV8, the RISC-V architecture itself will be introduced first in section \ref{sec:risc-v}.
+In this section, we will develop and implement the architecture to work with.
+As mentioned before, the RISC-V architecture will serve as a role model for the architecture to verify as part of this thesis.
+To derive a simpler version of the RISC-V architecture, which will be called MINRV8, we will introduce the RISC-V architecture itself in section \ref{sec:risc-v}.
 This introduction will conclude with a summary that mentions which parts will be adopted and which parts will be left out in the development of the MINRV8 architecture.
 
-Consequently, in section \ref{sec:minrv8}, the MINRV8 architecture will be introduced.
-The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv, which is presented in section \ref{sec:model-implementation}.
-Hence, certain design decisions of both the model and the implementation will only be sensible once both have been introduced.
+Consequently, in section \ref{sec:minrv8}, we will introduce the MINRV8 architecture.
+The development of the MINRV8 architecture went hand in hand with its implementation in nuXmv, which we will present in section \ref{sec:model-implementation}.
+Hence, some design decisions of the model and the implementation will only be sensible once both have been introduced.
 
 To conclude, section \ref{sec:arch-summary} will give a summary of what has been achieved in this chapter.
 
@@ -73,7 +73,7 @@ RISC-V is agnostic about the details of calling conventions for routines, e.g., 
 \paragraph{Platform management instructions}
 The RISC-V manual also knows this category and divides it into two subcategories: instructions that deal with \glspl{csr} and other instructions performing operations that potentially need some form of privilege.
 Examples for the former category are straight forward.
-RISC-V knows instructions to read or write complete \glspl{csr} but also knows operations to modify single bits only.
+RISC-V supports instructions to read or write complete \glspl{csr} but also knows operations to modify single bits only.
 For the latter category, RISC-V only knows two instructions at the base instruction set level which are \gls{ecall} and \gls{ebreak} instructions.
 These instructions well be inspected in more detail in section \ref{sec:rv-priv-arch}.
 
@@ -121,8 +121,9 @@ A simple embedded system might be the cheapest to implement and manufacture, how
 A secure embedded system supports some application to be run on it while an \gls{aee} running in machine-mode controls the execution of this application.
 The application communicates to the \gls{aee} via an \gls{abi} that defines the possible interactions between an application and the \gls{aee}.
 
-A system running a Unix-like \gls{os} enhances on this by having an \gls{os} running in supervisor-mode.
-This \gls{os} communicates with multiple applications running in parallel via an \gls{abi} and is itself managed by a \gls{see} which communicates with the \gls{os} via a \gls{sbi}.
+A system running a Unix-like \gls{os} enhances this by having an \gls{os} running in supervisor-mode.
+This \gls{os} communicates with multiple applications running in parallel via an \gls{abi}.
+The \gls{os} itself is managed by a \gls{see} which communicates with the \gls{os} via an \gls{sbi}.
 The \gls{see} runs in machine-mode.
 
 \begin{figure}
@@ -284,7 +285,7 @@ Delegation of interrupts can be disabled either by software writing the bits of 
 Similar to the \gls{mip} register, each bit field of \gls{mideleg} corresponds to the interrupt of the same index.
 Exceptions also have an exception code assigned and thus, fields of \gls{medeleg} correspond to these codes.
 An interrupt or exception can only be delegated to modes equally or higher privileged than the mode the interrupt or exception was targeting originally.
-For example, if an interrupt is targeting supervisor-mode it can optionally be delegated to supervisor-mode or must be handled by machine-mode but cannot be handled by user-mode.
+For example, if an interrupt is targeting supervisor-mode, it can optionally be delegated to supervisor-mode or must be handled by machine-mode but cannot be handled by user-mode.
 For each mode $ x $ ($ x \in \{ \text{M}, \text{S}, \text{U}\} $, there are respective counterparts to machine-mode registers such as \gls{mip}, e.g., if an interrupt is delegated to mode $ x $, the corresponding bit in the respective \gls{xip} register reads accordingly and becomes writable.
 Otherwise it appears to be hardwired to zero.
 From now on, registers related to interrupt and exception handling will be introduced for some arbitrary mode $ x $.
@@ -331,7 +332,7 @@ To summarize:
 \glspl{pma} and \gls{pmp} entries make general properties of physical memory transparent to software allowing it to adopt to possible interactions with respective regions correctly.
 \gls{pmp} entries, however, can also be used for memory protection in addition to virtualization.
 
-An overview of all registers that are involved in trap handling can be found in table \ref{tbl:trap-csrs}.
+Table \ref{tbl:trap-csrs} gives an overview of all registers that are involved in trap handling.
 \glspl{csr} which are available to user-mode would also be available to supervisor-mode in this context.
 Registers written in italic font are not actual registers on their own but provide a restricted view on their respective machine-mode counterpart.
 
@@ -359,10 +360,10 @@ Registers written in italic font are not actual registers on their own but provi
 Summarizing the mechanisms that play into interrupt and exception handling, recall the four steps to interrupt and exception handling we introduced at the beginning of this section.
 These can now be filled with more details:
 \begin{enumerate}
-    \item If an interrupt or exception is pending, determine the privilege mode to take the trap by checking the targeted privilege mode and any delegation settings
-    \item If an interrupt is pending, check that interrupts are enabled globally and check that the specific interrupt is enabled as well
-    \item Take the trap by jumping to to trap base vector and if an interrupt is being serviced take vectoring into account
-    \item Return from trap handler
+    \item If an interrupt or exception is pending, determine the privilege mode to take the trap by checking the targeted privilege mode and any delegation settings.
+    \item If an interrupt is pending, check that interrupts are enabled globally and check that the specific interrupt is enabled as well.
+    \item Take the trap by jumping to to trap base vector and, if an interrupt is being serviced, take vectoring into account.
+    \item Return from trap handler.
 \end{enumerate}
 
 The differences between handling exceptions and interrupts can be summarized by the following:
@@ -386,16 +387,16 @@ If an exception occurs while an interrupt is set pending, the interrupt can be h
 \subsection{Feature Selection}
 \label{sec:risc-v-selection}
 
-From what has been introduced of the RISC-V architecture, a selection of features to include in the MINRV8 architecture will now be made.
-The overall goal is to create an architecture that is simplified in comparison to the RISC-V \gls{isa} but still incorporates all types of features necessary to introduce a sufficient level of complexity allowing the MINRV8 to be comparable to modern architectures.
+From the introduction of the RISC-V architecture, we will now select the features to include in the MINRV8 architecture.
+The overall goal is to create an architecture that is simplified in comparison to the RISC-V \gls{isa} but still incorporates all types of features necessary to introduce a sufficient level of complexity, allowing the MINRV8 to be comparable to modern architectures.
 
 The first decision is which combination of privilege levels to model.
 In section \ref{sec:rv-priv-arch}, it has been mentioned that in this thesis, the focus will be put on secure embedded systems, i.e. systems supporting user- and machine-mode but not supervisor-mode.
 The core features added by supervisor-mode are those of virtualization.
-Since we deemed memory virtualization as out of scope in this context (cf. sec. \ref{sec:virtual-memory}), we value simplicity over completeness of the model and rule out supervisor-mode.
+Since we deemed memory virtualization as out of scope in this context (cf. sec. \ref{sec:virtual-memory}), we value simplicity over the completeness of the model and rule out supervisor-mode.
 
 Additionally, to keep the state space small, we decided to model an architecture where the word size is eight bit.
-There is no reason to believe that an increase in word size introduces fundamentally new security or information flow issues to an architecture so it was decided to value efficiency over completeness in this case.
+There is no reason to believe that an increase in word size introduces fundamentally new security or information flow issues to an architecture, so we decided to value efficiency over completeness in this case.
 Since the state space grows exponentially in word size, choosing a smaller word size should significantly improve the performance of the model.
 
 From both parts of the RISC-V specification, the base integer instruction set and the privileged architecture, the MINRV8 architecture will include the very foundation of all categories introduced except jumps and branches.
