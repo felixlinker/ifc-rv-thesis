@@ -26,7 +26,7 @@ This methodology has been sketched in the introduction but can be given precisel
 As already mentioned, the work of \citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} focusses on verifying specifications, in particular \glspl{isa}, against high-level properties.
 The key motivation of this work is best summarized by the conclusion of the paper:
 \begin{displaycquote}[p.88:22]{Reid17}
-    Formal verification of programs is becoming more and more practical but, if the verification is to be meaningful, it must be based on correct architecture specifications for the hardware that the programs run on.
+    ``Formal verification of programs is becoming more and more practical but, if the verification is to be meaningful, it must be based on correct architecture specifications for the hardware that the programs run on.
     That is, the specifications are a critical part of the Trusted Computing Base.
     Unfortunately, the size and complexity of architecture specifications is such that it seems inevitable that specifications will contain bugs and our previous work confirms this supposition.
 
@@ -48,12 +48,12 @@ This figure illustrates that both of these levels of verification are parallel t
 
 In the work of \citeauthor{Reid17}, the high-level properties are given by \textcquote[p.88:2]{Reid17}{cross-cutting features} which have the following properties:
 \begin{displaycquote}[pp.88:2-3]{Reid17}
-    The central design challenge we face is to create a set of properties that:
+    ``The central design challenge we face is to create a set of properties that:
     \begin{itemize}
         \item express the major guarantees that programmers depend on;
         \item are concise so that architects can easily review and remember the entire set of properties;
         \item are stable so that architectural extensions do not invalidate large numbers of rules;
-        \item and that describe the architecture differently from existing specification to reduce the risk of common-mode failure.
+        \item and that describe the architecture differently from existing specification to reduce the risk of common-mode failure.''
     \end{itemize}
 \end{displaycquote}.
 
@@ -347,10 +347,10 @@ To achieve this, it must be tackled how such an information flow policy as propo
 
 \citetitle{Patterson13} defines the term \gls{isa} as follows:
 \begin{displaycquote}[p.22]{Patterson13}
-    One of the most important abstractions \textins{in computer design} is the interface between the hardware and the lowest-level software.
+    ``One of the most important abstractions \textins{in computer design} is the interface between the hardware and the lowest-level software.
     Because of its importance, it is given a special name: the instruction set architecture, or simply architecture, of a computer.
     The instruction set architecture includes anything programmers need to know to make a binary machine language program work correctly, including instructions, I/O devices, and so on.
-    Typically, the operating system will encapsulate the details of doing I/O, allocating memory, and other low-level system functions so that application programmers do not need to worry about such details.
+    Typically, the operating system will encapsulate the details of doing I/O, allocating memory, and other low-level system functions so that application programmers do not need to worry about such details.''
 \end{displaycquote}
 
 Modern architectures all provide instructions of these categories: instructions for general computation, i.e. bit vector arithmetic, load/store instructions and platform management instructions.
@@ -390,10 +390,11 @@ The ARM architecture defines three architecture \textit{profiles}:
 Here, the ARMv8-A profile will be put into focus.
 The \citetitle{Armv8} \cite{Armv8} introduces the ARM A-class architecture as a \gls{risc} architecture with three key properties:
 \begin{displaycquote}[p.A1-34]{Armv8}
+    ``\textelp{}
     \begin{itemize}
         \item A large uniform register file.
         \item A load/store architecture, where data-processing operations only operate on register contents, not directly on memory contents.
-        \item Simple addressing modes, with all load/store addresses determined from register contents and instruction fields only.
+        \item Simple addressing modes, with all load/store addresses determined from register contents and instruction fields only.''
     \end{itemize}
 \end{displaycquote}
 
@@ -630,7 +631,7 @@ Model checking is a technique that falls into the domain of formal verification.
 It is one way to prove that a given system complies with a given specification.
 \citeauthor{Baier08} introduce model checking in their book \citetitle{Baier08} \cite{Baier08} as:
 \begin{displaycquote}[p.7ff.]{Baier08}
-    \textit{Model-based} verification techniques are based on models describing the possible system behaviour in a mathematically precise and unambiguous manner. \textelp{}
+    ``\textit{Model-based} verification techniques are based on models describing the possible system behaviour in a mathematically precise and unambiguous manner. \textelp{}
     This provides the basis for a whole range of verification techniques ranging from an exhaustive exploration (model checking) to experiments with a restrictive set of scenarios in the model (simulation), or in reality (testing). \textelp{}
 
     Model checking is a verification technique that explores all possible system states in a brute-force manner.
@@ -641,7 +642,7 @@ It is one way to prove that a given system complies with a given specification.
     Is the generated result OK?,
     Can the system reach a deadlock situation, e.g. when two concurrent programs are waiting for each other and thus halting the entire system?
     But also timing properties can be checked:
-    Can a deadlock occur within 1 hour after a system reset?, or, Is a response always received within 8 minutes?
+    Can a deadlock occur within 1 hour after a system reset?, or, Is a response always received within 8 minutes?''
 \end{displaycquote}
 
 Model checking therefore deals with two parts: Firstly, a model of some system, secondly, properties formalized on the basis of some specification.
@@ -680,9 +681,9 @@ SPIN (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is
 As its name suggests, it uses PROMELA as input language.
 \citetitle{SpinManual} \cite{SpinManual} which has been used as source for this section, describes SPIN initially as follows:
 \begin{displaycquote}[p.1]{SpinManual}
-    SPIN can be used to verify correctness requirements for systems of concurrently executing processes.
+    ``SPIN can be used to verify correctness requirements for systems of concurrently executing processes.
     The tool works by thoroughly checking either hand-built or mechanically generated models that capture the essential elements of a distributed system's design.
-    If a requirement is not satisfied, SPIN can produce a sample execution of the model to demonstrate this.
+    If a requirement is not satisfied, SPIN can produce a sample execution of the model to demonstrate this.''
 \end{displaycquote}
 
 As indicated by the quote, SPIN focusses heavily on the verification of distributed or parallel systems.
@@ -812,8 +813,8 @@ It might be obvious at this point why we decided against using SPIN as the model
 Its focus on verifying distributed and parallel systems would make implementing an \gls{isa} in it very hard.
 In the \textit{Primer and Reference Manual} for SPIN it is written:
 \begin{displaycquote}[p.33]{SpinManual}
-    \textins{W}e saw that the emphasis in PROMELA models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}
-    The specification language we use for systems verification is therefore deliberately designed to encourage the user to abstract from the purely computational aspects of a design, and to focus on the specification of process interaction at the system level.
+    ``\textins{W}e saw that the emphasis in PROMELA models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}
+    The specification language we use for systems verification is therefore deliberately designed to encourage the user to abstract from the purely computational aspects of a design, and to focus on the specification of process interaction at the system level.''
 \end{displaycquote}
 
 However, the \gls{isa} we will attempt to verify
@@ -897,13 +898,13 @@ SPACER \cite{Komuravelli13} is an algorithm that combines two widely implemented
 In its implementation, SPACER uses \muZ{} as a backend.
 The paper introducing SPACER, \citetitle{Komuravelli13} \cite{Komuravelli13}, describes those techniques as follows:
 \begin{displaycquote}[p.1f]{Komuravelli13}
-    The key idea of \gls{2bmc} is to iteratively construct an under-approximation \textins{(or refinement)} $ U $ of the target program $ P $ by unwinding its transition relation and check whether $ U $ is safe using \gls{bmc}.
+    ``The key idea of \gls{2bmc} is to iteratively construct an under-approximation \textins{(or refinement)} $ U $ of the target program $ P $ by unwinding its transition relation and check whether $ U $ is safe using \gls{bmc}.
     If $ U $ is unsafe, so is $ P $.
     Otherwise, a proof $ \pi_U $ is produced explaining \textit{why} $ U $ is safe.
     Finally, $ \pi_U $ is generalized (if possible) to a safety proof of $ P $.
     \textelp{}
 
-    Thea idea of \textins{\gls{cegar}} is to iteratively construct, verify, and refine an abstraction (\textit{i.e.}, an over-approximation) of $ P $ based on abstract counterexamples.
+    Thea idea of \textins{\gls{cegar}} is to iteratively construct, verify, and refine an abstraction (\textit{i.e.}, an over-approximation) of $ P $ based on abstract counterexamples.''
 \end{displaycquote}
 
 The key to understanding how SPACER works is to understand what under- or over-approximation of programs are.
@@ -1280,11 +1281,12 @@ This combines the work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferr
 This approach will be evaluated by applying it to a simplified version of the RISC-V \gls{isa}, MINRV8.
 We adopt the requirements to these properties from \cite{Reid17}, i.e. these properties should:
 \begin{displaycquote}[pp.88:2-3]{Reid17}
+    ``\textelp{}
     \begin{itemize}
         \item express the major guarantees that programmers depend on;
         \item \textelp{be} concise so that architects can easily review and remember the entire set of properties;
         \item \textelp{be} stable so that architectural extensions do not invalidate large numbers of rules;
-        \item \textelp{} describe the architecture differently from existing specification to reduce the risk of common-mode failure.
+        \item \textelp{} describe the architecture differently from existing specification to reduce the risk of common-mode failure.''
     \end{itemize}
 \end{displaycquote}
 
