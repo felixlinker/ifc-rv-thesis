@@ -42,6 +42,7 @@ This is due to the fact that \cite{GordonKPGNR15} considers the domain of confid
 Additionally, this in in line with our work where information flow properties regarding confidentiality state that confidential data may not flow to user-mode (the \enquote{outside world}) and malicious data from user-mode may not flow to sensitive places in machine-mode (the \enquote{user} in this analogy).
 Similarly to our work, the authors here also gave information flow semantics for each instruction available.
 The authors propose a simple security policy involving two rules:
+
 \begin{displaycquote}{SuhLZD04}
     \textit{No instruction can be generated from I/O inputs}, and \textit{No I/O inputs and spurious values based on propagated inputs can be used as pointers unless they are bound-checked and added to an authentic pointer}.
 \end{displaycquote}
@@ -72,9 +73,11 @@ The authors here extend the implementation of \citeauthor{Fox02} proving three i
 User-mode processes must only depend on process-accessible-resources, processes must only modify those memory regions they can access by a given \gls{mmu} configuration and user-mode processes must only execute code by calling machine-mode through a trap.
 The first of these is a non-interference property.
 Non-interference properties were introduced in \cite{GoguenMeseguer82} and can be best summarized as:
+
 \begin{displaycquote}[p.11]{GoguenMeseguer82}
     \textins{O}ne group of users, using a certain set of commands, is \underline{noninterfering} with another group of users if what the first group does with those has commands has no effect on what the second group of users can see.
 \end{displaycquote}
+
 Here, think of these two groups of users as two user-mode processes.
 This is an indirect way of expressing information flow properties.
 As opposed to formalize: \enquote{information from source $ X $ must not flow to sink $ T $}, directly, non-interference properties state that \enquote{information from any illegitimate source must not flow to any sink}, hence must not be able to interfere computation in any way.

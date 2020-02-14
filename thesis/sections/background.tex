@@ -25,6 +25,7 @@ This methodology has been sketched in the introduction but can be given precisel
 
 As already mentioned, the work of \citeauthor{Reid17} in \citetitle{Reid17} \cite{Reid17} focusses on verifying specifications, in particular \glspl{isa}, against high-level properties.
 The key motivation of this work is best summarized by the conclusion of the paper:
+
 \begin{displaycquote}[p.88:22]{Reid17}
     Formal verification of programs is becoming more and more practical but, if the verification is to be meaningful, it must be based on correct architecture specifications for the hardware that the programs run on.
     That is, the specifications are a critical part of the Trusted Computing Base.
@@ -47,6 +48,7 @@ The relation between verifying specifications against higher-level properties an
 This figure illustrates that both of these levels of verification are parallel to each other: Higher-level properties take the same role for specifications as specifications do for implementations.
 
 In the work of \citeauthor{Reid17}, the high-level properties are given by \textcquote[p.88:2]{Reid17}{cross-cutting features} which have the following properties:
+
 \begin{displaycquote}[pp.88:2-3]{Reid17}
     The central design challenge we face is to create a set of properties that:
     \begin{itemize}
@@ -346,6 +348,7 @@ To achieve this, it must be tackled how such an information flow policy as propo
 \label{sec:riscs}
 
 \citetitle{Patterson13} defines the term \gls{isa} as follows:
+
 \begin{displaycquote}[p.22]{Patterson13}
     One of the most important abstractions \textins{in computer design} is the interface between the hardware and the lowest-level software.
     Because of its importance, it is given a special name: the instruction set architecture, or simply architecture, of a computer.
@@ -392,6 +395,7 @@ The ARM architecture defines three architecture \textit{profiles}:
 
 Here, the ARMv8-A profile will be put into focus.
 The \citetitle{Armv8} \cite{Armv8} introduces the ARM A-class architecture as a \gls{risc} architecture with three key properties:
+
 \begin{displaycquote}[p.A1-34]{Armv8}
     \textelp{}
     \begin{itemize}
@@ -638,6 +642,7 @@ With recent microarchitectural-attacks (cf. Meltdown \cite{Lipp2018meltdown} and
 Model checking is a technique that falls into the domain of formal verification.
 It is one way to prove that a given system complies with a given specification.
 \citeauthor{Baier08} introduce model checking in their book \citetitle{Baier08} \cite{Baier08} as:
+
 \begin{displaycquote}[p.7ff.]{Baier08}
     \textit{Model-based} verification techniques are based on models describing the possible system behaviour in a mathematically precise and unambiguous manner. \textelp{}
     This provides the basis for a whole range of verification techniques ranging from an exhaustive exploration (model checking) to experiments with a restrictive set of scenarios in the model (simulation), or in reality (testing). \textelp{}
@@ -688,6 +693,7 @@ However, this section does not intend to perform an thorough analysis of contemp
 SPIN (which stands for \textit{S}imple \textit{P}romela \textit{IN}terpreter) is a model checker that has been originally developed by Bell Labs and made freely available in the nineties.
 As its name suggests, it uses PROMELA as input language.
 \citetitle{SpinManual} \cite{SpinManual} which has been used as source for this section, describes SPIN initially as follows:
+
 \begin{displaycquote}[p.1]{SpinManual}
     SPIN can be used to verify correctness requirements for systems of concurrently executing processes.
     The tool works by thoroughly checking either hand-built or mechanically generated models that capture the essential elements of a distributed system's design.
@@ -820,6 +826,7 @@ The last type of properties, trace assertions, solely deal with message passing 
 It might be obvious at this point why we decided against using SPIN as the model checker of this thesis.
 Its focus on verifying distributed and parallel systems would make implementing an \gls{isa} in it very hard.
 In the \textit{Primer and Reference Manual} for SPIN it is written:
+
 \begin{displaycquote}[p.33]{SpinManual}
     \textins{W}e saw that the emphasis in PROMELA models is placed on the coordination and synchronization aspects of a distributed system, and not on its computational aspects. \textelp{}
     The specification language we use for systems verification is therefore deliberately designed to encourage the user to abstract from the purely computational aspects of a design, and to focus on the specification of process interaction at the system level.
@@ -905,6 +912,7 @@ This example yields \smt{sat} as result when executed, meaning, that \smt{goal} 
 SPACER \cite{Komuravelli13} is an algorithm that combines two widely implemented approaches of currently available formal verification tools: \gls{2bmc} and \gls{cegar}.
 In its implementation, SPACER uses \muZ{} as a backend.
 The paper introducing SPACER, \citetitle{Komuravelli13} \cite{Komuravelli13}, describes those techniques as follows:
+
 \begin{displaycquote}[p.1f]{Komuravelli13}
     The key idea of \gls{2bmc} is to iteratively construct an under-approximation \textins{(or refinement)} $ U $ of the target program $ P $ by unwinding its transition relation and check whether $ U $ is safe using \gls{bmc}.
     If $ U $ is unsafe, so is $ P $.
@@ -1289,6 +1297,7 @@ The goal of this thesis is to evaluate an approach to formally verifying \glspl{
 This combines the work of \citeauthor{Reid17} \cite{Reid17} and \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17}.
 This approach will be evaluated by applying it to a simplified version of the RISC-V \gls{isa}, MINRV8.
 We adopt the requirements to these properties from \cite{Reid17}, i.e. these properties should:
+
 \begin{displaycquote}[pp.88:2-3]{Reid17}
     \textelp{}
     \begin{itemize}

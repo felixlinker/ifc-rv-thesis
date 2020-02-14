@@ -211,6 +211,7 @@ MXR is only applicable though, if page-based virtual memory is in place.
 \paragraph{Exceptions, traps and interrupts}
 
 Volume 1 of the RISC-V specification \cite{RiscVISA} introduces the concept of exceptions, traps and interrupts as follows:
+
 \begin{displaycquote}{RiscVISA}
     We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
     We use the term \textit{trap} to refer to the synchronous transfer of control to a trap handler caused by an exceptional condition occurring within a RISC-V thread.
@@ -500,6 +501,8 @@ The \gls{pmacfg} register defines cacheability of the two memory regions.
 Each memory region can either be set as uncacheable, write-back-cacheable, write-through-cacheable or write-protected-cacheable.
 These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the \citetitle{IntelSystemProgramming} \cite{IntelSystemProgramming}.
 This manual describes these methods of caching as follows:
+
+\begin{samepage}
 \begin{displaycquote}[p.11-7]{IntelSystemProgramming}
     \textelp{}
     \begin{description}
@@ -517,6 +520,7 @@ This manual describes these methods of caching as follows:
         \textelp{}
     \end{description}
 \end{displaycquote}
+\end{samepage}
 
 Cited paragraphs from the \citetitle{IntelSystemProgramming} are summarized in table \ref{tbl:cache-methods}.
 In this setting, we decided to always fill the cache on write-hits for write-through-cacheable memory regions to make the caching methods as concise as possible, although the manual leaves it open to implementations to also invalidate the cache.
