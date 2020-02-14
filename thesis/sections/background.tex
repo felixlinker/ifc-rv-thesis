@@ -380,6 +380,9 @@ Introducing more than one \gls{risc} architectures will allow us to choose parts
 
 \subsection{Arm}
 
+The ARM architecture originally was developed by Acorn Computers Ltd in the 1980s which later became Arm Ltd  \cite{ArmHistory}.
+In the beginning, Arm stood for \enquote{Advanced RISC Machines} but has become a self-contained name by now.
+The architecture's most prominent use-case lies in mobile computing, e.g. tablets, smartphones and smartwatches.
 The ARM architecture defines three architecture \textit{profiles}:
 \begin{itemize}
     \item The generic \textit{application profile} ARMv8-A,
@@ -425,6 +428,9 @@ As for the aspect of a large, uniform register file, MIPS supports 32 32- or 64-
 Contrary to the ARM architecture, there are no dedicated \glspl{lr} or \gls{sp}.
 As indicated by the options for register width, MIPS supports both a 32- and a 64-bit architecture and instruction sets.
 
+Historically, MIPS stands for \enquote{Microprocessor without Interlocked Pipelined Stages} and, as the ARM architecture, was developed in the 1980s at Stanford University \cite[p.4.16-4]{Patterson13}.
+In the past, MIPS was primarily used in workstations and servers but as of today, its application has shifted towards embedded scenarios \cite{MIPS}.
+
 MIPS comes with less features (not including custom extensions) than the ARM architecture; the specification only touches memory interaction including memory virtualization and cache, debugging and the interaction with a standard coprocessor that implements floating point arithmetic.
 MIPS, however, is far more customizable than the ARM architecture.
 Whereas in case of the latter, customizability is only given by choosing different extensions, a MIPS processor does not need to implement all features defined in the specification to be MIPS compliant.
@@ -435,6 +441,8 @@ Additionally to that, MIPS allows to extend the architecture by user defined ins
 \label{sec:bg-riscv}
 
 RISC-V was originally presented in the technical report \citetitle{RiscVISA-org} in May 2011 \cite{RiscVISA-org} and has undergone many changes since then.
+It was developed at the UC Berkeley to be a completely open ISA that suits a wide variety of applications and implementations by not \textcquote{RiscVISA}{\enquote{over-architecting} for a particular microarchitecture style}.
+
 RISC-V's architectural specification is divided into two volumes: volume 1 specifies the base user-level \gls{isa} which is separated into several modules whereas volume 2 defines the privileged architecture and instruction set but is still only available as a draft.
 The privileged architecture is not divided into modules but rather \textit{functional groups} that define certain aspects of privileged computing.
 Such groups include for example machine- and supervisor-level \glspl{isa} or the description of a platform level interrupt controller.
