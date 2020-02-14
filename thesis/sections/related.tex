@@ -43,7 +43,7 @@ Additionally, this in in line with our work where information flow properties re
 Similarly to our work, the authors here also gave information flow semantics for each instruction available.
 The authors propose a simple security policy involving two rules:
 \begin{displaycquote}{SuhLZD04}
-    ``\textit{No instruction can be generated from I/O inputs}, and \textit{No I/O inputs and spurious values based on propagated inputs can be used as pointers unless they are bound-checked and added to an authentic pointer}.''
+    \textit{No instruction can be generated from I/O inputs}, and \textit{No I/O inputs and spurious values based on propagated inputs can be used as pointers unless they are bound-checked and added to an authentic pointer}.
 \end{displaycquote}
 
 Whereas the first cannot be compared to the properties of this work meaningfully as executable memory is not modelled, the second comes remarkably close to our integrity property \ref{itm:prop-mem-i}, which expresses that no malicious data might be used as argument to a memory operation or in words of the authors of \cite{SuhLZD04} states that no \enquote{spurios} value can be used as pointer.
@@ -73,7 +73,7 @@ User-mode processes must only depend on process-accessible-resources, processes 
 The first of these is a non-interference property.
 Non-interference properties were introduced in \cite{GoguenMeseguer82} and can be best summarized as:
 \begin{displaycquote}[p.11]{GoguenMeseguer82}
-    ``\textins{O}ne group of users, using a certain set of commands, is \underline{noninterfering} with another group of users if what the first group does with those has commands has no effect on what the second group of users can see.''
+    \textins{O}ne group of users, using a certain set of commands, is \underline{noninterfering} with another group of users if what the first group does with those has commands has no effect on what the second group of users can see.
 \end{displaycquote}
 Here, think of these two groups of users as two user-mode processes.
 This is an indirect way of expressing information flow properties.

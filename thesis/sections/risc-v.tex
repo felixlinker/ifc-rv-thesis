@@ -212,7 +212,7 @@ MXR is only applicable though, if page-based virtual memory is in place.
 
 Volume 1 of the RISC-V specification \cite{RiscVISA} introduces the concept of exceptions, traps and interrupts as follows:
 \begin{displaycquote}{RiscVISA}
-    ``We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
+    We use the term \textit{exception} to refer to an unusual condition occurring at run time associated with an instruction in the current RISC-V thread.
     We use the term \textit{trap} to refer to the synchronous transfer of control to a trap handler caused by an exceptional condition occurring within a RISC-V thread.
     Trap handlers usually execute in a more privileged environment.
 
@@ -220,7 +220,7 @@ Volume 1 of the RISC-V specification \cite{RiscVISA} introduces the concept of e
     When an interrupt that must be serviced occurs, some instruction is selected to receive an interrupt exception and subsequently experiences a trap.
 
     The instruction descriptions \textelp{} describe conditions that raise an exception during execution.
-    Whether and how these are converted into traps is dependent on the execution environment, though the expectation is that most environments will take a \textit{precise} trap when an exception is signaled \textelp{}.''
+    Whether and how these are converted into traps is dependent on the execution environment, though the expectation is that most environments will take a \textit{precise} trap when an exception is signaled \textelp{}.
 \end{displaycquote}
 
 This means that a trigger hierarchy for interrupts, traps and exceptions can be given which is depicted in figure \ref{fig:trigger-hierarch}.
@@ -498,7 +498,6 @@ Each memory region can either be set as uncacheable, write-back-cacheable, write
 These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the \citetitle{IntelSystemProgramming} \cite{IntelSystemProgramming}.
 This manual describes these methods of caching as follows:
 \begin{displaycquote}[p.11-7]{IntelSystemProgramming}
-    ``\textelp{}
     \begin{description}
         \item[Write-through (WT)] --- \textelp{} Reads come from cache on cache hits; read misses cause cache fills. \textelp{}
         All writes are written to a cache line (when possible) and through to system memory.
@@ -511,7 +510,7 @@ This manual describes these methods of caching as follows:
         Write-back operations are triggered when a cache lines need to be deallocated, such as when new cache lines are being allocated in a cache that is already fill. \textelp{}
         \item[Write-protected (WP)] --- Reads come from cache lines when possible, and read misses cause cache fills.
         Writes are propagated to the system bus and cause corresponding cache lines on all processors on the bus to be invalidated.
-        \textelp{}''
+        \textelp{}
     \end{description}
 \end{displaycquote}
 
