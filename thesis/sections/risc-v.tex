@@ -498,6 +498,7 @@ Each memory region can either be set as uncacheable, write-back-cacheable, write
 These caching methods are inspired by the caching methods that are available in the x86 architecture from Intel as described in section 11.3 \textit{Methods of Caching Available} of the \citetitle{IntelSystemProgramming} \cite{IntelSystemProgramming}.
 This manual describes these methods of caching as follows:
 \begin{displaycquote}[p.11-7]{IntelSystemProgramming}
+    \textelp{}
     \begin{description}
         \item[Write-through (WT)] --- \textelp{} Reads come from cache on cache hits; read misses cause cache fills. \textelp{}
         All writes are written to a cache line (when possible) and through to system memory.

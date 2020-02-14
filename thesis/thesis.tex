@@ -59,9 +59,42 @@
 
 \setlist[description]{leftmargin=\parindent,labelindent=\parindent}
 
-% Use quotation marks in block quotes
-\renewcommand{\mkbegdispquote}[2]{\openautoquote}
-\renewcommand{\mkenddispquote}[2]{\closeautoquote#1#2}
+% Wrap displaycqote environment in quotation marks and place them at the end of lists instead of a next line
+\renewcommand\mkbegdispquote[2]{``}
+\renewcommand\mkenddispquote[2]{''#1#2}
+\makeatletter
+\let\oldendlist\enit@endlist
+\def\csq@@z{\csq@z{\csq@z}}
+\def\csq@@@z{\end{displaycquote}}
+\long\def\cqendlist#1\fi#2\fi#3#4{%
+    \def\z{#3{#4}}%
+    \ifx \z \csq@@@z
+        \let\z\csq@@z
+    \fi
+    \ifx \z \csq@@z
+        \ifhmode
+            \unskip
+        \fi
+        \leavevmode
+        '' \zcsqcite
+        \gdef\cs@next{\let\mkenddispquote\@gobbletwo}%
+    \fi
+    \oldendlist#1\fi#2\fi#3{#4}%
+}
+
+\let\olddcq\displaycquote
+\renewcommand\displaycquote[2][]{%
+    \let\cs@next\relax
+    \def\zcsqcite{\csq@cite[#1]{#2}}%
+    \let\enit@enditemize\cqendlist
+    \let\enit@enddescription\cqendlist
+    \olddcq[#1]{#2}}
+
+\let\oldedcq\enddisplaycquote
+\def\enddisplaycquote{%
+    \cs@next
+    \oldedcq}
+\makeatother
 
 \input{defs/listings.tex}
 
