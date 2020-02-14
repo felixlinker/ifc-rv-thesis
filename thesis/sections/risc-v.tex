@@ -404,6 +404,9 @@ From both parts of the RISC-V specification, the base integer instruction set an
 Consequently, MINRV8 supports integer arithmetic, bitwise-logical instructions and bit-shifts, loads and stores, as well as instructions to read and write \glspl{csr} and to transition between privilege modes.
 
 As for memory attributes, we decided to implement caching mechanisms in the architecture.
+Although we deemed recent side-channel-attacks such as Meltdown \cite{Lipp2018meltdown} and Spectre \cite{Kocher2018spectre}, which rely on cache, out of scope, there also are direct attacks leveraging the cache \cite{Wojtczuk09}.
+Caching undoubtedly plays a critical role in system security.
+We did not want to rule out a significant attack surface by assumption.
 Therefore, \glspl{pma} will be given in form of cacheability settings but nothing more.
 The RISC-V specification is quite vague when it comes to other types of \glspl{pma}.
 It mentions them but does not formally specify their workings.

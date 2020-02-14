@@ -314,6 +314,8 @@ This difference does not play a major role since the attack can take place nonet
 What can be done to mitigate this attack?
 Obviously, the vulnerability purposefully introduced to the architecture could be dropped.
 At this point, though, it is not clear how realistic this characteristic of the MINRV8 architecture is since at least in the case of the x86 architecture, the findings of \cite{Wojtczuk09} suggest hardware does not perform privilege checks when writing to the cache.
+Another natural conclusion would be to invalidate the cache on mode-transitions.
+However, it turned out, that even without the cache poisoning attack in place, this mitigation does not suffice to prevent integrity-related property violations (cf. sec. \ref{sec:cache-inval-mit}).
 
 It not likely, however, that RISC-V is vulnerable to this attack.
 One the one hand, the specification states that cacheability settings can be modified by machine-mode only \cite[p.43]{RiscVISAP}.
@@ -366,6 +368,8 @@ This extension adds three new registers and four instructions to the architectur
 \end{itemize}
 
 As can be guessed from the available instructions that deal with the stack, not much automation by hardware is supported.
+This lack of automation allows us to implement the \gls{sp}, although the implementation does not support a \gls{pc}, etc.
+Using the stack here effectively equals writing to or loading from a predetermined address.
 There are no stack-pointers dedicated to specific privilege-modes.
 Consequently, stack-pointers are not automatically switched by hardware on privilege-mode changes.
 However, when pushing to or popping from the stack, the stack-pointer automatically is in- or decremented.
@@ -467,7 +471,7 @@ Therefore, with this modification to the architecture the assumptions \smv{SP_BA
 However, new assumptions and \smv{INIT} constraints must be introduced.
 With the hardware automatically switching stack-pointers, it must be ensured that the memory regions these stack-pointers point to always are assigned with the respective privileges, i.e. user-mode-stack-pointer is user-mode-read- and -writeable, etc.
 This is assumed initially, and made stable by the assumption given in snippet \ref{snpt:sp-autobank-assumption}.
-These assumptions are to some extent unrealistic as it cannot be taken for granted that machine-mode actually is capable of setting up the memory regions correctly and guaranteeing that user-mode does not interfere with these settings.
+It cannot be taken for granted that machine-mode actually is capable of setting up the memory regions correctly and guaranteeing that user-mode does not interfere with these settings.
 However, verifying such mechanisms does not serve any purpose at this point and was skipped as a consequence.
 We therefore make aforementioned assumptions to show that \textit{given} such mechanisms, the herein proposed hardware mitigation to the SYSRET vulnerability can be verified by our approach.
 
@@ -501,9 +505,11 @@ In this chapter, the results to the prove-refine loop were presented:
 These assumptions are visualized in figure \ref{fig:ifc-assumptions} that again takes inspiration from digital timing diagrams.
 The eight assumptions introduced in section \ref{sec:assumptions} constrain streams of instructions to always resemble the following properties:
 Whenever machine-mode is called from user-mode by the \minrv{Ecall} instruction or there is an external interrupt, machine-mode must not use memory or \gls{csr} related instructions in the area colored in yellow until some form of a sanitization procedure (\smv{SAN}) has been completed.
-This leads to the integrity labels of inputs to these instructions being high after the sanitization procedure.
+This is implemented by the \smv{SAN_ON_CALL} assumptions and leads to the integrity labels of inputs to these instructions being high after the sanitization procedure.
+The effect of this assumption is indicated by an arrow: it forces the confidentiality labels of the registers to high.
 This property is made stable by the \smv{NO_PULIC_READS} and \smv{SAN_(CACHE)_ON_CLASSIFICATION} assumptions which ensure that no malicious data is loaded from memory or cache as long as machine-mode has control.
 If any of these are not assumed, the inputs to memory or \gls{csr} related instructions might become low e.g. somewhere in the orange colored area of the second row.
+The arrow again illustrates the effect of these two assumptions: they prevent the confidentiality labels from changing to low.
 
 In general, during execution of a trap handler in machine-mode, confidential data will be handled and therefore, the confidentiality labels of the registers become high at some point.
 The \smv{CLR_ON_RET} assumption then enforces that before the \minrv{Mret} instruction is executed by machine-mode to hand back control to user-mode, a procedure to clear the contents of the registers must be executed (\smv{CLR}) after which no other confidential data may be loaded into registers.

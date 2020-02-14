@@ -133,7 +133,7 @@ Intuitively speaking, information labelled with $ a \in M $ is allowed to flow t
     As we can see, each of these four labels comprises two tokens from two domains of the information flow policy.
     The first of these domains is the one of \textit{confidentiality}, i.e. each label states that a piece of information is either public (\P{}) or confidential (\C{}).
     The second of these domains is the one of \textit{integrity}, i.e. each label states that a piece of information is either trusted (\T{}) or untrusted (\U{}) where \enquote{trusted} marks whether
-    the values we deal with are integrous or in other words not malicious.
+    the values we deal with are trusted or in other words not malicious.
 
     \begin{figure}
         \centering
@@ -1232,6 +1232,7 @@ The input language allows to implement modules that are limited in the descripti
 } but is powerful in expressing modules as a whole.
 Having variables and transition allows to implement pretty much any sequential system.
 Therefore the decision was made to use nuXmv as a verification engine.
+We are not the first to use model checking for hardware verification (cf. \cite{Krieg14, Irfan16, BradfieldS16}), however, to our knowledge, we are the first to implement information flow control using a model checker.
 
 The idea for the implementation is straight-forward:
 \begin{itemize}
