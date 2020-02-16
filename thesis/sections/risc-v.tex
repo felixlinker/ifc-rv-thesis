@@ -750,7 +750,7 @@ Therefore, if the cache holds some non persisted values of write-back-cacheable 
 
 In this section, the core of the RISC-V \gls{isa} was introduced from which the MINRV8 architecture was derived (cf. section \ref{sec:risc-v}).
 MINRV8 supports machine- and user-mode as privilege levels and 15 instructions to perform general computation, read/write memory, load immediate values from memory, transition between privilege modes and read/write \glspl{csr} (cf. table \ref{tbl:min-arch-instrs}).
-It was shown that this list of instructions is complete in comparison to RISC-V minus very few but negligible instructions that were not included and modulo instructions made redundant by design decisions or that can be emulated.
+It was shown that this list of instructions is complete in comparison to RISC-V minus very few but negligible instructions that were not included and instructions made redundant by design decisions or that can be emulated.
 Furthermore, MINRV8 supports caching of memory regions and \gls{pmp} entries for memory regions, i.e. read- and write-permissions configurable for user-mode and to some extent for machine-mode (cf. section \ref{sec:minrv8}).
 
 It was argued that MINRV8 provides a sufficient amount of complexity to make it comparable to modern \gls{risc} architectures besides not including a model of executable memory and not supporting jumps and branches.

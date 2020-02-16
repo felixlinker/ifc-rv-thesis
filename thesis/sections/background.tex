@@ -11,9 +11,9 @@ The actual subject of verification, \glspl{isa}, and the technical details of th
 There will be not only an introduction to common \glspl{isa}, especially RISC-V, (section \ref{sec:riscs}) but also to the ecosystem of processors which allows to set up a threat-model (section \ref{sec:ecosystem}).
 Then, a general explanation of model checking will be given, resulting in the description of the nuXmv model checker that will be used in this thesis (section \ref{sec:model-checking}).
 
-In each of these subsections, a collection of \glspl{isa} or model checkers respectively will be touched to \begin{enumerate*}[label=\alph*)]
+In each of these subsections, a collection of \glspl{isa} or model checkers, respectively, will be touched to \begin{enumerate*}[label=\alph*)]
     \item give a better feel for the field as a whole and
-    \item meaningfully argue for one of the presented options to work within this thesis.
+    \item meaningfully argue for one of the presented options to work with in this thesis.
 \end{enumerate*}
 However, the sections on \gls{risc} architectures other than RISC-V and model checker other than nuXmv can be skipped by readers that are more interested in the results of this thesis.
 
@@ -1314,7 +1314,7 @@ A model of this instruction set architecture will be implemented in nuXmv.
 
 As a next step in chapter \ref{chp:ifc}, the terms of an information flow \textit{policy} and information flow \textit{control} will be applied to the MINRV8 architecture, thus, using the work of \citeauthor{Ferraiuolo17} \cite{Ferraiuolo17} to define higher-level properties to verify the architecture against.
 Thereby, it will be investigated how the policy in \cite{Ferraiuolo17} which applies to \gls{hdl} code can be carried over to \glspl{isa} and implemented in nuXmv.
-By using nuXmv as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions are taken into account.
+By using nuXmv as a verification tool, we enhance on \cite{Reid17} in the key aspect, that unbounded numbers of transitions can be constrained.
 When this has been dealt with, the actual \gls{ifc} will be expressed as \gls{ltl} properties.
 These properties will assume the user-mode of the system to be compromised and express that insecure flows of information between machine- and user-mode are impossible.
 
@@ -1332,7 +1332,7 @@ If the response happens to be a counter-example, the following questions must be
 \end{enumerate}
 
 The former question arises because the model of the architecture itself might be flawed.
-To answer it, one simply must inspect the trace at hand and verify whether all state transitions and variable changes are indeed valid in regard to the specification of MINRV8.
+To answer it, one simply must inspect the trace at hand and examine whether all state transitions and variable changes are indeed valid in regard to the specification of MINRV8.
 If the answer to this question is no, the implementation has to be fixed accordingly and the proofs must be re-run.
 
 The latter question leads to the actual results.
@@ -1343,7 +1343,7 @@ For example, it is an obvious security issue, when machine-mode directly hands c
 No sensible architectural mechanisms could prevent machine mode from doing this as long as machine mode is in fact able to hand data to user mode - which it should be.
 
 In the first case, where it is discovered that a counter-example comprises a proper architectural vulnerability, we will investigate mechanisms that mitigate the respective vulnerability and also attempt to verify the effectiveness of such mitigations by re-running the proofs.
-If however, we do not find the counter-example to uncover a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules to be obeyed by e.g. \gls{os} or compiler engineers that prohibit such bad vulnerabilities.
+If however, we do not find the counter-example to uncover a vulnerability but rather to describe \textit{vulnerable code}, we will phrase rules to be obeyed by e.g. \gls{os} or compiler engineers that prohibit such vulnerabilities.
 We also will then verify the effectiveness of these rules by implementing them in the model as assumptions and re-running the proofs as well.
 
 When phrasing assumptions, we impose the following requirements upon them:
@@ -1360,13 +1360,13 @@ The reasoning behind point \ref{itm:assumptions-non-trivial} is straight-forward
 Working with contradictory assumptions leads to proving \enquote{$ \text{false} \Rightarrow \text{properties} $} which is trivially true.
 Likewise, working with assumptions trivially entailing the properties leads to proving \enquote{$ \text{properties} \Rightarrow \text{properties} $} again being trivially true.
 
-Point \ref{itm:assumptions-machine-mode} was raised because it is important to note that the assumptions introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
+Point \ref{itm:assumptions-machine-mode} was raised because it is important to note that the assumptions that will be introduced as a result of this thesis fit in the threat model as discussed in section \ref{sec:threat-model}.
 Recall, that in context of this thesis it is assumed that user-mode is adversarial to machine-mode and compromised completely.
-Constraining user-mode in the assumptions therefore would have contradicted this threat model.
+Constraining user-mode in the assumptions therefore would contradict this threat model.
 
-Lastly, we hope that the assumptions established in context of this thesis can serve as a verification target for \glspl{os} or compilers.
+Lastly, we hope that the assumptions can serve as a verification target for \glspl{os} or compilers.
 This is expressed in point \ref{itm:assumptions-verifiable}.
-If one was to write a collection of interrupt handlers for an \gls{os}, these assumptions might be used to verify that each rule given by these assumptions is implemented by handlers.
+If one was to write a collection of interrupt handlers for an \gls{os}, these assumptions might be used to verify that each rule given by these assumptions is implemented by the handlers.
 This would grant the absence of information flow related bugs in context of the information flow properties as proposed in section \ref{sec:ifc-properties}.
 This, however, presupposes that it is actually possible to verify programs against these properties.
 As part of this thesis, we cannot give guarantees on the feasibility of this undertaking.

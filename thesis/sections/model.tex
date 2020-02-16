@@ -508,13 +508,13 @@ The domain of confidentiality has yet been left out so we will introduce one fin
 \section{Summary}
 
 In this chapter, information flow semantics were given for each instruction of the MINRV8 architecture and it was described how these were implemented in nuXmv.
-It was shown that the domains of confidentiality and integrity of the information flow policy can be tacked independently where the $ \sqcup $ operation on confidentiality labels is given by the logical disjunction and on integrity labels by the logical conjunction.
+It was shown that the domains of confidentiality and integrity of the information flow policy can be tacked independently as bits where the $ \sqcup $ operation on confidentiality labels is given by the logical disjunction and on integrity labels by the logical conjunction.
 
-Labels of arguments to some instructions that are not used by their respective information flow semantics were used to constitute the first information flow properties regarding integrity of instructions.
+Labels of arguments to instructions not being used by their respective information flow semantics were used to constitute the first information flow properties regarding integrity of instructions.
 Additionally, the \smv{priv} variable was considered when defining a property touching the confidentiality of data.
 In the end, all variables of the main module and all labels of arguments to instructions were considered such that they either led to an information flow property or are used to determine information flow in the model.
 
-The properties that were finally established are:
+The properties that were established are:
 \begin{enumerate}[label=\Roman*.]
     \item \smv{MEMORY_OP_INTEGRITY}: whenever a memory operation is performed in privileged mode, the target address must be trusted.
     \item \smv{CSR_INTEGRTY}: whenever a \gls{csr} is written, the value it is written with must be trusted.

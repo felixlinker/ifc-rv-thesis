@@ -13,12 +13,11 @@ Taken together with aforementioned assumptions these patches mark a fixpoint of 
 
 This section is grouped as follows: section \ref{sec:assumptions} will introduce aforementioned assumptions and \smv{INIT} constraints.
 
-Note that only assumptions and no architectural refinements were introduced to the model\footnote{%
+Since only assumptions and no architectural refinements were introduced to the model\footnote{%
     It was tested whether two assumptions could be replaced by one architectural mitigation.
     It turned out, that this architectural refinement did not manage to rule out the respective vulnerability.
     This is discussed at the end of appendix \ref{app:cexs}.
-}.
-It therefore was also tested how the results would change when canaries are introduced to the architecture.
+}, it was also tested how the results would change when canaries are introduced to the architecture.
 The term \enquote{canary} refers to birds historically used in coal mines to indicate a loss of oxygen.
 In the field of software development, this term refers to bugs that are added to code bases deliberately to test detection mechanisms.
 These canaries mimic known vulnerabilities to real-world architectures and will therefore also give an overview of the capabilities of the verification approach of this thesis.
@@ -504,11 +503,12 @@ In this chapter, the results to the prove-refine loop were presented:
 
 These assumptions are visualized in figure \ref{fig:ifc-assumptions} that again takes inspiration from digital timing diagrams.
 The eight assumptions introduced in section \ref{sec:assumptions} constrain streams of instructions to always resemble the following properties:
-Whenever machine-mode is called from user-mode by the \minrv{Ecall} instruction or there is an external interrupt, machine-mode must not use memory or \gls{csr} related instructions in the area colored in yellow until some form of a sanitization procedure (\smv{SAN}) has been completed.
+Whenever machine-mode is called from user-mode by the \minrv{Ecall} instruction or there is an external interrupt, machine-mode must not use memory or \gls{csr} related instructions until some form of a sanitization procedure (\smv{SAN}) has been completed.
+This windows is highlighted as the area colored in yellow.
 This is implemented by the \smv{SAN_ON_CALL} assumptions and leads to the integrity labels of inputs to these instructions being high after the sanitization procedure.
 The effect of this assumption is indicated by an arrow: it forces the confidentiality labels of the registers to high.
 This property is made stable by the \smv{NO_PULIC_READS} and \smv{SAN_(CACHE)_ON_CLASSIFICATION} assumptions which ensure that no malicious data is loaded from memory or cache as long as machine-mode has control.
-If any of these are not assumed, the inputs to memory or \gls{csr} related instructions might become low e.g. somewhere in the orange colored area of the second row.
+If any of these are not assumed, the inputs to memory or \gls{csr} related instructions might become low, e.g. somewhere in the orange colored area of the second row.
 The arrow again illustrates the effect of these two assumptions: they prevent the confidentiality labels from changing to low.
 
 In general, during execution of a trap handler in machine-mode, confidential data will be handled and therefore, the confidentiality labels of the registers become high at some point.
@@ -524,6 +524,6 @@ Again, the orange colored area of the first row shows where user-mode might be a
     \label{fig:ifc-assumptions}
 \end{figure}
 
-Two aspects were examined to strengthen these assumptions: it was shown that \enquote{assumptions $ \Leftrightarrow $ properties} as not assuming a single one of these leads to the failure of at least one information flow property and two canaries, the deliberate insertion of vulnerabilities into the model, were tested.
-It was discussed that it is possible to find both the cache poisoning \cite{Wojtczuk09} and the SYSRET vulnerabilies \cite{SYSRET-vuln,Dunlap19} to the x86 architecture can be modelled such that they apply to a slightly adjusted version of the MINRV8 architecture and can be found without any manual intervention.
+Two aspects were examined to strengthen these assumptions: two canaries, the deliberate insertion of vulnerabilities into the model, were tested and it was shown that \mbox{\enquote{assumptions $ \Leftrightarrow $ properties}} as not assuming a single one of these leads to the failure of at least one information flow property.
+It was discussed that it is possible to find both the cache poisoning \cite{Wojtczuk09} and the SYSRET vulnerabilities \cite{SYSRET-vuln,Dunlap19} to the x86 architecture without any manual intervention.
 The information flow properties and the assumptions did not need to be adjusted such that nuXmv would return a trace illustrating the respective vulnerability.

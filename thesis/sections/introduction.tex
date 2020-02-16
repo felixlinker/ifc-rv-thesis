@@ -4,7 +4,7 @@
 \label{chp:introduction}
 
 This thesis is in the realm of formal verification, i.e. the attempt to verify a system by the use of formal methods such as SAT solvers\footnote{%
-    Algorithms that can solve the Boolean satisfiability problem, i.e. whether a formula of propositional logic has a model.
+    Tools that can solve the Boolean satisfiability problem, i.e. whether a formula of propositional logic has a model.
 }, interactive theorem provers and model checkers.
 With these tools, formal verification engineers strive to prove the correctness of systems such as general computer programs, \glspl{os}, compilers or hardware designs.
 For a system to be correct means that it complies with a specification.
@@ -20,14 +20,14 @@ The relation between these two approaches often is illustrated by a famous quote
 Whereas testing is a quick and efficient way of finding bugs in the development process of a system, formal verification is a more complex but complete (regarding the properties verified) process of proving the absence of bugs.
 
 In \citetitle{Reid17} \cite{Reid17}, \citeauthor{Reid17} stressed the need of verifying specifications themselves as opposed to simply verifying implementations against specifications.
-To tackle this, he proposed to check specifications against higher-level properties and used this methodology to verify the specification of the ARM M-Class specification.
+To tackle this, he proposed to check specifications against higher-level properties and used this methodology to verify the specification of the ARM M-Class architecture.
 
-The following analogy by \citeauthor{Reid17} gives an intuition for this line of research: think of a specification as the law and an implementation as some action that is touched by the law.
+The following analogy by \citeauthor{Reid17} gives an intuition for this line of research: think of a specification as the law and of an implementation as some action that is touched by the law.
 In our everyday life, we rely on everybody to obey the law in their activities.
 If we want to find out whether some action is just (correct), it is checked whether it violates the law.
 The same applies to implementations.
 If we want to check whether some implementation is correct (just), it is checked whether it complies with the respective specification.
-However, every law has loopholes.
+However, the law can have loopholes.
 Sometimes what \textit{we want} from the law does not align with what it actually says.
 This is because the law is big and complex, and some cases get overlooked.
 Therefore, there also is a constitution that expresses the fundamental properties of each and every statute of the law.
@@ -40,13 +40,13 @@ In this thesis, we continue two lines of \citeauthor{Reid17}'s research: \begin{
 
 The higher-level properties an \gls{isa} will be verified against, mainly stem from the work of \citeauthor{Ferraiuolo17} in \citetitle{Ferraiuolo17} \cite{Ferraiuolo17}.
 As the title indicates, their work also falls into the domain of verification; the authors propose a new way of verifying \gls{hdl} implementations.
-The core idea here is to use a type system in which types serve as security annotation of information.
+Their core idea is to use a type system in which types serve as security annotation of information.
 By applying typing rules to expressions in the \gls{hdl} code, these annotations are propagated, and thus, information is tracked through the code.
-Certain type conversions are, however, prohibited and mark a security vulnerability.
+Certain type conversions, however, are prohibited and mark a security vulnerability.
 Thus, their approach can be summarized as tracking and controlling information flow in \gls{hdl} code.
 
 In this thesis, the idea of tracking and controlling information flow as proposed in \cite{Ferraiuolo17} will be lifted to the level of the \gls{isa} by annotating the registers of the architecture with information flow labels that are propagated by instructions.
-The information flow control that in \cite{Ferraiuolo17} was given by a type system will be implemented using high-level properties expressed in \gls{ltl} that constrain information flow very generally; thus following the line of research of \cite{Reid17}.
+The information flow control that in \cite{Ferraiuolo17} was given by a type system will be implemented using high-level properties expressed in \gls{ltl} that constrain information flow generally; thus following the line of research of \cite{Reid17}.
 
 We claim that the approach that will be developed in the course of this thesis is
 \begin{itemize}
@@ -95,6 +95,6 @@ These rules will be:
 
 Secondly, this approach will be applied to the MINRV8 to give a prototype.
 This prototype will be able to detect both the cache poisoning and the SYSRET vulnerability the x86 architecture was or is susceptible to.
-Whereas the cache poisoning attack was an actual vulnerability to the x86 architecture, the SYSRET vulnerability affected, e.g. \glspl{os} running on Intel's version of the x86 architecture.
+Whereas the cache poisoning attack was an actual vulnerability to the x86 architecture, the SYSRET vulnerability affected e.g. \glspl{os} running on Intel's version of the x86 architecture.
 Therefore, the latter vulnerability is a prime example of why verifying \glspl{isa} must also take into account software running on it.
-Hence, it is taken into account that not every vulnerability can be fixed in hardware.
+Hence, it is taken into account that not every vulnerability can be fixed by changing the specification.
