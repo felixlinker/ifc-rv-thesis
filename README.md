@@ -45,8 +45,8 @@ Cf. http://pyexpander.sourceforge.net for more information on `pyexpander`.
 
 ### smvtrcviz
 
-When nuXmv finds a property to be false, it generates a counter example.
-These counter examples can be given in various forms, one of which is XML.
+When nuXmv finds a property to be false, it generates a counter-example.
+These counter-examples can be given in various forms, one of which is XML.
 I wrote a command-line-tool that converts a trace given in XML into an HTML-table that can be looked at more easily.
 This tool is completely optional but I found it to be very helpful.
 You can find it under https://github.com/felixlinker/smvtrcviz.
