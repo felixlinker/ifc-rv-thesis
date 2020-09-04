@@ -4,17 +4,28 @@ $py(
 import math
 
 # Word length of the architecture
-XLEN=8
+XLEN=32
 # Size (in words) of the first memory region; it ranges from addresses 0 to
 # REGION0_SIZE - 1. In total, there are two memory regions. The second one
 # ranges from REGION0_SIZE to MEM_SIZE - 1.
-REGION0_SIZE=2
+REGION0_SIZE=8
 # Number of registers available
-REG_NUM=4
+REG_NUM=16
 # Size of memory
-MEM_SIZE=4
+MEM_SIZE=16
 # Size of addresses
 MEM_ADDR_LEN=int(math.log(MEM_SIZE, 2))
+
+# Does v have a 1 as highest bit in hex representation?
+def hex_leading_one(v):
+    if v == 0:
+        return False
+    hex_len = math.floor(math.log2(v) / 4) * 4
+    return bool(v >> hex_len)
+
+def gen_hex(v, bits=XLEN):
+    hex_str = hex(v)[2:]
+    return f'0h_{("F" if hex_leading_one(v) else "0") * ((bits // 4) - len(hex_str))}{hex_str}'
 )
 
 $# Available extensions; extensions alter the behavior of the model. They are
@@ -46,45 +57,221 @@ $default(
     SAN_CACHE_ON_CLASSIFICATION=False
 )
 
--- Extend the first one we can find
+$macro(gen_hex, v)
+$(gen_hex(int(v)))
+$endmacro
+
+$# Extend the first one we can find
 $macro(extend_sup_conf, w)
-    (0h_00 < (($w) & 0h_FF)\
-        ? (0h_00 < (($w) & 0h_0F)\
-            ? (0h_00 < (($w) & 0h_03)\
-                ? (0h_00 < (($w) & 0h_01) ? 0h_FF : 0h_FE)\
-                : (0h_00 < (($w) & 0h_04) ? 0h_FC : 0h_F8)\
-            )\
-            : (0h_00 < (($w) & 0h_30)\
-                ? (0h_00 < (($w) & 0h_10) ? 0h_F0 : 0h_E0)\
-                : (0h_00 < (($w) & 0h_40) ? 0h_C0 : 0h_80)\
-            ))\
-        : 0h_00)\
+    (0h_0000_0000 < (($w) & 0h_FFFF_FFFF)\
+        $# there is a 1
+        ? (0h_0000_0000 < (($w) & 0h_0000_FFFF)\
+            $# 1 in 0h_0000_XXXX
+            ? (0h_0000_0000 < (($w) & 0h_0000_00FF)\
+                $# 1 in 0h_0000_00XX
+                ? (0h_0000_0000 < (($w) & 0h_0000_000F)\
+                    $# 1 in 0h_0000_000X
+                    ? (0h_0000_0000 < (($w) & 0h_0000_0003)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0000_0001)\
+                            ? 0h_FFFF_FFFF\
+                            : 0h_FFFF_FFFE)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0000_0004)\
+                            ? 0h_FFFF_FFFC\
+                            : 0h_FFFF_FFF8))\
+                    $# 1 in 0h_0000_00X0
+                    : (0h_0000_0000 < (($w) & 0h_0000_0030)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0000_0010)\
+                            ? 0h_FFFF_FFF0\
+                            : 0h_FFFF_FFE0)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0000_0040)\
+                            ? 0h_FFFF_FFC0\
+                            : 0h_FFFF_FF80)))\
+                $# 1 in 0h_0000_XX00
+                : (0h_0000_0000 < (($w) & 0h_0000_0F00)\
+                    $# 1 in 0h_0000_0X00
+                    ? (0h_0000_0000 < (($w) & 0h_0000_0300)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0000_0100)\
+                            ? 0h_FFFF_FF00\
+                            : 0h_FFFF_FE00)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0000_0400)\
+                            ? 0h_FFFF_FC00\
+                            : 0h_FFFF_F800))\
+                    $# 1 in 0h_0000_X000
+                    : (0h_0000_0000 < (($w) & 0h_0000_3000)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0000_1000)\
+                            ? 0h_FFFF_F000\
+                            : 0h_FFFF_E000)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0000_4000)\
+                            ? 0h_FFFF_C000\
+                            : 0h_FFFF_8000))))\
+            $# 1 in 0h_XXXX_0000
+            : (0h_0000_0000 < (($w) & 0h_00FF_0000)\
+                $# 1 in 0h_00XX_0000
+                ? (0h_0000_0000 < (($w) & 0h_000F_0000)\
+                    $# 1 in 0h_000X_0000
+                    ? (0h_0000_0000 < (($w) & 0h_0003_0000)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0001_0000)\
+                            ? 0h_FFFF_0000\
+                            : 0h_FFFE_0000)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0004_0000)\
+                            ? 0h_FFFC_0000\
+                            : 0h_FFF8_0000))\
+                    $# 1 in 0h_00X0_0000
+                    : (0h_0000_0000 < (($w) & 0h_0030_0000)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0010_0000)\
+                            ? 0h_FFF0_0000\
+                            : 0h_FFE0_0000)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0040_0000)\
+                            ? 0h_FFC0_0000\
+                            : 0h_FF80_0000)))\
+                $# 1 in 0h_XX00_0000
+                : (0h_0000_0000 < (($w) & 0h_0F00_0000)\
+                    $# 1 in 0h_0X00_0000
+                    ? (0h_0000_0000 < (($w) & 0h_0300_0000)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_0100_0000)\
+                            ? 0h_FF00_0000\
+                            : 0h_FE00_0000)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_0400_0000)\
+                            ? 0h_FC00_0000\
+                            : 0h_F800_0000))\
+                    $# 1 in 0h_X000_0000
+                    : (0h_0000_0000 < (($w) & 0h_3000_0000)\
+                        $# X matches 3
+                        ? (0h_0000_0000 < (($w) & 0h_1000_0000)\
+                            ? 0h_F000_0000\
+                            : 0h_E000_0000)\
+                        $# X matches C
+                        : (0h_0000_0000 < (($w) & 0h_4000_0000)\
+                            ? 0h_C000_0000\
+                            : 0h_8000_0000)))))\
+        $# no 1
+        : 0h_00)
 $endmacro
 
--- Extend the first zero we can find
+$# Extend the first zero we can find
 $macro(extend_sup_integrity, w)
-    (($w) < 0h_FF\
-        ? (($w) < (($w) | 0h_0F)\
-            ? (($w) < (($w) | 0h_03)\
-                ? (($w) < (($w) | 0h_01) ? 0h_00 : 0h_01)\
-                : (($w) < (($w) | 0h_04) ? 0h_03 : 0h_07)\
-            )\
-            : (($w) < (($w) | 0h_30)\
-                ? (($w) < (($w) | 0h_10) ? 0h_0F : 0h_1F)\
-                : (($w) < (($w) | 0h_40) ? 0h_3F : 0h_7F)\
-            ))\
-        : 0h_FF)\
+    (($w) < 0h_FFFF_FFFF\
+        $# there is a 0
+        ? ((($w) | 0h_FFFF_0000) < 0h_FFFF_FFFF\
+            $# 0 in 0h_FFFF_XXXX
+            ? ((($w) | 0h_FFFF_FF00) < 0h_FFFF_FFFF\
+                $# 0 in 0h_FFFF_FFXX
+                ? ((($w) | 0h_FFFF_FFF0) < 0h_FFFF_FFFF\
+                    $# 0 in 0h_FFFF_FFFX
+                    ? ((($w) | 0h_FFFF_FFFC) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FFFF_FFFE) < 0h_FFFF_FFFF\
+                            ? 0h_0000_0000\
+                            : 0h_0000_0001)\
+                        $# X matches 3
+                        : ((($w) | 0h_FFFF_FFFB) < 0h_FFFF_FFFF\
+                            ? 0h_0000_0003\
+                            : 0h_0000_0007))\
+                    $# 0 in 0h_FFFF_FFXF
+                    : ((($w) | 0h_FFFF_FFCF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FFFF_FFEF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_000F\
+                            : 0h_0000_001F)\
+                        $# X matches 3
+                        : ((($w) | 0h_FFFF_FFBF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_003F\
+                            : 0h_0000_007F)))\
+                $# 0 in 0h_FFFF_XXFF
+                : ((($w) | 0h_FFFF_00FF) < 0h_FFFF_FFFF\
+                    $# 0 in 0h_FFFF_FXFF
+                    ? ((($w) | 0h_FFFF_FCFF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FFFF_FEFF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_00FF\
+                            : 0h_0000_01FF)\
+                        $# X matches 3
+                        : ((($w) | 0h_FFFF_FBFF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_03FF\
+                            : 0h_0000_07FF))\
+                    $# 0 in 0h_FFFF_XFFF
+                    : ((($w) | 0h_FFFF_CFFF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FFFF_EFFF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_0FFF\
+                            : 0h_0000_1FFF)\
+                        $# X matches 3
+                        : ((($w) | 0h_FFFF_BFFF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_3FFF\
+                            : 0h_0000_7FFF))))\
+            $# 0 in 0h_XXXX_FFFF
+            : ((($w) | 0h_FF00_FFFF) < 0h_FFFF_FFFF\
+                $# 0 in 0h_FFXX_FFFF
+                ? ((($w) | 0h_FFF0_FFFF) < 0h_FFFF_FFFF\
+                    $# 0 in 0h_FFFX_FFFF
+                    ? ((($w) | 0h_FFFC_FFFF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FFFE_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_0000_FFFF\
+                            : 0h_0001_FFFF)\
+                        $# X matches 3
+                        : ((($w) | 0h_FFFB_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_0003_FFFF\
+                            : 0h_0007_FFFF))\
+                    $# 0 in 0h_FFXF_FFFF
+                    : ((($w) | 0h_FFCF_FFFF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FFEF_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_000F_FFFF\
+                            : 0h_001F_FFFF)\
+                        $# X matches 3
+                        : ((($w) | 0h_FFBF_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_003F_FFFF\
+                            : 0h_007F_FFFF)))\
+                $# 0 in 0h_XXFF_FFFF
+                : ((($w) | 0h_F0FF_FFFF) < 0h_FFFF_FFFF\
+                    $# 0 in 0h_FXFF_FFFF
+                    ? ((($w) | 0h_FCFF_FFFF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_FEFF_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_00FF_FFFF\
+                            : 0h_01FF_FFFF)\
+                        $# X matches 3
+                        : ((($w) | 0h_FBFF_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_03FF_FFFF\
+                            : 0h_07FF_FFFF))\
+                    $# 0 in 0h_XFFF_FFFF
+                    : ((($w) | 0h_CFFF_FFFF) < 0h_FFFF_FFFF\
+                        $# X matches C
+                        ? ((($w) | 0h_EFFF_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_0FFF_FFFF\
+                            : 0h_1FFF_FFFF)\
+                        $# X matches 3
+                        : ((($w) | 0h_BFFF_FFFF) < 0h_FFFF_FFFF\
+                            ? 0h_3FFF_FFFF\
+                            : 0h_7FFF_FFFF)))))\
+        $# no 0
+        : 0h_FFFF_FFFF)
 $endmacro
 
--- constrain a value v to fall in the range [l, h]
+$# constrain a value v to fall in the range [l, h]
 $macro(clamp, v, l, h)
     (min(max(($v), $l), $h))\
 $endmacro
--- Calculate a memory address from some register given by `source`
+$# Calculate a memory address from some register given by `source`
 $macro(read_addr, source)
     (toint(unsigned(regs[$source])) mod $MEM_SIZE)\
 $endmacro
--- Check if a memory address given by `source` can be read in the current state
+$# Check if a memory address given by `source` can be read in the current state
 $macro(can_load, source)
     (priv
     $if(MPRV)
@@ -99,8 +286,8 @@ $macro(can_load, source)
             : pmpcfg1.read
         ))
 $endmacro
--- Check if a memory address given by `target` can be written to in the current
--- state
+$# Check if a memory address given by `target` can be written to in the current
+$# state
 $macro(can_write, target)
     (priv
     $if(MPRV)
@@ -277,7 +464,7 @@ MODULE main
         __csrs_integrity := [ 0h_FF, 0h_FF ];
         -- mstatus is the first csr
         mstatus := csrs[0];
-        -- pmacfg is conded in the upper half of mstatus
+        -- pmacfg is encoded in the upper half of mstatus
         pmacfg := mstatus[7:4];
         -- pmpcfg is in the second csr
         pmpcfg := csrs[1];
@@ -308,8 +495,8 @@ MODULE main
         pmacfg1 : pmacfg_module(pmacfg[3:2]);
 
     DEFINE
-        __init_high := [ 0h_FF, 0h_FF, 0h_FF, 0h_FF ];
-        __init_low := [ 0h_00, 0h_00, 0h_00, 0h_00 ];
+        __init_high := [ $(', '.join(map(lambda _: gen_hex(0xF), range(REG_NUM)))) ];
+        __init_low := [ $(', '.join(map(lambda _: gen_hex(0x0), range(REG_NUM)))) ];
     -- If architecture start in machine-mode, registers contain integrous data
     INIT priv -> regs_integrity = __init_high;
     -- If architecture starts in user-mode, registers do not contain
@@ -317,13 +504,13 @@ MODULE main
     INIT !priv -> regs_conf = __init_low;
     -- Initially, if memory region 0 is not readable by user-mode, it does not
     -- contain confidential data
-    INIT pmpcfg0.read -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00;
+    INIT pmpcfg0.read -> $('&'.join(map(lambda i: f'memory_conf[{i}] = {gen_hex(0x0)}', range(0, REGION0_SIZE))));
     -- Initially, if memory region 0 is only writable by machine-mode, it must
     -- not contain malicious data
-    INIT !pmpcfg0.write -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF;
+    INIT !pmpcfg0.write -> $('&'.join(map(lambda i: f'memory_integrity[{i}] = {gen_hex(0xF)}', range(0, REGION0_SIZE))));
     -- Same for memory 1...
-    INIT pmpcfg1.read -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00;
-    INIT !pmpcfg1.write -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF;
+    INIT pmpcfg1.read -> $('&'.join(map(lambda i: f'memory_conf[{i}] = {gen_hex(0x0)}', range(REGION0_SIZE, MEM_SIZE))));
+    INIT !pmpcfg1.write -> $('&'.join(map(lambda i: f'memory_integrity[{i}] = {gen_hex(0xF)}', range(REGION0_SIZE, MEM_SIZE))));
     -- Initially, the cache can only be valid if it targets a memory region that
     -- is cacheable
     INIT cache.valid -> (cache.addr < $REGION0_SIZE & !pmacfg0.uncached)
@@ -556,13 +743,13 @@ MODULE main
     $endfor
 
     -- This pseudo-function casts a signed bitvector into an int in the range of
-    -- [0, 8] by hand. Doing this with the macro clamp leads to a bug when used
+    -- [0, 32] by hand. Doing this with the macro clamp leads to a bug when used
     -- in a bit-shift, cf. https://essvn.fbk.eu/bugs/view.php?id=5410.
     $macro(clamp_buggy, w)
         (case\
-            $w < 0sd8_0: 0;\
-            0sd8_8 <= $w: 8;\
-            TRUE: toint(resize(unsigned($w), 3));\
+            $w < 0sd32_0: 0;\
+            0sd32_32 <= $w: 32;\
+            TRUE: toint(resize(unsigned($w), 5));\
         esac)
     $endmacro
 
@@ -646,19 +833,13 @@ MODULE main
     $macro(assumptions)
         $if(CLR_ON_RET)
             G (
-                priv & X !priv -> regs_conf[0] = 0h_00
-                    & regs_conf[1] = 0h_00
-                    & regs_conf[2] = 0h_00
-                    & regs_conf[3] = 0h_00
+                priv & X !priv -> $('&'.join(map(lambda i: f'regs_conf[{i}] = {gen_hex(0x0)}', range(REG_NUM))))
             ) &
         $endif
         $if(SAN_ON_CALL)
             G (!priv & X priv -> X (
                 (priv -> !(op in { LOAD, STORE, CSRRS, CSRRC $if(SP_ENABLE), PUSH $endif }))
-                U (regs_integrity[0] = 0h_FF
-                    & regs_integrity[1] = 0h_FF
-                    & regs_integrity[2] = 0h_FF
-                    & regs_integrity[3] = 0h_FF)
+                U ($('&'.join(map(lambda i: f'regs_integrity[{i}] = {gen_hex(0xF)}', range(REG_NUM)))))
             )) &
         $endif
         $if(NO_PUBLIC_READS)
@@ -673,31 +854,31 @@ MODULE main
         $endif
         $if(CLR_ON_DECLASSIFICATION)
             G (!pmpcfg0.read & X pmpcfg0.read
-                -> memory_conf[0] = 0h_00 & memory_conf[1] = 0h_00)
+                -> $('&'.join(map(lambda i: f'memory_conf[{i}] = {gen_hex(0x0)}', range(0, REGION0_SIZE)))))
             & G (!pmpcfg1.read & X pmpcfg1.read
-                -> memory_conf[2] = 0h_00 & memory_conf[3] = 0h_00) &
+                -> $('&'.join(map(lambda i: f'memory_conf[{i}] = {gen_hex(0x0)}', range(REGION0_SIZE, MEM_SIZE))))) &
         $endif
         $if(CLR_CACHE_ON_DECLASSIFICATION)
             G (!pmpcfg0.read & X pmpcfg0.read
                     & cache.valid & cache.addr < $REGION0_SIZE
-                -> cache.conf = 0h_00) &
+                -> cache.conf = $gen_hex(0)) &
             G (!pmpcfg1.read & X pmpcfg1.read
                     & cache.valid & $REGION0_SIZE <= cache.addr
-                -> cache.conf = 0h_00) &
+                -> cache.conf = $gen_hex(0)) &
         $endif
         $if(SAN_ON_CLASSIFICATION)
             G (pmpcfg0.write & X !pmpcfg0.write
-                -> memory_integrity[0] = 0h_FF & memory_integrity[1] = 0h_FF)
+                -> $('&'.join(map(lambda i: f'memory_integrity[{i}] = {gen_hex(0xF)}', range(0, REGION0_SIZE)))))
             & G (pmpcfg1.write & X !pmpcfg1.write
-                -> memory_integrity[2] = 0h_FF & memory_integrity[3] = 0h_FF) &
+                -> $('&'.join(map(lambda i: f'memory_integrity[{i}] = {gen_hex(0xF)}', range(REGION0_SIZE, MEM_SIZE))))) &
         $endif
         $if(SAN_CACHE_ON_CLASSIFICATION)
             G (pmpcfg0.write & X !pmpcfg0.write
                     & cache.valid & cache.addr < $REGION0_SIZE
-                -> cache.integrity = 0h_FF) &
+                -> cache.integrity = $gen_hex(16)) &
             G (pmpcfg1.write & X !pmpcfg1.write
                     & cache.valid & $REGION0_SIZE <= cache.addr
-                -> cache.integrity = 0h_FF) &
+                -> cache.integrity = $gen_hex(16)) &
         $endif
         $if(SP_BANK and SP_ENABLE)
             -- Switch SP on call
@@ -752,10 +933,7 @@ MODULE main
 
     -- Confidential information can never leak into user mode
     LTLSPEC NAME NO_LEAK := $assumptions() -> G (priv | (
-        regs_conf[0] = 0h_00
-        & regs_conf[1] = 0h_00
-        & regs_conf[2] = 0h_00
-        & regs_conf[3] = 0h_00
+        $('&'.join(map(lambda i: f'regs_conf[{i}] = {gen_hex(0x0)}', range(REG_NUM))))
     ));
 
     -- Control and status registers are only written with integrous data
